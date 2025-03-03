@@ -212,7 +212,7 @@ export type Student = {
     // mailps
     // mailblock
     // ews
-    coursetype: string | undefined;
+    coursetype: "NA" | "CCF" | "CBCS" | null;
     whatsappno: string | undefined;
     // middleName
     // lastName

@@ -11,9 +11,15 @@ import {
 } from "lucide-react";
 import { findStudentByEmail } from "@/lib/services/student";
 import Image from "next/image";
+import { findBatchByStudentId } from "@/lib/services/batch";
+import { Badge } from "@/components/ui/badge";
 
 export default async function HomePage() {
-  const student = await findStudentByEmail("0103123014@thebges.edu.in");
+  const student = await findStudentByEmail("0101181122@thebges.edu.in");
+
+  if (!student) return null;
+
+  const batch = await findBatchByStudentId(student?.id as number);
 
   return (
     <div className="p-6 space-y-6">
@@ -26,18 +32,35 @@ export default async function HomePage() {
                 Welcome Back, {student?.name}
               </h1>
               <div className="space-y-1 text-gray-600">
-                <p>
-                  <b>UID:</b> {student?.name}
-                </p>
-                <p>
-                  <b>Section:</b> {student?.name}
-                </p>
-                <p>
-                  <b>Course</b>: {student?.name}
-                </p>
-                <p>
-                  <b>Current Semester:</b> {student?.name}
-                </p>
+                <div className="flex gap-2 items-center">
+                  <p className="w-[150px] font-semibold">UID:</p>
+                  <p>{student?.codeNumber}</p>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <p className="w-[150px] font-semibold">Framework:</p>
+                  <p>
+                    {!student?.coursetype || student?.coursetype === "NA"
+                      ? ""
+                      : student?.coursetype}
+                  </p>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <p className="w-[150px] font-semibold">Course:</p>
+                  <p>{batch && batch.course?.courseName}</p>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <p className="w-[150px] font-semibold">Section:</p>
+                  <p>{batch && batch.section?.sectionName}</p>
+                </div>
+                {!student?.alumni && (
+                  <div className="flex gap-2 items-center">
+                    <p className="w-[150px] font-semibold">Current Semester:</p>{" "}
+                    <p>{student?.alumni ? "" : "-"}</p>
+                  </div>
+                )}
+                {student.alumni && (
+                    <Badge>Graduated</Badge>
+                )}
               </div>
             </div>
             <div className="h-24 w-24 rounded-full border-2 border-gray-300 flex items-center justify-center">
