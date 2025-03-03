@@ -9,16 +9,11 @@ import {
   FileText,
   User,
 } from "lucide-react";
+import { findStudentByEmail } from "@/lib/services/student";
+import Image from "next/image";
 
-export default function HomePage() {
-  // Mock student data - replace with actual data fetching logic
-  const studentData = {
-    name: "John Doe",
-    uid: "ST12345",
-    section: "A",
-    course: "Computer Science",
-    semester: "Fall 2023",
-  };
+export default async function HomePage() {
+  const student = await findStudentByEmail("0103123014@thebges.edu.in");
 
   return (
     <div className="p-6 space-y-6">
@@ -28,25 +23,35 @@ export default function HomePage() {
           <div className="flex justify-between items-center">
             <div className="space-y-2">
               <h1 className="text-2xl font-bold">
-                Welcome Back {studentData.name}
+                Welcome Back, {student?.name}
               </h1>
               <div className="space-y-1 text-gray-600">
                 <p>
-                  <b>UID:</b> {studentData.uid}
+                  <b>UID:</b> {student?.name}
                 </p>
                 <p>
-                  <b>Section:</b> {studentData.section}
+                  <b>Section:</b> {student?.name}
                 </p>
                 <p>
-                  <b>Course</b>: {studentData.course}
+                  <b>Course</b>: {student?.name}
                 </p>
                 <p>
-                  <b>Current Semester:</b> {studentData.semester}
+                  <b>Current Semester:</b> {student?.name}
                 </p>
               </div>
             </div>
             <div className="h-24 w-24 rounded-full border-2 border-gray-300 flex items-center justify-center">
-              <User className="h-12 w-12 text-gray-400" />
+              {student?.imgFile ? (
+                <Image
+                  src={`https://74.207.233.48:8443/hrclIRP/studentimages/${student?.imgFile}`}
+                  alt={student?.name || "student-profile-image"}
+                  className="h-full w-full rounded-full object-cover"
+                  width={100}
+                  height={100}
+                />
+              ) : (
+                <User className="h-12 w-12 text-gray-400" />
+              )}
             </div>
           </div>
         </CardContent>
