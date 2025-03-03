@@ -130,7 +130,7 @@ export default function AttendancePage() {
   };
 
   const currentSubjects =
-    mockData.subjects[selectedSemester as keyof typeof mockData.subjects] || [];
+    mockData.subjects[selectedSemester as unknown as keyof typeof mockData.subjects] || [];
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -366,7 +366,7 @@ export default function AttendancePage() {
                           subject.total
                         )
                       );
-                      const { status, textColor } =
+                      const { status } =
                         getAttendanceStatus(percentage);
 
                       return (
