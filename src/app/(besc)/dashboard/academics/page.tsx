@@ -143,7 +143,7 @@ export default function DocumentsPage() {
         <TabsContent value="marksheets">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {mockDocuments.marksheets[
-              selectedSemester as keyof typeof mockDocuments.marksheets
+              selectedSemester as unknown as keyof typeof mockDocuments.marksheets
             ]?.map((doc) => (
               <Card key={doc.id}>
                 <CardHeader className="pb-2">
