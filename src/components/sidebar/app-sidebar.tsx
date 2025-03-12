@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   BookOpen,
-  Frame,
+//   Frame,
   GalleryVerticalEnd,
   Map,
   PieChart,
@@ -24,6 +24,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import Image from "next/image";
 
 // This is sample data.
 const data = {
@@ -46,21 +47,21 @@ const data = {
       icon: SquareTerminal, // Or use HomeIcon if available
       isActive: true,
     },
-    {
-      title: "Attendance",
-      url: "/dashboard/attendance",
-      icon: Frame, // Represents a structured view (calendar-style)
-    },
+    // {
+    //   title: "Attendance",
+    //   url: "/dashboard/attendance",
+    //   icon: Frame, // Represents a structured view (calendar-style)
+    // },
     {
       title: "Exams",
       url: "/dashboard/exams",
       icon: PieChart, // Represents stats or progress
     },
-    {
-      title: "Assignments",
-      url: "/dashboard/assignments",
-      icon: BookOpen, // Represents coursework
-    },
+    // {
+    //   title: "Assignments",
+    //   url: "/dashboard/assignments",
+    //   icon: BookOpen, // Represents coursework
+    // },
     {
       title: "Academics",
       url: "/dashboard/academics",
@@ -77,8 +78,8 @@ const data = {
       icon: BookOpen, // Represents books
     },
     {
-      title: "Settings",
-      url: "/dashboard/settings",
+      title: "Profile",
+      url: "/dashboard/profile",
       icon: Settings2, // Represents settings
     },
   ],
@@ -96,7 +97,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="cursor-default hover:bg-transparent"
             >
               <div className="flex aspect-square w-8 h-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <img
+                <Image
+                  width={32}
+                  height={32}
                   src={"/logo.png"}
                   alt={"The Bhawanipur Education Society College Logo"}
                   className="w-8 h-8 rounded-lg object-cover"
