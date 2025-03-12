@@ -82,6 +82,7 @@ interface DocumentContentProps {
 }
 
 export default function DocumentContent({ scannedDocs }: DocumentContentProps) {
+  console.log(scannedDocs);
   const [selectedSemester, setSelectedSemester] = useState<string>("1");
   const [selectedView, setSelectedView] = useState<string>("marksheets");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
