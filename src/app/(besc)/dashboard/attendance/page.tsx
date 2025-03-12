@@ -88,6 +88,10 @@ const mockData = {
   },
 };
 
+export const metadata = {
+  title: "Attendance",
+};
+
 export default function AttendancePage() {
   const [selectedSemester, setSelectedSemester] = useState<string>("1");
   const [selectedView, setSelectedView] = useState<string>("cards");
@@ -130,7 +134,9 @@ export default function AttendancePage() {
   };
 
   const currentSubjects =
-    mockData.subjects[selectedSemester as unknown as keyof typeof mockData.subjects] || [];
+    mockData.subjects[
+      selectedSemester as unknown as keyof typeof mockData.subjects
+    ] || [];
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -366,8 +372,7 @@ export default function AttendancePage() {
                           subject.total
                         )
                       );
-                      const { status } =
-                        getAttendanceStatus(percentage);
+                      const { status } = getAttendanceStatus(percentage);
 
                       return (
                         <tr key={subject.code}>

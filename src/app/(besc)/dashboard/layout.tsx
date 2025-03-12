@@ -12,8 +12,19 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { StudentProvider } from "@/context/StudentContext";
 import { House } from "lucide-react";
+import { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: {
+    template: "%s | BESC Student Console",
+    default: "Home | BESC Student Console",
+  },
+  description: "BESC Student Console",
+  applicationName: "Student Console",
+};
 
 export default function DashboardLayout({
   children,
@@ -44,8 +55,8 @@ export default function DashboardLayout({
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="min-h-[100vh] flex-1 rounded-xl border md:min-h-min">
-            {children}
+          <div className="min-h-[100vh] flex-1 rounded-xl md:min-h-min">
+            <StudentProvider>{children}</StudentProvider>
           </div>
         </div>
       </SidebarInset>
