@@ -212,7 +212,7 @@ export default async function ProfilePage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
-                    Roll Number
+                    Class Roll Number
                   </p>
                   <p>{student.rollNumber || "Not Assigned"}</p>
                 </div>
@@ -240,15 +240,9 @@ export default async function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
-                    Last Institution
+                    Last Institution Name
                   </p>
                   <p>{student.lastInstitution || "Not Provided"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">
-                    Last Institution Address
-                  </p>
-                  <p>{student.lastInstitutionAddress || "Not Provided"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
@@ -328,9 +322,6 @@ export default async function ProfilePage() {
                   <p className="mt-1 text-sm text-gray-500">
                     PIN: {student.resiPinNo || "Not Provided"}
                   </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Phone: {student.resiPhoneMobileNo || "Not Provided"}
-                  </p>
                 </div>
               </div>
 
@@ -369,18 +360,6 @@ export default async function ProfilePage() {
                     Mobile Number
                   </p>
                   <p>{student.emercontactpersonmob || "Not Provided"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">
-                    Residence Phone
-                  </p>
-                  <p>{student.emercontactpersonphr || "Not Provided"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">
-                    Office Phone
-                  </p>
-                  <p>{student.emercontactpersonpho || "Not Provided"}</p>
                 </div>
               </div>
             </CardContent>

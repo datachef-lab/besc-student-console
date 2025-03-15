@@ -3,16 +3,15 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BookOpen,
-  Calendar,
   GraduationCap,
-  Clock,
-  FileText,
+  CalendarHeart,
   User,
+  NotebookPen,
 } from "lucide-react";
 import { findStudentByEmail } from "@/lib/services/student";
-import Image from "next/image";
 import { findBatchByStudentId } from "@/lib/services/batch";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 export default async function HomePage() {
   const student = await findStudentByEmail("0101181122@thebges.edu.in");
@@ -33,8 +32,14 @@ export default async function HomePage() {
               </h1>
               <div className="space-y-1 text-gray-600">
                 <div className="flex gap-2 items-center">
-                  <p className="w-[150px] font-semibold">UID:</p>
-                  <p>{student?.codeNumber}</p>
+                  <p className="w-[150px] font-semibold">Class Roll Number:</p>
+                  <p>{student?.univlstexmrollno}</p>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <p className="w-[150px] font-semibold">
+                    Class Registration Number:
+                  </p>
+                  <p>{student?.univregno}</p>
                 </div>
                 <div className="flex gap-2 items-center">
                   <p className="w-[150px] font-semibold">Framework:</p>
@@ -58,9 +63,7 @@ export default async function HomePage() {
                     <p>{student?.alumni ? "" : "-"}</p>
                   </div>
                 )}
-                {student.alumni && (
-                    <Badge>Graduated</Badge>
-                )}
+                {student.alumni && <Badge>Graduated</Badge>}
               </div>
             </div>
             <div className="h-24 w-24 rounded-full border-2 border-gray-300 flex items-center justify-center">
@@ -81,7 +84,7 @@ export default async function HomePage() {
       </Card>
 
       {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Attendance</CardTitle>
@@ -118,7 +121,7 @@ export default async function HomePage() {
             <p className="text-xs text-gray-500">This Week</p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Recent Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -166,10 +169,13 @@ export default async function HomePage() {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { title: "Attendance", icon: Clock },
-                { title: "Assignments", icon: FileText },
                 { title: "Course Material", icon: BookOpen },
-                { title: "Results", icon: GraduationCap },
+                {
+                  title: "University Results",
+                  icon: GraduationCap,
+                },
+                { title: "College Events", icon: CalendarHeart },
+                { title: "University Exams", icon: NotebookPen },
               ].map((link, index) => (
                 <button
                   key={index}
