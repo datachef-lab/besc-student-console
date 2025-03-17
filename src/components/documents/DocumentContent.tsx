@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Download, Eye, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ScanDoc } from "@/lib/services/docs";
 
 // Mock data - replace with actual data from your backend
 const mockDocuments = {
@@ -60,7 +61,7 @@ const mockDocuments = {
     },
     {
       id: "cert-2",
-      title: "Merit Certificate",
+      title: "Registration Certificate",
       type: "certificate",
       issueDate: "2024-02-10",
       downloadUrl:
@@ -76,8 +77,12 @@ const mockDocuments = {
     },
   ],
 };
+interface DocumentContentProps {
+  scannedDocs: ScanDoc[];
+}
 
-export default function DocumentsPage() {
+export default function DocumentContent({ scannedDocs }: DocumentContentProps) {
+  console.log(scannedDocs);
   const [selectedSemester, setSelectedSemester] = useState<string>("1");
   const [selectedView, setSelectedView] = useState<string>("marksheets");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);

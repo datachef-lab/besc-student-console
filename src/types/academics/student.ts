@@ -1,4 +1,6 @@
-export type Student = {
+import { Nationality } from "../resources/nationality";
+
+export type DbStudent = {
     readonly id?: number;
     mailingPinNo: string | undefined;
     resiPinNo: string | undefined;
@@ -239,4 +241,8 @@ export type Student = {
     pursuingca: string | undefined;
     abcid: string | undefined;
     apprid: string | undefined;
+}
+
+export interface Student extends DbStudent, Omit<Nationality, "id"> {
+
 }

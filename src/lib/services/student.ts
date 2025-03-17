@@ -1,6 +1,7 @@
 import { mysqlConnection } from "@/db";
-import { Student } from "@/types/academics/student";
+import { DbStudent, Student } from "@/types/academics/student";
 import { RowDataPacket } from "mysql2";
+import { findNationalityById } from "./nationality";
 
 export async function findStudentByEmail(email: string): Promise<Student | null> {
     const [rows] = await mysqlConnection.query<RowDataPacket[]>(
@@ -8,5 +9,25 @@ export async function findStudentByEmail(email: string): Promise<Student | null>
         [email]
     );
 
-    return rows.length > 0 ? (rows[0] as Student) : null; // Return student data if found, else return null
+    if (rows.length === 0) {
+        return null;
+    }
+
+    const foundStudent = rows[0] as DbStudent;
+
+    const nationality = await findNationalityById(foundStudent.nationalityId);
+
+    let formattedStudent: Student = {
+        ...foundStudent,
+        nationalityName: '',
+        pos: null,
+        code: null
+    }
+
+    if (nationality) {
+        const { pos, code, nationalityName } = nationality;
+        formattedStudent = { ...formattedStudent, pos, code, nationalityName, }
+    }
+
+    return formattedStudent; // Return student data if found, else return null
 }
