@@ -61,7 +61,7 @@ const mockDocuments = {
     },
     {
       id: "cert-2",
-      title: "Merit Certificate",
+      title: "Registration Certificate",
       type: "certificate",
       issueDate: "2024-02-10",
       downloadUrl:

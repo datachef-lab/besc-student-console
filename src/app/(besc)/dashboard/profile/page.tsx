@@ -5,6 +5,7 @@ export const metadata = {
   title: "Profile",
 };
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+    
   return <ProfileContent />;
 }

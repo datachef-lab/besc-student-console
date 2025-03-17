@@ -73,6 +73,14 @@ export default function ProfileContent() {
                   <GraduationCap className="h-4 w-4 text-gray-500" />
                   <span>Framework: {student.coursetype || "N/A"}</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 text-gray-500" />
+                  <span>Registration No.: {student.univregno || "N/A"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 text-gray-500" />
+                  <span>Roll No.: {student.univlstexmrollno || "N/A"}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -113,7 +121,7 @@ export default function ProfileContent() {
                       : "Not Specified"}
                   </p>
                 </div>
-                <div className="space-y-1">
+                {/* <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
                     Blood Group
                   </p>
@@ -122,15 +130,15 @@ export default function ProfileContent() {
                       ? `Group ${student.bloodGroup}`
                       : "Not Specified"}
                   </p>
-                </div>
+                </div> */}
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
                     Nationality
                   </p>
                   <p>
-                    {student.nationalityId
-                      ? `ID: ${student.nationalityId}`
-                      : student.othernationality || "Not Specified"}
+                    {student?.nationalityName?.trim() !== ""
+                      ? `${student.nationalityName}`
+                      : "Not Specified"}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -211,7 +219,7 @@ export default function ProfileContent() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
-                    Roll Number
+                    Class Roll Number
                   </p>
                   <p>{student.rollNumber || "Not Assigned"}</p>
                 </div>
@@ -239,15 +247,9 @@ export default function ProfileContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
-                    Last Institution
+                    Last Institution Name
                   </p>
                   <p>{student.lastInstitution || "Not Provided"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">
-                    Last Institution Address
-                  </p>
-                  <p>{student.lastInstitutionAddress || "Not Provided"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
@@ -327,9 +329,6 @@ export default function ProfileContent() {
                   <p className="mt-1 text-sm text-gray-500">
                     PIN: {student.resiPinNo || "Not Provided"}
                   </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Phone: {student.resiPhoneMobileNo || "Not Provided"}
-                  </p>
                 </div>
               </div>
 
@@ -368,18 +367,6 @@ export default function ProfileContent() {
                     Mobile Number
                   </p>
                   <p>{student.emercontactpersonmob || "Not Provided"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">
-                    Residence Phone
-                  </p>
-                  <p>{student.emercontactpersonphr || "Not Provided"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">
-                    Office Phone
-                  </p>
-                  <p>{student.emercontactpersonpho || "Not Provided"}</p>
                 </div>
               </div>
             </CardContent>

@@ -1,8 +1,8 @@
-import DocumentContent from "@/components/academics/DocumentContent";
+import DocumentContent from "@/components/documents/DocumentContent";
 import { scanDocs } from "@/lib/services/docs";
 
 export const metadata = {
-  title: "Academics",
+  title: "Documents",
 };
 
 export default async function DocumentsPage() {
