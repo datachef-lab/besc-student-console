@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   BookOpen,
-//   Frame,
+  //   Frame,
   GalleryVerticalEnd,
   Map,
   PieChart,
@@ -98,24 +98,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: SquareTerminal,
       isActive: pathname === "/dashboard",
     },
-    {
-      title: "Attendance",
-      url: "/dashboard/attendance",
-      icon: Frame,
-      isActive: pathname === "/dashboard/attendance",
-    },
+    // {
+    //   title: "Attendance",
+    //   url: "/dashboard/attendance",
+    //   icon: Frame,
+    //   isActive: pathname === "/dashboard/attendance",
+    // },
     {
       title: "Exams",
       url: "/dashboard/exams",
       icon: PieChart,
       isActive: pathname === "/dashboard/exams",
     },
-    {
-      title: "Assignments",
-      url: "/dashboard/assignments",
-      icon: BookOpen,
-      isActive: pathname === "/dashboard/assignments",
-    },
+    // {
+    //   title: "Assignments",
+    //   url: "/dashboard/assignments",
+    //   icon: BookOpen,
+    //   isActive: pathname === "/dashboard/assignments",
+    // },
     {
       title: "Academics",
       url: "/dashboard/academics",
@@ -135,10 +135,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isActive: pathname === "/dashboard/library",
     },
     {
-      title: "Settings",
-      url: "/dashboard/settings",
+      title: "Profile",
+      url: "/dashboard/profile",
       icon: Settings2,
-      isActive: pathname === "/dashboard/settings",
+      isActive: pathname === "/dashboard/profile",
     },
   ];
 
