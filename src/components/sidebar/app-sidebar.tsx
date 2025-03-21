@@ -10,6 +10,7 @@ import {
   Settings2,
   SquareTerminal,
 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { NavMain } from "@/components/sidebar/nav-main";
 import { NavProjects } from "@/components/sidebar/nav-projects";
@@ -86,6 +87,60 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+
+  // Define navigation items
+  const navMainItems = [
+    {
+      title: "Home",
+      url: "/dashboard",
+      icon: SquareTerminal,
+      isActive: pathname === "/dashboard",
+    },
+    {
+      title: "Attendance",
+      url: "/dashboard/attendance",
+      icon: Frame,
+      isActive: pathname === "/dashboard/attendance",
+    },
+    {
+      title: "Exams",
+      url: "/dashboard/exams",
+      icon: PieChart,
+      isActive: pathname === "/dashboard/exams",
+    },
+    {
+      title: "Assignments",
+      url: "/dashboard/assignments",
+      icon: BookOpen,
+      isActive: pathname === "/dashboard/assignments",
+    },
+    {
+      title: "Academics",
+      url: "/dashboard/academics",
+      icon: Map,
+      isActive: pathname === "/dashboard/academics",
+    },
+    {
+      title: "Admission & Fees",
+      url: "/dashboard/admission-fees",
+      icon: GalleryVerticalEnd,
+      isActive: pathname === "/dashboard/admission-fees",
+    },
+    {
+      title: "Library",
+      url: "/dashboard/library",
+      icon: BookOpen,
+      isActive: pathname === "/dashboard/library",
+    },
+    {
+      title: "Settings",
+      url: "/dashboard/settings",
+      icon: Settings2,
+      isActive: pathname === "/dashboard/settings",
+    },
+  ];
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -112,7 +167,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMainItems} />
         {data.projects.length > 0 && <NavProjects projects={data.projects} />}
       </SidebarContent>
       <SidebarFooter>

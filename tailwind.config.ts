@@ -71,12 +71,8 @@ export default {
             },
             keyframes: {
                 aurora: {
-                    from: {
-                        backgroundPosition: "50% 50%, 50% 50%",
-                    },
-                    to: {
-                        backgroundPosition: "350% 50%, 350% 50%",
-                    },
+                    '0%': { backgroundPosition: '0% 50%, 50% 50%' },
+                    '100%': { backgroundPosition: '100% 50%, 50% 50%' },
                 },
                 "appear": {
                     from: {
@@ -98,7 +94,10 @@ export default {
             animation: {
                 "appear": "appear 1s ease-in-out",
                 "slide": "slide 750ms ease-in-out",
-                aurora: "aurora 60s linear infinite",
+                aurora: "aurora 20s linear infinite",
+            },
+            backgroundImage: {
+                'gradient-border': 'linear-gradient(to right, var(--tw-gradient-stops))',
             },
         }
     },
