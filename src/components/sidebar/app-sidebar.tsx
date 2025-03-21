@@ -64,8 +64,8 @@ const data = {
     //   icon: BookOpen, // Represents coursework
     // },
     {
-      title: "Academics",
-      url: "/dashboard/academics",
+      title: "Documents",
+      url: "/dashboard/documents",
       icon: Map, // Represents academic navigation
     },
     {
