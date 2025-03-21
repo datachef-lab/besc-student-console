@@ -152,37 +152,37 @@ export default async function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
-                    Father's Name
+                    Father&apos;s Name
                   </p>
                   <p>{student.fatherName || "Not Provided"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
-                    Father's Contact
+                    Father&apos;s Contact
                   </p>
                   <p>{student.fatherMobNo || "Not Provided"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
-                    Mother's Name
+                    Mother&apos;s Name
                   </p>
                   <p>{student.motherName || "Not Provided"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
-                    Mother's Contact
+                    Mother&apos;s Contact
                   </p>
                   <p>{student.motherMobNo || "Not Provided"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
-                    Guardian's Name
+                    Guardian&apos;s Name
                   </p>
                   <p>{student.guardianName || "Not Provided"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
-                    Guardian's Contact
+                    Guardian&apos;s Contact
                   </p>
                   <p>{student.guardianMobNo || "Not Provided"}</p>
                 </div>
