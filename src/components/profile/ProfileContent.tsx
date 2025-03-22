@@ -225,6 +225,12 @@ export default function ProfileContent() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">
+                    UID
+                  </p>
+                  <p>{student.codeNumber || "Not Assigned"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">
                     Admission Year
                   </p>
                   <p>{student.admissionYear || "Not Available"}</p>
