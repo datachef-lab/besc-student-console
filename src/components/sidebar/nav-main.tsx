@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { Collapsible } from "@/components/ui/collapsible";
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -134,8 +133,7 @@ export function NavMain({
 
                 <AnimatePresence initial={false}>
                   {(item.items?.length ?? 0) > 0 && isExpanded && (
-                    <SidebarMenuSub
-                      as={motion.div}
+                    <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{
                         height: "auto",
@@ -149,6 +147,7 @@ export function NavMain({
                       }}
                       className="pl-10 overflow-hidden"
                     >
+                      <SidebarMenuSub>
                       <div className="relative pl-4 border-l border-zinc-200 dark:border-zinc-700 mt-1 mb-1 space-y-1">
                         {item.items?.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.title}>
@@ -174,7 +173,8 @@ export function NavMain({
                           </SidebarMenuSubItem>
                         ))}
                       </div>
-                    </SidebarMenuSub>
+                      </SidebarMenuSub>
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </SidebarMenuItem>
