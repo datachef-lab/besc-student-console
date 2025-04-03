@@ -121,7 +121,6 @@
 
 "use client";
 
-import { UserButton, useUser } from "@clerk/nextjs";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -129,19 +128,15 @@ import {
 } from "@/components/ui/sidebar";
 
 export function NavUser() {
-  const { user } = useUser();
-
-  if (!user) return null;
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton size="lg" className="flex items-center gap-2 p-2">
-          <UserButton />
+          TODO: User Name
           <div className="flex flex-col text-left">
-            <span className="text-sm font-semibold">{user.fullName}</span>
+            <span className="text-sm font-semibold">{"user.fullName"}</span>
             <span className="text-xs text-gray-500">
-              {user.primaryEmailAddress?.emailAddress}
+              {"user.primaryEmailAddress?.emailAddress"}
             </span>
           </div>
         </SidebarMenuButton>

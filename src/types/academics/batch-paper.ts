@@ -9,7 +9,10 @@ export interface DbBatchPaper {
     paperId: number;
 }
 
-export interface BatchPaper extends Omit<DbBatchPaper, "parent_id" | "subjectTypeId" | "subjectId" | "paperId"> {
+export interface BatchPaper extends Omit<DbBatchPaper, "parent_id"> {
     batchId: number;
+    subjectTypeName: string;
+    subjectName: string;
     paper: PaperSubject;
+    paperName: string;
 }
