@@ -1,11 +1,9 @@
-
-
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
 import { Student } from '@/types/academics/student';
-import { findStudentByEmail } from './student';
+import { findStudentByEmail, findStudentByUid } from './student';
 
 // JWT Secret should be in environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
@@ -19,6 +17,7 @@ const REFRESH_TOKEN_EXPIRY = '7d'; // 7 days
 export interface TokenPayload {
     userId: number;
     email: string;
+    uid: string,
     name: string;
     isAdmin?: boolean;
 }
@@ -44,6 +43,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 export function generateTokens(user: Student): AuthTokens {
     const payload: TokenPayload = {
         userId: user?.id as number,
+        uid: user.codeNumber as string,
         email: user.institutionalemail as string,
         name: user.name,
     };
@@ -75,7 +75,6 @@ export function verifyRefreshToken(token: string): TokenPayload | null {
         return null;
     }
 }
-
 
 // Set auth cookies
 // export async function setAuthCookies(tokens: AuthTokens, response: ) {
@@ -128,7 +127,6 @@ export function setAuthCookies(tokens: AuthTokens) {
     return response;
 }
 
-
 // Clear auth cookies
 export async function clearAuthCookies() {
     const cookieStore = await cookies();
@@ -139,6 +137,12 @@ export async function clearAuthCookies() {
 // Get user by email
 export async function getUserByEmail(email: string): Promise<Student | null> {
     const user = await findStudentByEmail(email);
+    return user;
+}
+
+// Get user by uid
+export async function getUserByUid(uid: string): Promise<Student | null> {
+    const user = await findStudentByUid(uid);
     return user;
 }
 

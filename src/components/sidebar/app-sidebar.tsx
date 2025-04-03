@@ -110,12 +110,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: PieChart,
       isActive: pathname === "/dashboard/exams",
     },
-    // {
-    //   title: "Assignments",
-    //   url: "/dashboard/assignments",
-    //   icon: BookOpen,
-    //   isActive: pathname === "/dashboard/assignments",
-    // },
+    {
+      title: "Academics",
+      url: "/dashboard/academics",
+      icon: BookOpen,
+      isActive: pathname === "/dashboard/academics",
+    },
     {
       title: "Documents",
       url: "/dashboard/documents",

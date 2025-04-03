@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findStudentByEmail } from "@/lib/services/student";
+import { findStudentByUid } from "@/lib/services/student";
 import { findBatchesByStudentId } from "@/lib/services/batch";
 
 export async function GET(req: NextRequest) {
-    const email = req.nextUrl.searchParams.get("email");
+    const uid = req.nextUrl.searchParams.get("uid");
 
-    if (!email) {
-        return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    if (!uid) {
+        return NextResponse.json({ error: "UID is required" }, { status: 400 });
     }
 
     try {
-        const student = await findStudentByEmail(email);
+        const student = await findStudentByUid(uid);
+        console.log("in student api:", student);
         if (!student) {
             return NextResponse.json({ error: "Student not found" }, { status: 404 });
         }

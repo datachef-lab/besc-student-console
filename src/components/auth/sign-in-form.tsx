@@ -18,7 +18,7 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
   const router = useRouter();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [uid, setUID] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -26,8 +26,8 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    if (!email || !password) {
-      setError("Please enter your email and password");
+    if (!uid || !password) {
+      setError("Please enter your uid and password");
       return;
     }
 
@@ -37,7 +37,7 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ uid, password }),
       });
 
       if (!response.ok) {
@@ -112,11 +112,10 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="uid"
+              type="text"
+              value={uid}
+              onChange={(e) => setUID(e.target.value)}
               required
             />
           </div>

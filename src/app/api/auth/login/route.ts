@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserByEmail, generateTokens, setAuthCookies } from '@/lib/services/auth';
+import { generateTokens, setAuthCookies, getUserByUid } from '@/lib/services/auth';
 
 // export async function POST(req: NextRequest) {
 //     try {
@@ -70,15 +70,15 @@ import { getUserByEmail, generateTokens, setAuthCookies } from '@/lib/services/a
 
 export async function POST(req: NextRequest) {
     try {
-        const { email, password } = await req.json();
+        const { uid, password } = await req.json();
 
-        if (!email || !password) {
-            return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+        if (!uid || !password) {
+            return NextResponse.json({ error: 'UID and password are required' }, { status: 400 });
         }
 
-        const user = await getUserByEmail(email);
+        const user = await getUserByUid(uid);
         if (!user || password !== "123") {
-            return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+            return NextResponse.json({ error: 'Invalid UID or password' }, { status: 401 });
         }
 
 
@@ -89,7 +89,8 @@ export async function POST(req: NextRequest) {
             user: {
                 id: user.id,
                 name: user.name,
-                email: user.email,
+                uid: user.codeNumber,
+                email: user.institutionalemail,
             },
             accessToken: tokens.accessToken,
         }, response);
