@@ -97,7 +97,7 @@ export default function HomeContent() {
           </div>
         </CardContent>
       </Card> */}
-      {JSON.stringify(student, null, 2)}
+      {/* {JSON.stringify(batches   , null, 2)} */}
       <Card className="border rounded-lg overflow-hidden">
         <CardContent className="py-6 px-3">
           <div className="flex flex-col md:flex-row justify-between items-center">
@@ -145,7 +145,7 @@ export default function HomeContent() {
                       <p>:</p>
                       <p className="truncate">
                         {batches
-                          ? batches[batches.length - 1]?.course?.courseName
+                          ? batches[batches.length - 1]?.coursename
                           : ""}
                       </p>
                     </div>
@@ -153,7 +153,7 @@ export default function HomeContent() {
                       <p className="w-[120px] font-semibold min-w-0">Section</p>
                       <p>:</p>
                       <p className="truncate">
-                        {"batches ? batches[batches.length - 1]?.section} :"}
+                        {batches && batches[batches.length - 1]?.sectionName}
                       </p>
                     </div>
                   </div>

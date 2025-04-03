@@ -40,8 +40,7 @@ export async function GET(req: NextRequest) {
         // Set new refresh token cookie
         cookieStore.set('refreshToken', tokens.refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: false,
             maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
             path: '/'
         });

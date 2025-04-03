@@ -1,3 +1,4 @@
+import SharedArea from "@/components/home/SharedArea";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import {
   Breadcrumb,
@@ -12,7 +13,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { StudentProvider } from "@/context/StudentContext";
 import { House } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -56,7 +56,7 @@ export default function DashboardLayout({
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <div className="min-h-[100vh] flex-1 rounded-xl md:min-h-min">
-            <StudentProvider>{children}</StudentProvider>
+            <SharedArea>{children}</SharedArea>
           </div>
         </div>
       </SidebarInset>

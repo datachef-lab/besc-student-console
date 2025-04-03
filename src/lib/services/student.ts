@@ -4,7 +4,7 @@ import { RowDataPacket } from "mysql2";
 import { findNationalityById } from "./nationality";
 
 export async function findStudentByEmail(email: string): Promise<Student | null> {
-    const [rows] = await mysqlConnection.query<RowDataPacket[]>(
+    const [rows] = await mysqlConnection!.query<RowDataPacket[]>(
         `SELECT * FROM studentpersonaldetails WHERE institutionalemail = ?`,
         [email]
     );
@@ -13,12 +13,35 @@ export async function findStudentByEmail(email: string): Promise<Student | null>
         return null;
     }
 
-    const foundStudent = rows[0] as DbStudent;
+    const formattedStudent = formatResponse(rows[0] as DbStudent);
 
-    const nationality = await findNationalityById(foundStudent.nationalityId);
+    return formattedStudent;
+}
+
+export async function findStudentByUid(uid: string): Promise<Student | null> {
+    const [rows] = await mysqlConnection!.query<RowDataPacket[]>(
+        `SELECT * FROM studentpersonaldetails WHERE codeNumber = ?`,
+        [uid]
+    );
+
+    if (rows.length === 0) {
+        return null;
+    }
+
+    const formattedStudent = formatResponse(rows[0] as DbStudent);
+
+    return formattedStudent; // Return student data if found, else return null
+}
+
+export async function formatResponse(student: DbStudent | null) {
+    if (!student) {
+        return null;
+    }
+
+    const nationality = await findNationalityById(student.nationalityId);
 
     let formattedStudent: Student = {
-        ...foundStudent,
+        ...student,
         nationalityName: '',
         pos: null,
         code: null
