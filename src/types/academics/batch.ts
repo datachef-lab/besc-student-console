@@ -1,7 +1,5 @@
-import { AcademicClass } from "./academic-class";
-import { Course } from "./course";
-import { Section } from "./section";
-import { Shift } from "./shfit";
+import { BatchPaper } from "./batch-paper";
+import { DbSession } from "./session";
 
 export interface DbBatch {
     readonly id?: number;
@@ -13,9 +11,11 @@ export interface DbBatch {
     instituteId: number | null;
 }
 
-export default interface Batch extends Omit<DbBatch, "courseId" | "classId" | "shiftId" | "sectionId"> {
-    course: Course | null;
-    academicClass: AcademicClass | null;
-    section: Section | null;
-    shift: Shift | null;
+export default interface Batch extends DbBatch {
+    courseName: string;
+    classname: string;
+    sectionName: string;
+    shiftName: string;
+    session: DbSession;
+    batchPapers?: BatchPaper[];
 }

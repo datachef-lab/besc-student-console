@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
 import { Student } from "@/types/academics/student";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Batch {
   course?: { courseName: string } | null;
@@ -9,7 +10,7 @@ interface Batch {
 
 interface StudentContextType {
   student: Student | null;
-  batch: Batch | null;
+  batches: Batch[];
   loading: boolean;
 }
 
@@ -18,20 +19,20 @@ export const StudentContext = createContext<StudentContextType | undefined>(
 );
 
 export function StudentProvider({ children }: { children: React.ReactNode }) {
-  const [student, setStudent] = useState<Student | null>(null);
-  const [batch, setBatch] = useState<Batch | null>(null);
+  const { user } = useAuth();
+  const [student, setStudent] = useState<Student | null>(user);
+  const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStudent() {
       try {
-        const email = "0101181122@thebges.edu.in"; // Dynamic in future
-        const res = await fetch(`/api/student?email=${email}`);
+        const res = await fetch(`/api/student?email=${user?.email}`);
         const data = await res.json();
         console.log(data);
         if (res.ok) {
           setStudent(data.student);
-          setBatch(data.batch);
+          setBatches(data.batches);
         } else {
           console.error("Error fetching student:", data.error);
         }
@@ -43,10 +44,10 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
     }
 
     fetchStudent();
-  }, []);
+  }, [user]);
 
   return (
-    <StudentContext.Provider value={{ student, batch, loading }}>
+    <StudentContext.Provider value={{ student, batches, loading }}>
       {children}
     </StudentContext.Provider>
   );
