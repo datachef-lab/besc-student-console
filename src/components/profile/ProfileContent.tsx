@@ -9,7 +9,7 @@ import Image from "next/image";
 import { useStudent } from "@/context/StudentContext";
 
 export default function ProfileContent() {
-  const { student, batch } = useStudent();
+  const { student, batches } = useStudent();
 
   if (!student) return <div className="p-6">Student data not found</div>;
 
@@ -208,13 +208,15 @@ export default function ProfileContent() {
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">Course</p>
                   <p>
-                    {(batch && batch.course?.courseName) || "Not Available"}
+                    {(batches && batches[batches.length - 1]?.coursename) ||
+                      "Not Available"}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">Section</p>
                   <p>
-                    {(batch && batch.section?.sectionName) || "Not Available"}
+                    {(batches && batches[batches.length - 1]?.sectionName) ||
+                      "Not Available"}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -224,9 +226,7 @@ export default function ProfileContent() {
                   <p>{student.rollNumber || "Not Assigned"}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">
-                    UID
-                  </p>
+                  <p className="text-sm font-medium text-gray-500">UID</p>
                   <p>{student.codeNumber || "Not Assigned"}</p>
                 </div>
                 <div className="space-y-1">
