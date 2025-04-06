@@ -128,7 +128,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     checkSession();
-  }, [generateNewToken, isDashboardRoute]);
+  }, [generateNewToken, isDashboardRoute, accessToken]);
 
   useEffect(() => {
     if (!isDashboardRoute) return; // ✅ Skip request if not on /dashboard/**
