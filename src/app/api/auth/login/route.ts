@@ -76,25 +76,39 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'UID and password are required' }, { status: 400 });
         }
 
-        const user = await getUserByUid(uid);
-        if (!user || password !== "123") {
-            return NextResponse.json({ error: 'Invalid UID or password' }, { status: 401 });
+        console.log(`Login attempt for UID: ${uid}`);
+
+        // Normal login flow
+        try {
+            const user = await getUserByUid(uid);
+            console.log(`User found for UID ${uid}:`, user ? "Yes" : "No");
+
+            if (!user) {
+                return NextResponse.json({ error: 'Invalid UID or password' }, { status: 401 });
+            }
+
+            // Simple password check for development
+            if (password !== "123") {
+                return NextResponse.json({ error: 'Invalid UID or password' }, { status: 401 });
+            }
+
+            console.log("Login successful for user:", user.name);
+            const tokens = generateTokens(user);
+
+            const response = setAuthCookies(tokens);
+            return NextResponse.json({
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    uid: user.codeNumber,
+                    email: user.institutionalemail,
+                },
+                accessToken: tokens.accessToken,
+            }, response);
+        } catch (error) {
+            console.error("Error during getUserByUid:", error);
+            return NextResponse.json({ error: 'User lookup failed' }, { status: 500 });
         }
-
-
-        const tokens = generateTokens(user);
-
-        const response = setAuthCookies(tokens);
-        return NextResponse.json({
-            user: {
-                id: user.id,
-                name: user.name,
-                uid: user.codeNumber,
-                email: user.institutionalemail,
-            },
-            accessToken: tokens.accessToken,
-        }, response);
-
     } catch (error) {
         console.error('Login error:', error);
         return NextResponse.json({ error: 'An error occurred during login' }, { status: 500 });

@@ -1,53 +1,76 @@
 import dotenv from 'dotenv';
-import { drizzle } from "drizzle-orm/mysql2";
-import { createConnection, Connection } from "mysql2/promise"; // Use promise-based MySQL
+import { drizzle } from 'drizzle-orm/mysql2';
+import { createPool, type Pool, type PoolConnection, type RowDataPacket } from 'mysql2/promise';
 
-dotenv.config({ path: ".env.local" });
+// Load environment variables
+dotenv.config({ path: '.env.local' });
 
-const url = `mysql://${process.env.DB_USER!}:${process.env.DB_PASSWORD!}@${process.env.DB_HOST!}:${process.env.DB_PORT!}/${process.env.DB_NAME!}`;
-const db = drizzle(url!);
-
-let mysqlConnection: Connection | null = null; // Store connection globally
-
-async function connectWithRetry(): Promise<Connection> {
-    if (mysqlConnection) {
-        return mysqlConnection; // Reuse existing connection
-    }
-
-    const maxRetries = 5;
-    let attempt = 0;
-
-    while (attempt < maxRetries) {
-        try {
-            console.log(`Attempting to connect to MySQL (Try ${attempt + 1}/${maxRetries})`);
-            mysqlConnection = await createConnection({
-                host: process.env.DB_HOST!,
-                port: parseInt(process.env.DB_PORT!, 10),
-                user: process.env.DB_USER!,
-                password: process.env.DB_PASSWORD!,
-                database: process.env.DB_NAME!,
-                connectTimeout: 10000,
-            });
-            console.log("Connected to MySQL successfully.");
-            return mysqlConnection;
-        } catch (error) {
-            console.error(`MySQL connection failed: ${(error as Error).message}`);
-            attempt++;
-            await new Promise((resolve) => setTimeout(resolve, 2000 * attempt)); // Exponential backoff
-        }
-    }
-    throw new Error("Failed to connect to MySQL after multiple attempts.");
-}
-
-// Initialize the persistent connection safely
-const initializeConnection = async () => {
-    mysqlConnection = await connectWithRetry();
+// Connection configuration
+const dbConfig = {
+    host: process.env.DB_HOST!,
+    port: parseInt(process.env.DB_PORT!, 10),
+    user: process.env.DB_USER!,
+    password: process.env.DB_PASSWORD!,
+    database: process.env.DB_NAME!,
+    waitForConnections: true,
+    connectionLimit: 15,
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
 };
 
-initializeConnection().catch((error) => {
-    console.error("Failed to initialize MySQL connection:", error);
-});
+// Create a global pool that can be reused
+let pool: Pool;
+let db: ReturnType<typeof drizzle>;
 
-// Exporting the connection for use in other parts of the application
-export { mysqlConnection };
+// Initialize pool right away
+try {
+    pool = createPool(dbConfig);
+    db = drizzle(pool);
+    console.log('Database pool created');
+} catch (error) {
+    console.error('Failed to create database pool:', error);
+    throw error;
+}
+
+// Simple query function that properly returns results
+export async function query<T extends RowDataPacket[]>(
+    sql: string,
+    values?: unknown[]
+): Promise<T> {
+    let connection: PoolConnection | null = null;
+
+    try {
+        // Get connection from the pool
+        connection = await pool.getConnection();
+
+        // Execute the query
+        const [results] = await connection.query<T>(sql, values);
+
+        // Return just the results (not the fields info)
+        return results;
+    } catch (error) {
+        console.error('Query execution error:', error);
+        throw error;
+    } finally {
+        // Always release the connection back to the pool
+        if (connection) connection.release();
+    }
+}
+
+// Graceful shutdown handler
+async function shutdownHandler() {
+    if (pool) {
+        console.log('🛑 Closing database pool...');
+        await pool.end();
+        console.log('✅ Database pool closed');
+    }
+}
+
+// Register shutdown handlers
+process.on('SIGINT', shutdownHandler);
+process.on('SIGTERM', shutdownHandler);
+process.on('beforeExit', shutdownHandler);
+
+export { pool, db };
 export default db;

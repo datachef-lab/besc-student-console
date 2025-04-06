@@ -1,9 +1,10 @@
-import { mysqlConnection } from "@/db";
+
+import { query } from "@/db";
 import { Nationality } from "@/types/resources/nationality";
 import { RowDataPacket } from "mysql2";
 
 export async function findNationalityById(id: number = 1) {
-    const [rows] = await mysqlConnection.query<RowDataPacket[]>(`
+    const [rows] = await query<RowDataPacket[]>(`
         SELECT * 
         FROM nationality
         WHERE id = ${id}
