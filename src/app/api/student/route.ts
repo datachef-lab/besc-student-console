@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findStudentByUid } from "@/lib/services/student";
-import { findBatchesByStudentId } from "@/lib/services/batch";
+import { getStudentByUid } from "@/app/actions/student-actions";
 
 export async function GET(req: NextRequest) {
     const uid = req.nextUrl.searchParams.get("uid");
@@ -10,16 +9,16 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const student = await findStudentByUid(uid);
-        console.log("in student api:", student);
+        // Use the server action instead of direct database call
+        const student = await getStudentByUid(uid);
+
         if (!student) {
             return NextResponse.json({ error: "Student not found" }, { status: 404 });
         }
 
-        const batches = await findBatchesByStudentId(student.id as number);
-        return NextResponse.json({ student, batches });
+        return NextResponse.json({ student });
     } catch (error) {
-        console.error("Database error:", error);
+        console.error("API error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

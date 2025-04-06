@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { Student } from "@/types/academics/student";
 import { useAuth } from "@/hooks/use-auth";
 import { BatchCustom } from "@/types/academics/batch";
+import { getStudentData } from "@/app/actions/student-actions";
 
 interface StudentContextType {
   student: Student | null;
@@ -28,18 +29,21 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        console.log("fetching for:", user.codeNumber);
-        const res = await fetch(`/api/student?uid=${user.codeNumber}`);
-        const data = await res.json();
-        console.log("student data:", data);
-        if (res.ok) {
-          setStudent(data.student);
-          setBatches(data.batches || []);
+        console.log("Fetching student data for:", user.codeNumber);
+
+        // Use the server action to fetch data
+        const { student: studentData, batches: batchesData } =
+          await getStudentData(user.codeNumber);
+
+        if (studentData) {
+          setStudent(studentData);
+          setBatches(batchesData || []);
         } else {
-          console.error("Error fetching student:", data.error);
+          console.error("Student data not found");
+          setBatches([]);
         }
       } catch (error) {
-        console.error("Error fetching student:", error);
+        console.error("Error fetching student data:", error);
       } finally {
         setLoading(false);
       }
