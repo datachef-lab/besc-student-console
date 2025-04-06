@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyRefreshToken, generateTokens, getUserByEmail } from '@/lib/services/auth';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         // Get refresh token from cookies
         const cookieStore = await cookies();
