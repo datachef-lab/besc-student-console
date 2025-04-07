@@ -7,7 +7,7 @@
         "dev:webhook": "ngrok http --url=vast-distinctly-silkworm.ngrok-free.app 3000",
         "dev:all": "concurrently \"npm run dev\" \"npm run dev:webhook\" ",
         "build": "next build",
-        "start": "concurrently \"next start -p 3008\" \"ngrok http --url=vast-distinctly-silkworm.ngrok-free.app 3008\"",
+        "start": "next start -p 3008",
         "lint": "next lint"
     },
     "dependencies": {
