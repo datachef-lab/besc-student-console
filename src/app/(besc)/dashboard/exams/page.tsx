@@ -142,11 +142,6 @@ export default function ExamsContent() {
                     </div>
                     <p className="text-sm text-gray-500">Venue: {exam.venue}</p>
                   </div>
-                  <div className="mt-4 md:mt-0">
-                    <Button variant="outline" className="w-full md:w-auto">
-                      View Details
-                    </Button>
-                  </div>
                 </div>
               </CardContent>
             </Card>

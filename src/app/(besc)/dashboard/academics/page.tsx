@@ -5,13 +5,6 @@ import { useStudent } from "@/context/StudentContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -20,52 +13,38 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 
 export default function AcademicsPage() {
   const { batches, loading } = useStudent();
-  const [selectedBatch, setSelectedBatch] = useState<number | null>(
-    batches.length > 0 ? 0 : null
-  );
+  const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
 
   if (loading) {
     return (
       <div className="p-6 space-y-6">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-10 w-64" />
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
         </div>
       </div>
     );
   }
 
-  const selectedBatchData =
-    selectedBatch !== null ? batches[selectedBatch] : null;
+  const handleCardClick = (index: number) => {
+    if (selectedBatch === index) {
+      setSelectedBatch(null);
+    } else {
+      setSelectedBatch(index);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">
-          Academic Information
-        </h1>
-        <Select
-          value={selectedBatch?.toString()}
-          onValueChange={(value) => setSelectedBatch(Number(value))}
-        >
-          <SelectTrigger className="w-[280px]">
-            <SelectValue placeholder="Select a class" />
-          </SelectTrigger>
-          <SelectContent>
-            {batches.map((batch, index) => (
-              <SelectItem key={index} value={index.toString()}>
-                {batch.coursename} - {batch.classname} ({batch.sectionName})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <h1 className="text-2xl font-bold tracking-tight">
+        Academic Information
+      </h1>
 
       {batches.length === 0 ? (
         <div className="text-center py-12">
@@ -73,92 +52,115 @@ export default function AcademicsPage() {
             No academic information available
           </p>
         </div>
-      ) : selectedBatchData ? (
-        <div className="space-y-6">
-          <Card className="bg-muted/50">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-2xl font-bold">
-                    {selectedBatchData.coursename}
-                  </CardTitle>
-                  <p className="text-lg text-muted-foreground">
-                    {selectedBatchData.classname}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <p className="text-sm font-medium">Section</p>
-                    <p className="text-lg font-semibold">
-                      {selectedBatchData.sectionName}
-                    </p>
-                  </div>
-                  <div className="h-12 w-px bg-border" />
-                  <div className="text-right">
-                    <p className="text-sm font-medium">Shift</p>
-                    <p className="text-lg font-semibold">
-                      {selectedBatchData.shiftName}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Session:</span>
-                <Badge variant="secondary" className="text-sm">
-                  {selectedBatchData.sessionName}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Subjects & Papers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {selectedBatchData.papers &&
-              selectedBatchData.papers.length > 0 ? (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[40%]">Subject</TableHead>
-                        <TableHead className="w-[40%]">Paper</TableHead>
-                        <TableHead className="w-[20%]">Type</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedBatchData.papers.map((paper, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">
-                            {paper.subjectname}
-                          </TableCell>
-                          <TableCell>{paper.paperName}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">
-                              {paper.subjecttypename}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No papers available for this batch
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            Please select a class to view academic information
-          </p>
+        <div className="space-y-6">
+          {selectedBatch !== null ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="w-full"
+            >
+              <Card
+                className="w-full cursor-pointer bg-muted/50"
+                onClick={() => setSelectedBatch(null)}
+              >
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-2xl font-bold">
+                        {batches[selectedBatch].coursename}
+                      </CardTitle>
+                      <p className="text-lg text-muted-foreground">
+                        {batches[selectedBatch].classname} (
+                        {batches[selectedBatch].sectionName})
+                      </p>
+                    </div>
+                    <Badge className="text-sm">
+                      {batches[selectedBatch].sessionName}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">
+                      Subjects & Papers
+                    </h3>
+                    {batches[selectedBatch].papers &&
+                    batches[selectedBatch].papers.length > 0 ? (
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[40%]">Subject</TableHead>
+                              <TableHead className="w-[40%]">Paper</TableHead>
+                              <TableHead className="w-[20%]">Type</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {batches[selectedBatch].papers.map(
+                              (paper, index) => (
+                                <TableRow key={index}>
+                                  <TableCell className="font-medium">
+                                    {paper.subjectname}
+                                  </TableCell>
+                                  <TableCell>{paper.paperName}</TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {paper.subjecttypename}
+                                    </Badge>
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No papers available for this batch
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Click to close
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {batches.map((batch, index) => (
+                <motion.div
+                  key={index}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <Card
+                    className="h-32 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => handleCardClick(index)}
+                  >
+                    <CardHeader className="pb-2">
+                      <CardTitle className="line-clamp-1">
+                        {batch.coursename}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {batch.classname} ({batch.sectionName})
+                      </p>
+                      <Badge className="mt-2 text-xs">
+                        {batch.sessionName}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
