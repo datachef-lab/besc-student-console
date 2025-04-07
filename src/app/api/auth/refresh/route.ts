@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyRefreshToken, generateTokens, getUserByEmail } from '@/lib/services/auth';
+import { Student } from '@/types/academics/student';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         // Get refresh token from cookies
         const cookieStore = await cookies();
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest) {
 
         // Verify refresh token
         const payload = verifyRefreshToken(refreshToken);
+
         if (!payload) {
             return NextResponse.json(
                 { error: 'Invalid refresh token' },
@@ -25,17 +27,130 @@ export async function GET(req: NextRequest) {
             );
         }
 
-        // Get user from database
-        const user = await getUserByEmail(payload.email);
-        if (!user) {
-            return NextResponse.json(
-                { error: 'User not found' },
-                { status: 404 }
-            );
+        let user: Student | null = null;
+        if (payload.isAdmin) {
+            user = {
+                id: 0,
+                name: 'Admin',
+                codeNumber: 'admin',
+                institutionalemail: 'admin@example.com',
+                email: 'admin@example.com',
+                isAdmin: true,
+                // Add required fields with default values
+                mailingPinNo: '',
+                resiPinNo: '',
+                admissionYear: 0,
+                oldcodeNumber: '',
+                active: true,
+                alumni: false,
+                contactNo: '',
+                imgFile: '',
+                applicantSignature: '',
+                sexId: 0,
+                mailingAddress: '',
+                phoneMobileNo: '',
+                residentialAddress: '',
+                resiPhoneMobileNo: '',
+                religionId: 0,
+                studentCategoryId: 0,
+                motherTongueId: 0,
+                dateOfBirth: new Date(),
+                nationalityId: 0,
+                rollNumber: '',
+                bloodGroup: 0,
+                eyePowerLeft: '',
+                eyePowerRight: '',
+                emrgnResidentPhNo: '',
+                emrgnOfficePhNo: '',
+                emrgnMotherMobNo: '',
+                emrgnFatherMobNo: '',
+                lastInstitution: '',
+                lastInstitutionAddress: '',
+                handicapped: 'NO',
+                handicappedDetails: '',
+                lsmedium: '',
+                annualFamilyIncome: '',
+                lastBoardUniversity: 0,
+                institutionId: 0,
+                fatherName: '',
+                fatherOccupation: 0,
+                fatherOffPhone: '',
+                fatherMobNo: '',
+                fatherEmail: '',
+                motherName: '',
+                motherOccupation: 0,
+                motherOffPhone: '',
+                motherMobNo: '',
+                motherEmail: '',
+                guardianName: '',
+                guardianOccupation: 0,
+                guardianOffAddress: '',
+                guardianOffPhone: '',
+                guardianMobNo: '',
+                guardianEmail: '',
+                admissioncodeno: '',
+                placeofstay: '',
+                placeofstaycontactno: '',
+                placeofstayaddr: '',
+                universityRegNo: '',
+                admissiondate: new Date(),
+                emercontactpersonnm: '',
+                emerpersreltostud: '',
+                emercontactpersonmob: '',
+                emercontactpersonphr: '',
+                emercontactpersonpho: '',
+                leavingdate: new Date(),
+                univregno: '',
+                univlstexmrollno: '',
+                communityid: 0,
+                lspassedyr: 0,
+                cuformno: '',
+                chkrepeat: false,
+                notes: '',
+                fatherPic: '',
+                motherPic: '',
+                guardianPic: '',
+                lastotherBoardUniversity: 0,
+                boardresultid: 0,
+                rfidno: '',
+                specialisation: '',
+                aadharcardno: '',
+                leavingreason: '',
+                localitytyp: '',
+                rationcardtyp: '',
+                fatheraadharno: '',
+                motheraadharno: '',
+                gurdianaadharno: '',
+                issnglprnt: '',
+                handicappedpercentage: '',
+                disabilitycode: '',
+                coursetype: null,
+                whatsappno: '',
+                alternativeemail: '',
+                othernationality: '',
+                pursuingca: '',
+                abcid: '',
+                apprid: '',
+                // Add Nationality fields
+                nationalityName: 'Admin',
+                pos: 0,
+                code: 'ADMIN'
+            }
+
+        }
+        else {
+            // Get user from database
+            const user = await getUserByEmail(payload.email);
+            if (!user) {
+                return NextResponse.json(
+                    { error: 'User not found' },
+                    { status: 404 }
+                );
+            }
         }
 
         // Generate new tokens
-        const tokens = generateTokens(user);
+        const tokens = generateTokens(user as Student);
 
         // Set new refresh token cookie
         cookieStore.set('refreshToken', tokens.refreshToken, {

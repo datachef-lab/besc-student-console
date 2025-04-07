@@ -110,7 +110,7 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">UID</Label>
             <Input
               id="uid"
               type="text"
@@ -121,7 +121,7 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">OTP</Label>
               <Link
                 href="/forgot-password"
                 className="text-sm text-indigo-600 hover:text-indigo-800"
