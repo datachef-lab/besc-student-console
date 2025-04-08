@@ -129,7 +129,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     checkSession();
-  }, [generateNewToken, isProtectedRoute]);
+  }, [accessToken, generateNewToken, isProtectedRoute]);
 
   useEffect(() => {
     if (!isProtectedRoute) return; // ✅ Skip request if not on protected route

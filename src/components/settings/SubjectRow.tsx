@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { TableCell, TableRow } from "../ui/table";
 import { Button } from "../ui/button";
-import { FileText, Trash2, Pencil, Plus, Link2, File } from "lucide-react";
+import { Trash2, Pencil, Plus, Link2, File } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +15,6 @@ import {
 
 import { BatchSubject } from "@/types/academics/batch-subjects";
 import { Badge } from "../ui/badge";
-import MaterialItem from "./MaterialItem";
 import { DbCourseMaterial } from "@/types/academics/course-material";
 
 type SubjectRowProps = {
@@ -62,12 +61,10 @@ export default function SubjectRow({
       // Open link in new tab
       window.open(material.url, "_blank", "noopener,noreferrer");
     } else if (material.type === "file" && material.file_path) {
-      // Extract just the relative path from the full path
-      const relativePath = material.file_path.split("course-materials/")[1];
-      if (relativePath) {
-        // Download file
-        window.location.href = `/api/download?filePath=course-materials/${relativePath}`;
-      }
+      // Download file
+      window.location.href = `/api/download?filePath=${encodeURIComponent(
+        material.file_path
+      )}`;
     }
   };
 

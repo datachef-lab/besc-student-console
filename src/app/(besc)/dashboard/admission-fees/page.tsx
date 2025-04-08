@@ -21,8 +21,26 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Calendar, CheckCircle, Clock, AlertCircle } from "lucide-react";
 
+interface Installment {
+  id: number;
+  amount: number;
+  dueDate: string;
+  status: "paid" | "pending" | "overdue";
+  paidOn: string | null;
+}
+
+interface Fee {
+  id: number;
+  name: string;
+  totalAmount: number;
+  paidAmount: number;
+  dueDate: string;
+  status: "paid" | "pending" | "overdue" | "partially_paid";
+  installments: Installment[];
+}
+
 // Mock data for demonstration
-const mockFeesData = [
+const mockFeesData: Fee[] = [
   {
     id: 1,
     name: "Tuition Fee",
@@ -115,9 +133,9 @@ const mockFeesData = [
 ];
 
 export default function AdmissionFeesPage() {
-  const [feesData, setFeesData] = useState([]);
+  const [feesData, setFeesData] = useState<Fee[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFee, setSelectedFee] = useState(null);
+  const [selectedFee, setSelectedFee] = useState<number | null>(null);
 
   // Simulate API call to fetch fees data
   useEffect(() => {
@@ -127,7 +145,7 @@ export default function AdmissionFeesPage() {
     }, 1000);
   }, []);
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -135,7 +153,7 @@ export default function AdmissionFeesPage() {
     });
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
@@ -143,7 +161,9 @@ export default function AdmissionFeesPage() {
     }).format(amount);
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (
+    status: Fee["status"] | Installment["status"]
+  ): string => {
     switch (status) {
       case "paid":
         return "bg-green-100 text-green-800";
@@ -158,7 +178,9 @@ export default function AdmissionFeesPage() {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (
+    status: Fee["status"] | Installment["status"]
+  ): React.ReactNode => {
     switch (status) {
       case "paid":
         return <CheckCircle className="w-4 h-4 text-green-600" />;
@@ -173,7 +195,7 @@ export default function AdmissionFeesPage() {
     }
   };
 
-  const handleCardClick = (feeId) => {
+  const handleCardClick = (feeId: number): void => {
     if (selectedFee === feeId) {
       setSelectedFee(null);
     } else {

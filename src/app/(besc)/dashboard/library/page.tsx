@@ -1,5 +1,6 @@
 import React from "react";
 import { Calendar, Clock, Search, BookMarked, BarChart } from "lucide-react";
+import Image from "next/image";
 
 export const metadata = {
   title: "Library Dashboard",
@@ -117,7 +118,7 @@ export default function LibraryPage() {
                   key={book.id}
                   className="flex space-x-4 border-b border-gray-100 pb-4"
                 >
-                  <img
+                  <Image
                     src={book.cover}
                     alt={book.title}
                     className="rounded shadow-sm"

@@ -167,6 +167,7 @@ export default function MaterialsSettingsPage() {
   }, [materialLinks]);
 
   // Define fetchCourseMaterials outside the useEffect
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchCourseMaterials = async () => {
     if (!subjects.length) return;
 
@@ -236,7 +237,7 @@ export default function MaterialsSettingsPage() {
   // Add new effect to fetch course materials when subjects change
   useEffect(() => {
     fetchCourseMaterials();
-  }, [subjects]);
+  }, [fetchCourseMaterials, subjects]);
 
   const openAddModal = (subjectId: number) => {
     setIsEditing(false);

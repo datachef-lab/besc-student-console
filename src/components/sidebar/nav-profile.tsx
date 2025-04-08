@@ -8,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import Image from "next/image";
 
 interface StudentProfileProps {
   student: {
@@ -27,7 +28,9 @@ export function StudentProfile({ student }: StudentProfileProps) {
         >
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
             {student.avatarUrl ? (
-              <img
+              <Image
+                width={32}
+                height={32}
                 src={student.avatarUrl}
                 alt={student.name}
                 className="size-8 rounded-lg object-cover"
