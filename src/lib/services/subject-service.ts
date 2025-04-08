@@ -21,11 +21,8 @@ export async function findSubjectsByCourseAndClass(courseId: number, classId: nu
             currentsessionmaster ses,
             paperlist pl
         WHERE
-            p.parent_id IN (
-                SELECT id
-                FROM studentpaperlinkingmain
-                WHERE courseId = ${courseId} AND classId = ${classId}
-            )
+            m.courseId = ? 
+            AND m.classId = ?
             AND m.id = p.parent_id 
             AND p.subjectTypeId = st.id 
             AND p.subjectId = sb.id
@@ -33,7 +30,8 @@ export async function findSubjectsByCourseAndClass(courseId: number, classId: nu
             AND m.classid = cl.id
             AND p.paperId = pl.id
     `;
-    const [subjects] = await query<RowDataPacket[]>(sqlQuery) as [BatchSubject[], unknown];
-
+    console.log("Fetching subjects for course:", courseId, "class:", classId);
+    const subjects = await query<RowDataPacket[]>(sqlQuery, [courseId, classId]) as BatchSubject[];
+    console.log("Found subjects:", subjects.length);
     return subjects;
 }

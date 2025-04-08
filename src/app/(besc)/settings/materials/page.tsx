@@ -1,24 +1,9 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  FileText,
-  Trash2,
-  ExternalLink,
-  Edit,
-  Filter,
-  Download,
-  Plus,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+
+import { FileText, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -27,196 +12,248 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-
-// Define types
-interface AdditionalLink {
-  title: string;
-  url: string;
-}
-
-interface MaterialLink {
-  id: string;
-  title: string;
-  url: string;
-  subjectId: string;
-  courseId: string;
-  semesterId: string;
-  description: string;
-  dateAdded: string;
-  type: "link" | "file";
-  additionalLinks: AdditionalLink[];
-}
-
-// Mock data for subjects, courses and semesters
-const mockSubjects = [
-  { id: "1", name: "Financial Accounting", type: "Core", paper: "Paper 1" },
-  { id: "2", name: "Business Economics", type: "Core", paper: "Paper 2" },
-  {
-    id: "3",
-    name: "Computer Applications",
-    type: "Elective",
-    paper: "Paper 1",
-  },
-  { id: "4", name: "Business Mathematics", type: "Core", paper: "Paper 3" },
-  {
-    id: "5",
-    name: "Business Communication",
-    type: "Elective",
-    paper: "Paper 2",
-  },
-];
-
-const mockCourses = [
-  { id: "1", name: "Bachelor of Commerce" },
-  { id: "2", name: "Bachelor of Business Administration" },
-  { id: "3", name: "Bachelor of Computer Applications" },
-];
-
-const mockSemesters = [
-  { id: "1", name: "Semester 1" },
-  { id: "2", name: "Semester 2" },
-  { id: "3", name: "Semester 3" },
-  { id: "4", name: "Semester 4" },
-  { id: "5", name: "Semester 5" },
-  { id: "6", name: "Semester 6" },
-];
+import { Course } from "@/types/academics/course";
+import { AcademicClass } from "@/types/academics/academic-class";
+import { BatchSubject } from "@/types/academics/batch-subjects";
+import { DbCourseMaterial } from "@/types/academics/course-material";
+import SubjectRow from "@/components/settings/SubjectRow";
+import MaterialItemForm from "./MaterialItemForm";
+import SelectCourseAndSemester from "./SelectCourseAndSemester";
 
 export default function MaterialsSettingsPage() {
   const { user } = useAuth();
-  const [selectedCourse, setSelectedCourse] = useState("all");
-  const [selectedSemester, setSelectedSemester] = useState("all");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [classes, setClasses] = useState<AcademicClass[]>([]);
+  const [subjects, setSubjects] = useState<BatchSubject[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedSemester, setSelectedSemester] =
+    useState<AcademicClass | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentMaterialLink, setCurrentMaterialLink] = useState<
-    Omit<MaterialLink, "dateAdded"> & { dateAdded?: string }
-  >({
-    id: "",
-    title: "",
-    url: "",
-    subjectId: "",
-    courseId: "",
-    semesterId: "",
-    description: "",
-    type: "link",
-    additionalLinks: [],
-  });
-
-  // Material link states
-  const [materialLinks, setMaterialLinks] = useState<MaterialLink[]>([
-    {
-      id: "1",
-      title: "Introduction to Financial Accounting",
-      url: "https://example.com/accounting-intro",
-      subjectId: "1",
-      courseId: "1",
-      semesterId: "1",
-      description: "Basic concepts and principles of financial accounting",
-      dateAdded: "2024-04-10",
-      type: "link",
-      additionalLinks: [
-        {
-          title: "Accounting Basics PDF",
-          url: "https://example.com/accounting-basics.pdf",
-        },
-        {
-          title: "Practice Problems",
-          url: "https://example.com/accounting-practice",
-        },
-      ],
-    },
-    {
-      id: "2",
-      title: "Economics Fundamentals",
-      url: "https://example.com/econ-basics",
-      subjectId: "2",
-      courseId: "1",
-      semesterId: "1",
-      description: "Introduction to basic economic principles",
-      dateAdded: "2024-04-12",
-      type: "link",
-      additionalLinks: [],
-    },
-    {
-      id: "3",
-      title: "Computer Applications in Business",
-      url: "https://example.com/comp-apps",
-      subjectId: "3",
-      courseId: "2",
-      semesterId: "2",
-      description: "Using software tools for business operations",
-      dateAdded: "2024-04-15",
-      type: "link",
-      additionalLinks: [
-        { title: "Excel Tutorial", url: "https://example.com/excel-tutorial" },
-      ],
-    },
-    {
-      id: "4",
-      title: "Business Mathematics - Advanced Concepts",
-      url: "https://example.com/bus-math",
-      subjectId: "4",
-      courseId: "2",
-      semesterId: "3",
-      description: "Advanced mathematical techniques for business analysis",
-      dateAdded: "2024-04-18",
-      type: "file",
-      additionalLinks: [],
-    },
-    {
-      id: "5",
-      title: "Communication Skills for Professionals",
-      url: "https://example.com/comm-skills",
-      subjectId: "5",
-      courseId: "3",
-      semesterId: "2",
-      description: "Developing effective business communication skills",
-      dateAdded: "2024-04-20",
-      type: "link",
-      additionalLinks: [
-        {
-          title: "Presentation Tips",
-          url: "https://example.com/presentation-tips",
-        },
-        {
-          title: "Business Writing Guide",
-          url: "https://example.com/writing-guide",
-        },
-      ],
-    },
-  ]);
-
-  const handleRemoveLink = (id: string) => {
-    setMaterialLinks(materialLinks.filter((link) => link.id !== id));
-  };
-
-  const openAddModal = (
-    subjectId: string,
-    courseId: string,
-    semesterId: string
-  ) => {
-    setCurrentMaterialLink({
-      id: "",
+  const [currentMaterialLink, setCurrentMaterialLink] =
+    useState<DbCourseMaterial>({
+      id: 0,
+      subject_id_fk: 0,
       title: "",
       url: "",
-      subjectId: subjectId,
-      courseId: courseId,
-      semesterId: semesterId,
-      description: "",
       type: "link",
-      additionalLinks: [],
+      file_path: null,
     });
+
+  const [materialLinks, setMaterialLinks] = useState<DbCourseMaterial[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [coursesResponse, classesResponse] = await Promise.all([
+          fetch("/api/courses"),
+          fetch("/api/classes"),
+        ]);
+
+        if (!coursesResponse.ok || !classesResponse.ok) {
+          throw new Error("Failed to fetch data");
+        }
+
+        const [coursesData, classesData] = await Promise.all([
+          coursesResponse.json(),
+          classesResponse.json(),
+        ]);
+
+        // Ensure we're setting arrays
+        const validCourses = Array.isArray(coursesData) ? coursesData : [];
+        const validClasses = Array.isArray(classesData) ? classesData : [];
+
+        setCourses(validCourses);
+        setClasses(validClasses);
+
+        // Set default selections to first elements if available
+        if (validCourses.length > 0 && validClasses.length > 0) {
+          const firstCourse = validCourses[0];
+          const firstClass = validClasses[0];
+          console.log(
+            "Setting initial course and class:",
+            firstCourse,
+            firstClass
+          );
+          setSelectedCourse(firstCourse);
+          setSelectedSemester(firstClass);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setCourses([]);
+        setClasses([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Separate effect for fetching subjects when course or semester changes
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      if (!selectedCourse?.id || !selectedSemester?.id) {
+        console.log("Course or semester not selected, skipping subjects fetch");
+        return;
+      }
+
+      try {
+        console.log(
+          "Starting to fetch subjects for course:",
+          selectedCourse.id,
+          "class:",
+          selectedSemester.id
+        );
+
+        const response = await fetch(
+          `/api/subjects?courseId=${selectedCourse.id}&classId=${selectedSemester.id}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch subjects");
+        }
+
+        const data = await response.json();
+        console.log("Raw API Response:", JSON.stringify(data, null, 2));
+
+        if (!Array.isArray(data)) {
+          console.error("Invalid response format:", data);
+          setSubjects([]);
+          return;
+        }
+
+        console.log(`Received ${data.length} subjects from API`);
+
+        // Log each subject for debugging
+        data.forEach((subject, index) => {
+          console.log(`Subject ${index + 1}:`, {
+            id: subject.subjectId,
+            name: subject.subjectname,
+            type: subject.subjecttypename,
+            paper: subject.paperName,
+          });
+        });
+
+        console.log("Setting subjects to state:", data);
+        setSubjects(data);
+      } catch (error) {
+        console.error("Error in fetchSubjects:", error);
+        setSubjects([]);
+      }
+    };
+
+    fetchSubjects();
+  }, [selectedCourse?.id, selectedSemester?.id]);
+
+  // Debug effect to monitor subjects state
+  useEffect(() => {
+    console.log("Subjects state updated:", JSON.stringify(subjects, null, 2));
+    console.log("Subjects state length:", subjects.length);
+  }, [subjects]);
+
+  // Debug effect to monitor selected values
+  useEffect(() => {
+    console.log("Selected course:", selectedCourse);
+    console.log("Selected semester:", selectedSemester);
+  }, [selectedCourse, selectedSemester]);
+
+  // Debug effect to monitor material links
+  useEffect(() => {
+    console.log("Current material links:", materialLinks);
+  }, [materialLinks]);
+
+  // Define fetchCourseMaterials outside the useEffect
+  const fetchCourseMaterials = async () => {
+    if (!subjects.length) return;
+
+    try {
+      // Fetch materials for all subjects
+      const materialsPromises = subjects.map((subject) =>
+        fetch(`/api/course-materials?subjectId=${subject.subjectId}`)
+          .then((res) => res.json())
+          .catch((err) => {
+            console.error(
+              `Error fetching materials for subject ${subject.subjectId}:`,
+              err
+            );
+            return [];
+          })
+      );
+
+      const materialsArrays = await Promise.all(materialsPromises);
+      const allMaterials = materialsArrays.flat();
+
+      console.log(`Fetched ${allMaterials.length} total materials`);
+      setMaterialLinks(allMaterials);
+    } catch (error) {
+      console.error("Error fetching course materials:", error);
+      setMaterialLinks([]);
+    }
+  };
+
+  // Function to refresh materials for a specific subject
+  const refreshSubjectMaterials = async (subjectId: number) => {
+    try {
+      console.log(`Explicitly refreshing materials for subject ${subjectId}`);
+      const response = await fetch(
+        `/api/course-materials?subjectId=${subjectId}`
+      );
+      const materials = await response.json();
+
+      console.log(
+        `Fetched ${materials.length} materials for subject ${subjectId}`
+      );
+
+      // Update the materialLinks state by replacing materials for this subject
+      // and keeping materials for other subjects
+      setMaterialLinks((prev) => {
+        const filteredMaterials = prev.filter(
+          (m) => m.subject_id_fk !== subjectId
+        );
+        return [...filteredMaterials, ...materials];
+      });
+
+      // Also force the UI to update by changing the subject reference
+      setSubjects(
+        subjects.map((subject) =>
+          subject.subjectId === subjectId
+            ? { ...subject, _refreshTimestamp: Date.now() }
+            : subject
+        )
+      );
+    } catch (error) {
+      console.error(
+        `Error refreshing materials for subject ${subjectId}:`,
+        error
+      );
+    }
+  };
+
+  // Add new effect to fetch course materials when subjects change
+  useEffect(() => {
+    fetchCourseMaterials();
+  }, [subjects]);
+
+  const openAddModal = (subjectId: number) => {
     setIsEditing(false);
+    setCurrentMaterialLink({
+      id: 0,
+      subject_id_fk: subjectId,
+      title: "",
+      url: "",
+      type: "link",
+      file_path: null,
+    });
     setIsModalOpen(true);
   };
 
-  const openEditModal = (link: MaterialLink) => {
-    setCurrentMaterialLink(link);
+  const openEditModal = (material: DbCourseMaterial) => {
     setIsEditing(true);
+    setCurrentMaterialLink(material);
     setIsModalOpen(true);
   };
 
@@ -224,559 +261,216 @@ export default function MaterialsSettingsPage() {
     setIsModalOpen(false);
   };
 
-  const handleSaveMaterial = () => {
-    if (
-      !currentMaterialLink.title ||
-      !currentMaterialLink.url ||
-      !currentMaterialLink.subjectId ||
-      !currentMaterialLink.courseId ||
-      !currentMaterialLink.semesterId
-    ) {
+  const handleSaveMaterial = async () => {
+    if (!currentMaterialLink.title || !currentMaterialLink.subject_id_fk) {
       // Show validation error
       return;
     }
 
-    if (isEditing) {
-      // Update existing material
-      const updatedLink: MaterialLink = {
-        ...currentMaterialLink,
-        dateAdded:
-          currentMaterialLink.dateAdded ||
-          new Date().toISOString().split("T")[0],
-      };
-
-      setMaterialLinks(
-        materialLinks.map((link) =>
-          link.id === currentMaterialLink.id ? updatedLink : link
-        )
+    try {
+      const formData = new FormData();
+      formData.append(
+        "subjectId",
+        currentMaterialLink.subject_id_fk.toString()
       );
-    } else {
-      // Add new material
-      const newMaterial: MaterialLink = {
-        ...currentMaterialLink,
-        id: Math.random().toString(36).substring(2, 9),
-        dateAdded: new Date().toISOString().split("T")[0],
-      };
-      setMaterialLinks([...materialLinks, newMaterial]);
+      formData.append("title", currentMaterialLink.title);
+      formData.append("type", currentMaterialLink.type);
+      formData.append("url", currentMaterialLink.url || "");
+
+      // If it's a file type and we have a file, append it
+      if (
+        currentMaterialLink.type === "file" &&
+        currentMaterialLink.file_path
+      ) {
+        // Check if file_path is a Blob URL or actual file data
+        if (currentMaterialLink.file_path.startsWith("blob:")) {
+          // Get the file from the fileInput element
+          const fileInput = document.getElementById(
+            "fileUpload"
+          ) as HTMLInputElement;
+          if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            formData.append("file", fileInput.files[0]);
+            console.log("File appended to FormData:", fileInput.files[0]);
+          } else {
+            console.error("File input element not found or no files selected");
+          }
+        } else {
+          formData.append("file_path", currentMaterialLink.file_path);
+        }
+      }
+
+      const response = await fetch("/api/course-materials", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save material");
+      }
+
+      const result = await response.json();
+      console.log("Material saved:", result);
+
+      // Close the modal first to prevent UI glitches
+      closeModal();
+
+      // Get the subject ID that was just updated
+      const subjectId = currentMaterialLink.subject_id_fk;
+
+      // Refresh materials specifically for this subject
+      await refreshSubjectMaterials(subjectId);
+
+      console.log("Materials refreshed for subject:", subjectId);
+    } catch (error) {
+      console.error("Error saving material:", error);
+      // Close the modal even on error
+      closeModal();
     }
-
-    closeModal();
   };
 
-  const getSubjectName = (id: string) => {
-    const subject = mockSubjects.find((s) => s.id === id);
-    return subject ? subject.name : "Unknown Subject";
+  const handleDeleteMaterial = async (materialId: number) => {
+    try {
+      const response = await fetch(`/api/course-materials?id=${materialId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete material");
+      }
+
+      // Update the materialLinks state by removing the deleted material
+      setMaterialLinks((prev) => prev.filter((m) => m.id !== materialId));
+    } catch (error) {
+      console.error("Error deleting material:", error);
+      // You might want to show a toast notification here
+    }
   };
 
-  const getSubjectType = (id: string) => {
-    const subject = mockSubjects.find((s) => s.id === id);
-    return subject ? subject.type : "Unknown Type";
-  };
-
-  const getSubjectPaper = (id: string) => {
-    const subject = mockSubjects.find((s) => s.id === id);
-    return subject ? subject.paper : "Unknown Paper";
-  };
-
-  // Filter materials based on selected course and semester
-  const filteredMaterials = materialLinks.filter((material) => {
-    const matchesCourse =
-      selectedCourse === "all" || material.courseId === selectedCourse;
-    const matchesSemester =
-      selectedSemester === "all" || material.semesterId === selectedSemester;
-    return matchesCourse && matchesSemester;
-  });
+  // Add loading state UI
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!user?.isAdmin) {
     return null;
   }
 
   return (
-    <div className="space-y-4 px-0">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="text-primary h-5 w-5" />
-          <h1 className="text-xl font-medium">Course Materials</h1>
-        </div>
-      </div>
-      <p className="text-sm text-muted-foreground">
-        Manage course material links for students across all courses
-      </p>
-
-      {/* Filter and Table */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
+    selectedCourse &&
+    selectedSemester && (
+      <div className="space-y-4 px-0">
+        {/* {JSON.stringify(subjects)} */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex items-center">
-              <Filter size={15} className="mr-2" />
-              <span className="text-sm font-medium mr-3">Filter Materials</span>
-            </div>
-
-            <div className="flex space-x-2">
-              <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                <SelectTrigger className="h-8 w-[200px] rounded-md border px-3 text-xs">
-                  <SelectValue placeholder="All Courses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
-                  {mockCourses.map((course) => (
-                    <SelectItem key={course.id} value={course.id}>
-                      {course.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={selectedSemester}
-                onValueChange={setSelectedSemester}
-              >
-                <SelectTrigger className="h-8 w-[160px] rounded-md border px-3 text-xs">
-                  <SelectValue placeholder="All Semesters" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Semesters</SelectItem>
-                  {mockSemesters.map((semester) => (
-                    <SelectItem key={semester.id} value={semester.id}>
-                      {semester.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <FileText className="text-primary h-5 w-5" />
+            <h1 className="text-xl font-medium">Course Materials</h1>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-3 text-xs gap-1.5"
-          >
-            <Download size={13} />
-            Export
-          </Button>
         </div>
+        <p className="text-sm text-muted-foreground">
+          Manage course material links for students across all courses
+        </p>
 
-        {/* Materials Table */}
-        <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
-          {filteredMaterials.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="mx-auto h-14 w-14 text-muted-foreground opacity-40" />
-              <p className="mt-4 text-sm text-muted-foreground">
-                No material links found with current filters
-              </p>
-            </div>
-          ) : (
+        {/* Filter and Table */}
+        <div>
+          <SelectCourseAndSemester
+            courses={courses}
+            classes={classes}
+            selectedCourse={selectedCourse}
+            setSelectedCourse={setSelectedCourse}
+            selectedSemester={selectedSemester}
+            setSelectedSemester={setSelectedSemester}
+          />
+
+          {/* Materials Table */}
+          <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
             <div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b bg-muted/30 hover:bg-muted/30">
-                      <TableHead className="w-[50px] font-medium pl-6 py-2.5 text-center">
-                        No
-                      </TableHead>
-                      <TableHead className="font-medium w-[180px] py-2.5 text-center">
-                        Subject
-                      </TableHead>
-                      <TableHead className="font-medium w-[100px] py-2.5 text-center">
-                        Type
-                      </TableHead>
-                      <TableHead className="font-medium w-[80px] py-2.5 text-center">
-                        Paper
-                      </TableHead>
-                      <TableHead className="font-medium w-[280px] py-2.5 text-center">
-                        Materials
-                      </TableHead>
-                      <TableHead className="w-[90px] text-right pr-6 font-medium py-2.5">
-                        Actions
-                      </TableHead>
+                      {[
+                        "Sr. No",
+                        "Subject",
+                        "Type",
+                        "Paper",
+                        "Materials",
+                        "Actions",
+                      ].map((header) => (
+                        <TableHead
+                          key={header}
+                          className="font-medium py-2.5 text-center"
+                        >
+                          {header}
+                        </TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {/* Group materials by subject */}
-                    {mockSubjects
-                      .filter((subject) => {
-                        // Get all materials for this subject
-                        const subjectMaterials = filteredMaterials.filter(
-                          (m) => m.subjectId === subject.id
-                        );
-                        // Only show subjects with materials matching the filters or when no filters are applied
-                        return (
-                          subjectMaterials.length > 0 ||
-                          (selectedCourse === "all" &&
-                            selectedSemester === "all")
-                        );
-                      })
-                      .map((subject, index) => {
-                        // Get materials for this subject
-                        const subjectMaterials = filteredMaterials.filter(
-                          (m) => m.subjectId === subject.id
-                        );
-
-                        return (
-                          <TableRow
-                            key={subject.id}
-                            className="border-b hover:bg-muted/5"
-                          >
-                            <TableCell className="align-top pl-6 font-mono text-xs text-muted-foreground pt-3 pb-2 text-center">
-                              {index + 1}
-                            </TableCell>
-                            <TableCell className="align-top pt-3 pb-2 text-center">
-                              <div className="font-medium">{subject.name}</div>
-                            </TableCell>
-                            <TableCell className="align-top pt-3 pb-2 text-center">
-                              <Badge
-                                variant={
-                                  subject.type === "Core"
-                                    ? "default"
-                                    : "secondary"
-                                }
-                                className="text-xs font-normal"
-                              >
-                                {subject.type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="align-top pt-3 pb-2 text-center text-sm">
-                              {subject.paper}
-                            </TableCell>
-                            <TableCell className="py-2 align-top">
-                              {subjectMaterials.length > 0 ? (
-                                <div className="space-y-0.5">
-                                  {subjectMaterials.map((material) => (
-                                    <div
-                                      key={material.id}
-                                      className="flex items-center justify-between group px-2 py-1 hover:bg-muted/10 rounded"
-                                    >
-                                      <a
-                                        href={material.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-primary hover:underline flex items-center gap-1.5 font-medium flex-1"
-                                      >
-                                        {material.type === "link" ? (
-                                          <ExternalLink size={14} />
-                                        ) : (
-                                          <Download size={14} />
-                                        )}
-                                        <span>{material.title}</span>
-                                      </a>
-                                      <div className="flex gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-6 w-6 text-muted-foreground hover:text-primary"
-                                          onClick={() =>
-                                            openEditModal(material)
-                                          }
-                                          title="Edit Material"
-                                        >
-                                          <Edit size={14} />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                                          onClick={() =>
-                                            handleRemoveLink(material.id)
-                                          }
-                                          title="Delete Material"
-                                        >
-                                          <Trash2 size={14} />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="text-xs text-center py-2 text-muted-foreground italic">
-                                  No materials
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right py-2 align-top pr-6">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 w-7 rounded-full"
-                                onClick={() =>
-                                  openAddModal(
-                                    subject.id,
-                                    selectedCourse !== "all"
-                                      ? selectedCourse
-                                      : "1",
-                                    selectedSemester !== "all"
-                                      ? selectedSemester
-                                      : "1"
-                                  )
-                                }
-                                title={`Add material to ${subject.name}`}
-                              >
-                                <Plus size={15} />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                    {subjects.length > 0 ? (
+                      subjects.map((subject, index) => (
+                        <SubjectRow
+                          key={`subject-${subject.subjectId}`}
+                          index={index}
+                          subject={subject}
+                          openAddModal={openAddModal}
+                          openEditModal={openEditModal}
+                          onDeleteMaterial={handleDeleteMaterial}
+                          materials={materialLinks}
+                        />
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8">
+                          <div className="flex flex-col items-center gap-2">
+                            <FileText className="h-8 w-8 text-muted-foreground opacity-40" />
+                            <p className="text-sm text-muted-foreground">
+                              {selectedCourse === null ||
+                              selectedSemester === null
+                                ? "Please select a course and semester to view subjects"
+                                : "No subjects found for the selected course and semester"}
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
-
-              <div className="border-t bg-muted/10 px-6 py-3 flex justify-between items-center">
-                <p className="text-xs text-muted-foreground">
-                  Showing {filteredMaterials.length} of {materialLinks.length}{" "}
-                  materials
-                </p>
-              </div>
             </div>
-          )}
+          </div>
         </div>
+
+        {/* Add/Edit Material Modal */}
+        <MaterialItemForm
+          closeModal={closeModal}
+          currentMaterialLink={currentMaterialLink}
+          isEditing={isEditing}
+          isModalOpen={isModalOpen}
+          onSaveMaterial={handleSaveMaterial}
+          setCurrentMaterialLink={setCurrentMaterialLink}
+          subjects={subjects}
+          setIsModalOpen={setIsModalOpen}
+        />
+
+        {/* Add custom scrollbar style */}
+        <style jsx global>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+          }
+        `}</style>
       </div>
-
-      {/* Add/Edit Material Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[550px]">
-          <DialogTitle className="text-lg">
-            {isEditing ? "Edit Material" : "Add Material"}
-          </DialogTitle>
-
-          {/* Subject context info */}
-          <div className="bg-primary/5 -mx-6 px-6 py-3 border-y mb-5">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-white font-medium">
-                {getSubjectName(currentMaterialLink.subjectId)}
-              </Badge>
-              <span className="text-xs text-muted-foreground">•</span>
-              <Badge variant="secondary" className="font-normal">
-                {getSubjectType(currentMaterialLink.subjectId)}
-              </Badge>
-              <span className="text-xs text-muted-foreground">•</span>
-              <span className="text-xs">
-                {getSubjectPaper(currentMaterialLink.subjectId)}
-              </span>
-            </div>
-          </div>
-
-          {/* Form fields */}
-          <div className="space-y-5">
-            <div className="bg-muted/10 p-3 rounded-lg">
-              <Label
-                htmlFor="materialType"
-                className="mb-2 block text-sm font-medium"
-              >
-                Material Type <span className="text-red-500">*</span>
-              </Label>
-              <div className="flex space-x-4">
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    id="typeLink"
-                    name="materialType"
-                    className="mr-2 h-4 w-4 accent-primary"
-                    checked={currentMaterialLink.type === "link"}
-                    onChange={() =>
-                      setCurrentMaterialLink({
-                        ...currentMaterialLink,
-                        type: "link",
-                      })
-                    }
-                  />
-                  <Label
-                    htmlFor="typeLink"
-                    className="cursor-pointer flex items-center gap-1.5"
-                  >
-                    <ExternalLink size={14} />
-                    Link
-                  </Label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    id="typeFile"
-                    name="materialType"
-                    className="mr-2 h-4 w-4 accent-primary"
-                    checked={currentMaterialLink.type === "file"}
-                    onChange={() =>
-                      setCurrentMaterialLink({
-                        ...currentMaterialLink,
-                        type: "file",
-                      })
-                    }
-                  />
-                  <Label
-                    htmlFor="typeFile"
-                    className="cursor-pointer flex items-center gap-1.5"
-                  >
-                    <FileText size={14} />
-                    File Upload
-                  </Label>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <Label
-                htmlFor="title"
-                className="mb-1.5 block text-sm font-medium"
-              >
-                Material Title <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="title"
-                value={currentMaterialLink.title}
-                onChange={(e) =>
-                  setCurrentMaterialLink({
-                    ...currentMaterialLink,
-                    title: e.target.value,
-                  })
-                }
-                placeholder="Enter material title"
-                className="border-muted-foreground/20"
-              />
-            </div>
-
-            {currentMaterialLink.type === "link" ? (
-              <div>
-                <Label
-                  htmlFor="url"
-                  className="mb-1.5 block text-sm font-medium"
-                >
-                  URL <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="url"
-                  value={currentMaterialLink.url}
-                  onChange={(e) =>
-                    setCurrentMaterialLink({
-                      ...currentMaterialLink,
-                      url: e.target.value,
-                    })
-                  }
-                  placeholder="https://example.com/resource"
-                  className="border-muted-foreground/20"
-                />
-              </div>
-            ) : (
-              <div>
-                <Label
-                  htmlFor="fileUpload"
-                  className="mb-1.5 block text-sm font-medium"
-                >
-                  File Upload <span className="text-red-500">*</span>
-                </Label>
-                <div className="mt-1">
-                  <label
-                    htmlFor="fileUpload"
-                    className="cursor-pointer flex flex-col items-center justify-center w-full border-2 border-dashed border-primary/30 rounded-md py-6 px-4 hover:bg-primary/5 transition-all group bg-muted/5"
-                  >
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/15 transition-colors">
-                      <FileText size={24} className="text-primary" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">
-                      Drag and drop or click to upload
-                    </span>
-                    <span className="text-xs text-muted-foreground mt-1.5 max-w-[240px] text-center">
-                      PDF, DOCX, PPT, XLSX files up to 10MB
-                    </span>
-                    <input
-                      id="fileUpload"
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setCurrentMaterialLink({
-                            ...currentMaterialLink,
-                            url: URL.createObjectURL(e.target.files[0]),
-                            title:
-                              e.target.files[0].name ||
-                              currentMaterialLink.title,
-                          });
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-                {currentMaterialLink.url && (
-                  <div className="mt-3 text-sm bg-primary/5 p-3 rounded-md border border-primary/20 flex items-start gap-2.5">
-                    <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <FileText className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground truncate">
-                        {currentMaterialLink.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Ready to upload
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() =>
-                        setCurrentMaterialLink({
-                          ...currentMaterialLink,
-                          url: "",
-                          title: "",
-                        })
-                      }
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div>
-              <Label
-                htmlFor="description"
-                className="mb-1.5 block text-sm font-medium"
-              >
-                Description (Optional)
-              </Label>
-              <Textarea
-                id="description"
-                value={currentMaterialLink.description}
-                onChange={(e) =>
-                  setCurrentMaterialLink({
-                    ...currentMaterialLink,
-                    description: e.target.value,
-                  })
-                }
-                placeholder="Brief description of this material"
-                className="border-muted-foreground/20 resize-none"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
-            <Button variant="outline" onClick={closeModal} size="sm">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveMaterial}
-              disabled={!currentMaterialLink.title || !currentMaterialLink.url}
-              size="sm"
-            >
-              {isEditing ? "Update" : "Save"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add custom scrollbar style */}
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: rgba(0, 0, 0, 0.2);
-          border-radius: 3px;
-        }
-      `}</style>
-    </div>
+    )
   );
 }
