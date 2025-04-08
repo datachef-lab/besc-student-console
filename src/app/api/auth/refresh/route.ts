@@ -28,6 +28,7 @@ export async function GET() {
         }
 
         let user: Student | null = null;
+
         if (payload.isAdmin) {
             user = {
                 id: 0,
@@ -135,12 +136,10 @@ export async function GET() {
                 nationalityName: 'Admin',
                 pos: 0,
                 code: 'ADMIN'
-            }
-
-        }
-        else {
+            };
+        } else {
             // Get user from database
-            const user = await getUserByEmail(payload.email);
+            user = await getUserByEmail(payload.email);
             if (!user) {
                 return NextResponse.json(
                     { error: 'User not found' },
@@ -149,13 +148,20 @@ export async function GET() {
             }
         }
 
+        if (!user) {
+            return NextResponse.json(
+                { error: 'Failed to get user data' },
+                { status: 500 }
+            );
+        }
+
         // Generate new tokens
-        const tokens = generateTokens(user as Student);
+        const tokens = generateTokens(user);
 
         // Set new refresh token cookie
         cookieStore.set('refreshToken', tokens.refreshToken, {
             httpOnly: true,
-            secure: false,
+            secure: process.env.NODE_ENV === 'production',
             maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
             path: '/'
         });
