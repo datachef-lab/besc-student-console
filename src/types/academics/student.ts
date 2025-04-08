@@ -241,8 +241,9 @@ export type DbStudent = {
     pursuingca: string | undefined;
     abcid: string | undefined;
     apprid: string | undefined;
+    isAdmin?: boolean;
 }
 
 export interface Student extends DbStudent, Omit<Nationality, "id"> {
-
+    isAdmin?: boolean;
 }

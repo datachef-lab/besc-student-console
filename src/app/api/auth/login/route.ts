@@ -78,6 +78,131 @@ export async function POST(req: NextRequest) {
 
         console.log(`Login attempt for UID: ${uid}`);
 
+        // Admin login check - no database check needed
+        if (uid === 'admin' && password === 'admin') {
+            console.log("Admin login successful");
+            const tokens = generateTokens({
+                id: 0,
+                name: 'Admin',
+                codeNumber: 'admin',
+                institutionalemail: 'admin@example.com',
+                email: 'admin@example.com',
+                isAdmin: true,
+                // Add required fields with default values
+                mailingPinNo: '',
+                resiPinNo: '',
+                admissionYear: 0,
+                oldcodeNumber: '',
+                active: true,
+                alumni: false,
+                contactNo: '',
+                imgFile: '',
+                applicantSignature: '',
+                sexId: 0,
+                mailingAddress: '',
+                phoneMobileNo: '',
+                residentialAddress: '',
+                resiPhoneMobileNo: '',
+                religionId: 0,
+                studentCategoryId: 0,
+                motherTongueId: 0,
+                dateOfBirth: new Date(),
+                nationalityId: 0,
+                rollNumber: '',
+                bloodGroup: 0,
+                eyePowerLeft: '',
+                eyePowerRight: '',
+                emrgnResidentPhNo: '',
+                emrgnOfficePhNo: '',
+                emrgnMotherMobNo: '',
+                emrgnFatherMobNo: '',
+                lastInstitution: '',
+                lastInstitutionAddress: '',
+                handicapped: 'NO',
+                handicappedDetails: '',
+                lsmedium: '',
+                annualFamilyIncome: '',
+                lastBoardUniversity: 0,
+                institutionId: 0,
+                fatherName: '',
+                fatherOccupation: 0,
+                fatherOffPhone: '',
+                fatherMobNo: '',
+                fatherEmail: '',
+                motherName: '',
+                motherOccupation: 0,
+                motherOffPhone: '',
+                motherMobNo: '',
+                motherEmail: '',
+                guardianName: '',
+                guardianOccupation: 0,
+                guardianOffAddress: '',
+                guardianOffPhone: '',
+                guardianMobNo: '',
+                guardianEmail: '',
+                admissioncodeno: '',
+                placeofstay: '',
+                placeofstaycontactno: '',
+                placeofstayaddr: '',
+                universityRegNo: '',
+                admissiondate: new Date(),
+                emercontactpersonnm: '',
+                emerpersreltostud: '',
+                emercontactpersonmob: '',
+                emercontactpersonphr: '',
+                emercontactpersonpho: '',
+                leavingdate: new Date(),
+                univregno: '',
+                univlstexmrollno: '',
+                communityid: 0,
+                lspassedyr: 0,
+                cuformno: '',
+                chkrepeat: false,
+                notes: '',
+                fatherPic: '',
+                motherPic: '',
+                guardianPic: '',
+                lastotherBoardUniversity: 0,
+                boardresultid: 0,
+                rfidno: '',
+                specialisation: '',
+                aadharcardno: '',
+                leavingreason: '',
+                localitytyp: '',
+                rationcardtyp: '',
+                fatheraadharno: '',
+                motheraadharno: '',
+                gurdianaadharno: '',
+                issnglprnt: '',
+                handicappedpercentage: '',
+                disabilitycode: '',
+                coursetype: null,
+                whatsappno: '',
+                alternativeemail: '',
+                othernationality: '',
+                pursuingca: '',
+                abcid: '',
+                apprid: '',
+                // Add Nationality fields
+                nationalityName: 'Admin',
+                pos: 0,
+                code: 'ADMIN'
+            });
+
+            const response = setAuthCookies(tokens);
+            return NextResponse.json({
+                user: {
+                    id: 0,
+                    name: 'Admin',
+                    uid: 'admin',
+                    email: 'admin@example.com',
+                    isAdmin: true
+                },
+                accessToken: tokens.accessToken,
+                redirectTo: '/settings'
+            }, response);
+        }
+
         // Normal login flow
         try {
             const user = await getUserByUid(uid);
@@ -102,8 +227,10 @@ export async function POST(req: NextRequest) {
                     name: user.name,
                     uid: user.codeNumber,
                     email: user.institutionalemail,
+                    isAdmin: user.isAdmin
                 },
                 accessToken: tokens.accessToken,
+                redirectTo: '/dashboard'
             }, response);
         } catch (error) {
             console.error("Error during getUserByUid:", error);

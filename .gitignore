@@ -10,6 +10,9 @@
 !.yarn/releases
 !.yarn/versions
 
+/data
+course-materials
+
 # testing
 /coverage
 

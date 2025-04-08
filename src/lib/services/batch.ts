@@ -176,5 +176,12 @@ export async function findBatchesByStudentUid(uid: string): Promise<BatchCustom[
     }
 }
 
+// export async function findBatchesOrderByCourse() {
+//     const sqlQuery = `
+//         SELECT
 
+//         FROM
 
+//         WHERE
+//     `;
+// }

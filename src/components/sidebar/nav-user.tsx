@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { LogOut, User, ChevronDown } from "lucide-react";
+import { LogOut, User, ChevronDown, Settings } from "lucide-react";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -93,6 +93,12 @@ export function NavUser() {
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
+              {user?.isAdmin && (
+                <DropdownMenuItem onClick={() => router.push("/settings")}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Admin Settings</span>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

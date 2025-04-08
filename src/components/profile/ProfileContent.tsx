@@ -208,15 +208,13 @@ export default function ProfileContent() {
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">Course</p>
                   <p>
-                    {(batches && batches[batches.length - 1]?.coursename) ||
-                      "Not Available"}
+                    {(batches && batches[batches.length - 1]?.coursename) || "Not Available"}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">Section</p>
                   <p>
-                    {(batches && batches[batches.length - 1]?.sectionName) ||
-                      "Not Available"}
+                    {(batches && batches[batches.length - 1]?.sectionName) || "Not Available"}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -227,6 +225,12 @@ export default function ProfileContent() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">UID</p>
+                  <p>{student.codeNumber || "Not Assigned"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">
+                    UID
+                  </p>
                   <p>{student.codeNumber || "Not Assigned"}</p>
                 </div>
                 <div className="space-y-1">

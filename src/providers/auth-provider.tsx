@@ -44,7 +44,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname(); // Get the current route
 
-  const isDashboardRoute = pathname.startsWith("/dashboard");
+  const isProtectedRoute =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/settings");
 
   const login = (accessToken: string, userData: Student) => {
     setAccessToken(accessToken);
@@ -59,7 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const logout = useCallback(async () => {
-    if (pathname.startsWith("/dashboard")) {
+    if (pathname.startsWith("/dashboard") || pathname.startsWith("/settings")) {
       try {
         await axiosInstance.post("/api/auth/logout");
         setAccessToken(null);
@@ -75,7 +76,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [router, pathname]);
 
   const generateNewToken = useCallback(async (): Promise<string | null> => {
-    if (!isDashboardRoute) return null; // ✅ Skip request if not on /dashboard/**
+    if (!isProtectedRoute) return null; // ✅ Skip request if not on protected route
 
     try {
       const response = await axiosInstance.get<{
@@ -92,10 +93,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       logout();
       return null;
     }
-  }, [logout, isDashboardRoute]);
+  }, [logout, isProtectedRoute]);
 
   useEffect(() => {
-    if (!isDashboardRoute) return; // ✅ Skip request if not on /dashboard/**
+    if (!isProtectedRoute) return; // ✅ Skip request if not on protected route
 
     const checkSession = async () => {
       try {
@@ -128,10 +129,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     checkSession();
-  }, [generateNewToken, isDashboardRoute, accessToken]);
+  }, [accessToken, generateNewToken, isProtectedRoute]);
 
   useEffect(() => {
-    if (!isDashboardRoute) return; // ✅ Skip request if not on /dashboard/**
+    if (!isProtectedRoute) return; // ✅ Skip request if not on protected route
 
     if (accessToken === null && !isLoading) {
       console.log("Generating accessToken...");
@@ -170,7 +171,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       axiosInstance.interceptors.request.eject(requestInterceptor);
       axiosInstance.interceptors.response.eject(responseInterceptor);
     };
-  }, [accessToken, generateNewToken, logout, isLoading, isDashboardRoute]);
+  }, [accessToken, generateNewToken, logout, isLoading, isProtectedRoute]);
 
   const contextValue: AuthContextType = {
     user,
