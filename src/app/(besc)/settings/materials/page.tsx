@@ -18,7 +18,6 @@ import {
   Filter,
   Download,
   Plus,
-  X,
 } from "lucide-react";
 import {
   Table,
@@ -49,6 +48,7 @@ interface MaterialLink {
   semesterId: string;
   description: string;
   dateAdded: string;
+  type: "link" | "file";
   additionalLinks: AdditionalLink[];
 }
 
@@ -102,11 +102,8 @@ export default function MaterialsSettingsPage() {
     courseId: "",
     semesterId: "",
     description: "",
+    type: "link",
     additionalLinks: [],
-  });
-  const [tempAdditionalLink, setTempAdditionalLink] = useState<AdditionalLink>({
-    title: "",
-    url: "",
   });
 
   // Material link states
@@ -120,6 +117,7 @@ export default function MaterialsSettingsPage() {
       semesterId: "1",
       description: "Basic concepts and principles of financial accounting",
       dateAdded: "2024-04-10",
+      type: "link",
       additionalLinks: [
         {
           title: "Accounting Basics PDF",
@@ -140,6 +138,7 @@ export default function MaterialsSettingsPage() {
       semesterId: "1",
       description: "Introduction to basic economic principles",
       dateAdded: "2024-04-12",
+      type: "link",
       additionalLinks: [],
     },
     {
@@ -151,6 +150,7 @@ export default function MaterialsSettingsPage() {
       semesterId: "2",
       description: "Using software tools for business operations",
       dateAdded: "2024-04-15",
+      type: "link",
       additionalLinks: [
         { title: "Excel Tutorial", url: "https://example.com/excel-tutorial" },
       ],
@@ -164,6 +164,7 @@ export default function MaterialsSettingsPage() {
       semesterId: "3",
       description: "Advanced mathematical techniques for business analysis",
       dateAdded: "2024-04-18",
+      type: "file",
       additionalLinks: [],
     },
     {
@@ -175,6 +176,7 @@ export default function MaterialsSettingsPage() {
       semesterId: "2",
       description: "Developing effective business communication skills",
       dateAdded: "2024-04-20",
+      type: "link",
       additionalLinks: [
         {
           title: "Presentation Tips",
@@ -205,6 +207,7 @@ export default function MaterialsSettingsPage() {
       courseId: courseId,
       semesterId: semesterId,
       description: "",
+      type: "link",
       additionalLinks: [],
     });
     setIsEditing(false);
@@ -219,31 +222,6 @@ export default function MaterialsSettingsPage() {
 
   const closeModal = () => {
     setIsModalOpen(false);
-  };
-
-  const addAdditionalLink = () => {
-    if (tempAdditionalLink.title && tempAdditionalLink.url) {
-      setCurrentMaterialLink({
-        ...currentMaterialLink,
-        additionalLinks: [
-          ...currentMaterialLink.additionalLinks,
-          {
-            title: tempAdditionalLink.title,
-            url: tempAdditionalLink.url,
-          },
-        ],
-      });
-      setTempAdditionalLink({ title: "", url: "" });
-    }
-  };
-
-  const removeAdditionalLink = (index: number) => {
-    const updatedLinks = [...currentMaterialLink.additionalLinks];
-    updatedLinks.splice(index, 1);
-    setCurrentMaterialLink({
-      ...currentMaterialLink,
-      additionalLinks: updatedLinks,
-    });
   };
 
   const handleSaveMaterial = () => {
@@ -380,8 +358,8 @@ export default function MaterialsSettingsPage() {
         {/* Materials Table */}
         <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
           {filteredMaterials.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+            <div className="text-center py-12">
+              <FileText className="mx-auto h-14 w-14 text-muted-foreground opacity-40" />
               <p className="mt-4 text-sm text-muted-foreground">
                 No material links found with current filters
               </p>
@@ -391,167 +369,161 @@ export default function MaterialsSettingsPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/30">
-                      <TableHead className="w-[60px] font-medium">
-                        No.
+                    <TableRow className="border-b bg-muted/30 hover:bg-muted/30">
+                      <TableHead className="w-[50px] font-medium pl-6 py-2.5 text-center">
+                        No
                       </TableHead>
-                      <TableHead className="font-medium w-[220px]">
+                      <TableHead className="font-medium w-[180px] py-2.5 text-center">
                         Subject
                       </TableHead>
-                      <TableHead className="font-medium w-[350px]">
-                        Material Link
-                      </TableHead>
-                      <TableHead className="font-medium w-[100px]">
+                      <TableHead className="font-medium w-[100px] py-2.5 text-center">
                         Type
                       </TableHead>
-                      <TableHead className="font-medium w-[120px]">
-                        Course
+                      <TableHead className="font-medium w-[80px] py-2.5 text-center">
+                        Paper
                       </TableHead>
-                      <TableHead className="font-medium w-[120px]">
-                        Semester
+                      <TableHead className="font-medium w-[280px] py-2.5 text-center">
+                        Materials
                       </TableHead>
-                      <TableHead className="font-medium w-[100px]">
-                        Add. Resources
-                      </TableHead>
-                      <TableHead className="w-[100px] text-right font-medium">
+                      <TableHead className="w-[90px] text-right pr-6 font-medium py-2.5">
                         Actions
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredMaterials.map((material, index) => {
-                      const course = mockCourses.find(
-                        (c) => c.id === material.courseId
-                      );
-                      const semester = mockSemesters.find(
-                        (s) => s.id === material.semesterId
-                      );
+                    {/* Group materials by subject */}
+                    {mockSubjects
+                      .filter((subject) => {
+                        // Get all materials for this subject
+                        const subjectMaterials = filteredMaterials.filter(
+                          (m) => m.subjectId === subject.id
+                        );
+                        // Only show subjects with materials matching the filters or when no filters are applied
+                        return (
+                          subjectMaterials.length > 0 ||
+                          (selectedCourse === "all" &&
+                            selectedSemester === "all")
+                        );
+                      })
+                      .map((subject, index) => {
+                        // Get materials for this subject
+                        const subjectMaterials = filteredMaterials.filter(
+                          (m) => m.subjectId === subject.id
+                        );
 
-                      return (
-                        <TableRow
-                          key={material.id}
-                          className="border-b hover:bg-muted/5"
-                        >
-                          <TableCell className="font-medium align-middle py-3">
-                            {index + 1}
-                          </TableCell>
-                          <TableCell className="align-middle py-3">
-                            <div>
-                              <div className="font-medium">
-                                {getSubjectName(material.subjectId)}
-                              </div>
+                        return (
+                          <TableRow
+                            key={subject.id}
+                            className="border-b hover:bg-muted/5"
+                          >
+                            <TableCell className="align-top pl-6 font-mono text-xs text-muted-foreground pt-3 pb-2 text-center">
+                              {index + 1}
+                            </TableCell>
+                            <TableCell className="align-top pt-3 pb-2 text-center">
+                              <div className="font-medium">{subject.name}</div>
+                            </TableCell>
+                            <TableCell className="align-top pt-3 pb-2 text-center">
                               <Badge
-                                className="mt-1 text-xs"
                                 variant={
-                                  getSubjectType(material.subjectId) === "Core"
+                                  subject.type === "Core"
                                     ? "default"
                                     : "secondary"
                                 }
+                                className="text-xs font-normal"
                               >
-                                {getSubjectPaper(material.subjectId)}
+                                {subject.type}
                               </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell className="align-middle py-3">
-                            <div>
-                              <a
-                                href={material.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline flex items-center gap-1.5 font-medium"
-                              >
-                                <ExternalLink size={14} />
-                                <span>{material.title}</span>
-                              </a>
-                              {material.description && (
-                                <p className="text-xs text-muted-foreground mt-1 max-w-[300px] truncate">
-                                  {material.description}
-                                </p>
+                            </TableCell>
+                            <TableCell className="align-top pt-3 pb-2 text-center text-sm">
+                              {subject.paper}
+                            </TableCell>
+                            <TableCell className="py-2 align-top">
+                              {subjectMaterials.length > 0 ? (
+                                <div className="space-y-0.5">
+                                  {subjectMaterials.map((material) => (
+                                    <div
+                                      key={material.id}
+                                      className="flex items-center justify-between group px-2 py-1 hover:bg-muted/10 rounded"
+                                    >
+                                      <a
+                                        href={material.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:underline flex items-center gap-1.5 font-medium flex-1"
+                                      >
+                                        {material.type === "link" ? (
+                                          <ExternalLink size={14} />
+                                        ) : (
+                                          <Download size={14} />
+                                        )}
+                                        <span>{material.title}</span>
+                                      </a>
+                                      <div className="flex gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-6 w-6 text-muted-foreground hover:text-primary"
+                                          onClick={() =>
+                                            openEditModal(material)
+                                          }
+                                          title="Edit Material"
+                                        >
+                                          <Edit size={14} />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                          onClick={() =>
+                                            handleRemoveLink(material.id)
+                                          }
+                                          title="Delete Material"
+                                        >
+                                          <Trash2 size={14} />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-center py-2 text-muted-foreground italic">
+                                  No materials
+                                </div>
                               )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="align-middle py-3">
-                            <Badge
-                              variant={
-                                getSubjectType(material.subjectId) === "Core"
-                                  ? "default"
-                                  : "secondary"
-                              }
-                              className="text-xs"
-                            >
-                              {getSubjectType(material.subjectId)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="align-middle py-3 text-sm">
-                            {course?.name || "—"}
-                          </TableCell>
-                          <TableCell className="align-middle py-3 text-sm">
-                            {semester?.name || "—"}
-                          </TableCell>
-                          <TableCell className="align-middle py-3 text-center">
-                            {material.additionalLinks.length > 0 ? (
-                              <Badge variant="outline" className="text-xs">
-                                {material.additionalLinks.length}
-                              </Badge>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">
-                                —
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right py-3">
-                            <div className="flex justify-end gap-1">
+                            </TableCell>
+                            <TableCell className="text-right py-2 align-top pr-6">
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-primary"
-                                onClick={() => openEditModal(material)}
-                                title="Edit Material"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 rounded-full"
+                                onClick={() =>
+                                  openAddModal(
+                                    subject.id,
+                                    selectedCourse !== "all"
+                                      ? selectedCourse
+                                      : "1",
+                                    selectedSemester !== "all"
+                                      ? selectedSemester
+                                      : "1"
+                                  )
+                                }
+                                title={`Add material to ${subject.name}`}
                               >
-                                <Edit size={15} />
+                                <Plus size={15} />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                onClick={() => handleRemoveLink(material.id)}
-                                title="Delete Material"
-                              >
-                                <Trash2 size={15} />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                   </TableBody>
                 </Table>
               </div>
+
               <div className="border-t bg-muted/10 px-6 py-3 flex justify-between items-center">
                 <p className="text-xs text-muted-foreground">
                   Showing {filteredMaterials.length} of {materialLinks.length}{" "}
                   materials
                 </p>
-                <div className="flex flex-wrap justify-end gap-2">
-                  {mockSubjects.map((subject) => (
-                    <Button
-                      key={subject.id}
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() =>
-                        openAddModal(
-                          subject.id,
-                          selectedCourse !== "all" ? selectedCourse : "1",
-                          selectedSemester !== "all" ? selectedSemester : "1"
-                        )
-                      }
-                    >
-                      <Plus size={14} className="mr-1" />
-                      {subject.name}
-                    </Button>
-                  ))}
-                </div>
               </div>
             </div>
           )}
@@ -560,25 +532,90 @@ export default function MaterialsSettingsPage() {
 
       {/* Add/Edit Material Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogTitle>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogTitle className="text-lg">
             {isEditing ? "Edit Material" : "Add Material"}
           </DialogTitle>
 
           {/* Subject context info */}
-          <div className="text-sm text-muted-foreground mb-4">
-            Subject:{" "}
-            <span className="font-medium">
-              {getSubjectName(currentMaterialLink.subjectId)}
-            </span>{" "}
-            •{getSubjectType(currentMaterialLink.subjectId)} •
-            {getSubjectPaper(currentMaterialLink.subjectId)}
+          <div className="bg-primary/5 -mx-6 px-6 py-3 border-y mb-5">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-white font-medium">
+                {getSubjectName(currentMaterialLink.subjectId)}
+              </Badge>
+              <span className="text-xs text-muted-foreground">•</span>
+              <Badge variant="secondary" className="font-normal">
+                {getSubjectType(currentMaterialLink.subjectId)}
+              </Badge>
+              <span className="text-xs text-muted-foreground">•</span>
+              <span className="text-xs">
+                {getSubjectPaper(currentMaterialLink.subjectId)}
+              </span>
+            </div>
           </div>
 
           {/* Form fields */}
-          <div className="space-y-4">
+          <div className="space-y-5">
+            <div className="bg-muted/10 p-3 rounded-lg">
+              <Label
+                htmlFor="materialType"
+                className="mb-2 block text-sm font-medium"
+              >
+                Material Type <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex space-x-4">
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="typeLink"
+                    name="materialType"
+                    className="mr-2 h-4 w-4 accent-primary"
+                    checked={currentMaterialLink.type === "link"}
+                    onChange={() =>
+                      setCurrentMaterialLink({
+                        ...currentMaterialLink,
+                        type: "link",
+                      })
+                    }
+                  />
+                  <Label
+                    htmlFor="typeLink"
+                    className="cursor-pointer flex items-center gap-1.5"
+                  >
+                    <ExternalLink size={14} />
+                    Link
+                  </Label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="typeFile"
+                    name="materialType"
+                    className="mr-2 h-4 w-4 accent-primary"
+                    checked={currentMaterialLink.type === "file"}
+                    onChange={() =>
+                      setCurrentMaterialLink({
+                        ...currentMaterialLink,
+                        type: "file",
+                      })
+                    }
+                  />
+                  <Label
+                    htmlFor="typeFile"
+                    className="cursor-pointer flex items-center gap-1.5"
+                  >
+                    <FileText size={14} />
+                    File Upload
+                  </Label>
+                </div>
+              </div>
+            </div>
+
             <div>
-              <Label htmlFor="title">
+              <Label
+                htmlFor="title"
+                className="mb-1.5 block text-sm font-medium"
+              >
                 Material Title <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -591,28 +628,110 @@ export default function MaterialsSettingsPage() {
                   })
                 }
                 placeholder="Enter material title"
+                className="border-muted-foreground/20"
               />
             </div>
 
+            {currentMaterialLink.type === "link" ? (
+              <div>
+                <Label
+                  htmlFor="url"
+                  className="mb-1.5 block text-sm font-medium"
+                >
+                  URL <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="url"
+                  value={currentMaterialLink.url}
+                  onChange={(e) =>
+                    setCurrentMaterialLink({
+                      ...currentMaterialLink,
+                      url: e.target.value,
+                    })
+                  }
+                  placeholder="https://example.com/resource"
+                  className="border-muted-foreground/20"
+                />
+              </div>
+            ) : (
+              <div>
+                <Label
+                  htmlFor="fileUpload"
+                  className="mb-1.5 block text-sm font-medium"
+                >
+                  File Upload <span className="text-red-500">*</span>
+                </Label>
+                <div className="mt-1">
+                  <label
+                    htmlFor="fileUpload"
+                    className="cursor-pointer flex flex-col items-center justify-center w-full border-2 border-dashed border-primary/30 rounded-md py-6 px-4 hover:bg-primary/5 transition-all group bg-muted/5"
+                  >
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/15 transition-colors">
+                      <FileText size={24} className="text-primary" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">
+                      Drag and drop or click to upload
+                    </span>
+                    <span className="text-xs text-muted-foreground mt-1.5 max-w-[240px] text-center">
+                      PDF, DOCX, PPT, XLSX files up to 10MB
+                    </span>
+                    <input
+                      id="fileUpload"
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setCurrentMaterialLink({
+                            ...currentMaterialLink,
+                            url: URL.createObjectURL(e.target.files[0]),
+                            title:
+                              e.target.files[0].name ||
+                              currentMaterialLink.title,
+                          });
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                {currentMaterialLink.url && (
+                  <div className="mt-3 text-sm bg-primary/5 p-3 rounded-md border border-primary/20 flex items-start gap-2.5">
+                    <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <FileText className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground truncate">
+                        {currentMaterialLink.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Ready to upload
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() =>
+                        setCurrentMaterialLink({
+                          ...currentMaterialLink,
+                          url: "",
+                          title: "",
+                        })
+                      }
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div>
-              <Label htmlFor="url">
-                URL <span className="text-red-500">*</span>
+              <Label
+                htmlFor="description"
+                className="mb-1.5 block text-sm font-medium"
+              >
+                Description (Optional)
               </Label>
-              <Input
-                id="url"
-                value={currentMaterialLink.url}
-                onChange={(e) =>
-                  setCurrentMaterialLink({
-                    ...currentMaterialLink,
-                    url: e.target.value,
-                  })
-                }
-                placeholder="https://example.com/resource"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="description">Description (Optional)</Label>
               <Textarea
                 id="description"
                 value={currentMaterialLink.description}
@@ -623,103 +742,21 @@ export default function MaterialsSettingsPage() {
                   })
                 }
                 placeholder="Brief description of this material"
+                className="border-muted-foreground/20 resize-none"
                 rows={3}
               />
-            </div>
-
-            {/* Additional Links Section */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Secondary Resources</Label>
-                <span className="text-xs text-muted-foreground">
-                  (Optional)
-                </span>
-              </div>
-
-              {/* List of existing additional links */}
-              {currentMaterialLink.additionalLinks.length > 0 && (
-                <div className="space-y-2 mb-4 max-h-[200px] overflow-y-auto pr-1">
-                  {currentMaterialLink.additionalLinks.map((link, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between border rounded-md p-2"
-                    >
-                      <div>
-                        <div className="font-medium text-sm">{link.title}</div>
-                        <div className="text-xs text-muted-foreground truncate max-w-[350px]">
-                          {link.url}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeAdditionalLink(index)}
-                      >
-                        <X size={16} />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add new additional link */}
-              <div className="grid grid-cols-3 gap-2 items-end">
-                <div className="col-span-1">
-                  <Label htmlFor="additionalTitle" className="text-sm">
-                    Title
-                  </Label>
-                  <Input
-                    id="additionalTitle"
-                    value={tempAdditionalLink.title}
-                    onChange={(e) =>
-                      setTempAdditionalLink({
-                        ...tempAdditionalLink,
-                        title: e.target.value,
-                      })
-                    }
-                    placeholder="Title"
-                    className="text-sm"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <Label htmlFor="additionalUrl" className="text-sm">
-                    URL
-                  </Label>
-                  <Input
-                    id="additionalUrl"
-                    value={tempAdditionalLink.url}
-                    onChange={(e) =>
-                      setTempAdditionalLink({
-                        ...tempAdditionalLink,
-                        url: e.target.value,
-                      })
-                    }
-                    placeholder="URL"
-                    className="text-sm"
-                  />
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={addAdditionalLink}
-                  disabled={
-                    !tempAdditionalLink.title || !tempAdditionalLink.url
-                  }
-                >
-                  Add Resource
-                </Button>
-              </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={closeModal}>
+          <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
+            <Button variant="outline" onClick={closeModal} size="sm">
               Cancel
             </Button>
             <Button
               onClick={handleSaveMaterial}
               disabled={!currentMaterialLink.title || !currentMaterialLink.url}
+              size="sm"
             >
               {isEditing ? "Update" : "Save"}
             </Button>
