@@ -41,6 +41,7 @@ export interface BatchCustom {
     sectionName: string;
     sessionName: string;
     papers?: {
+        subjectId: number;
         subjectname: string;
         subjecttypename: string;
         paperName: string;

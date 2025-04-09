@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useStudent } from "@/context/StudentContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,10 +14,65 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { DbCourseMaterial } from "@/types/academics/course-material";
+import { Download, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BatchSubject } from "@/types/academics/batch-subjects";
 
 export default function AcademicsPage() {
   const { batches, loading } = useStudent();
   const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
+  const [materials, setMaterials] = useState<
+    Record<number, DbCourseMaterial[]>
+  >({});
+  const [materialLinks, setMaterialLinks] = useState<DbCourseMaterial[]>([]);
+  const [subjects, setSubjects] = useState<BatchSubject[]>([]);
+
+  const refreshSubjectMaterials = async (subjectId: number) => {
+    try {
+      console.log(`Explicitly refreshing materials for subject ${subjectId}`);
+      const response = await fetch(
+        `/api/course-materials?subjectId=${subjectId}`
+      );
+      const materials = await response.json();
+
+      console.log(
+        `Fetched ${materials.length} materials for subject ${subjectId}`
+      );
+
+      setMaterialLinks((prev) => {
+        const filteredMaterials = prev.filter(
+          (m) => m.subject_id_fk !== subjectId
+        );
+        return [...filteredMaterials, ...materials];
+      });
+
+      setSubjects(
+        subjects.map((subject) =>
+          subject.subjectId === subjectId
+            ? { ...subject, _refreshTimestamp: Date.now() }
+            : subject
+        )
+      );
+    } catch (error) {
+      console.error(
+        `Error refreshing materials for subject ${subjectId}:`,
+        error
+      );
+    }
+  };
+
+  // Fetch materials when batch is selected
+  useEffect(() => {
+    if (selectedBatch !== null && batches[selectedBatch]?.papers) {
+      const currentBatchPapers = batches[selectedBatch].papers;
+      currentBatchPapers.forEach((paper) => {
+        if (paper.subjectId) {
+          refreshSubjectMaterials(paper.subjectId);
+        }
+      });
+    }
+  }, [selectedBatch, batches]);
 
   if (loading) {
     return (
@@ -92,9 +147,12 @@ export default function AcademicsPage() {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="w-[40%]">Subject</TableHead>
-                              <TableHead className="w-[40%]">Paper</TableHead>
+                              <TableHead className="w-[25%]">Subject</TableHead>
+                              <TableHead className="w-[25%]">Paper</TableHead>
                               <TableHead className="w-[20%]">Type</TableHead>
+                              <TableHead className="w-[30%]">
+                                Materials
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -112,6 +170,52 @@ export default function AcademicsPage() {
                                     >
                                       {paper.subjecttypename}
                                     </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    {paper.subjectId &&
+                                      materialLinks
+                                        .filter(
+                                          (m) =>
+                                            m.subject_id_fk === paper.subjectId
+                                        )
+                                        .map((material, idx) => (
+                                          <div
+                                            key={idx}
+                                            className="flex items-center gap-2 mb-1"
+                                          >
+                                            {material.type === "file" ? (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 px-2"
+                                                onClick={() =>
+                                                  window.open(
+                                                    `/api/course-materials/download/${material.id}`,
+                                                    "_blank"
+                                                  )
+                                                }
+                                              >
+                                                <Download className="h-3 w-3 mr-1" />
+                                                {material.title}
+                                              </Button>
+                                            ) : (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 px-2"
+                                                onClick={() =>
+                                                  window.open(
+                                                    material.url,
+                                                    "_blank"
+                                                  )
+                                                }
+                                              >
+                                                <ExternalLink className="h-3 w-3 mr-1" />
+                                                {material.title}
+                                              </Button>
+                                            )}
+                                          </div>
+                                        ))}
                                   </TableCell>
                                 </TableRow>
                               )

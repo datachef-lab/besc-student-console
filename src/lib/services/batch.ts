@@ -33,6 +33,7 @@ export async function findBatchesByStudentUid(uid: string): Promise<BatchCustom[
                 s.codenumber,
                 st.subjecttypename,
                 sb.subjectname,
+                sb.id as subjectId,
                 shft.shiftName,
                 sec.sectionName,
                 sess.sessionName,
@@ -78,6 +79,7 @@ export async function findBatchesByStudentUid(uid: string): Promise<BatchCustom[
                 s.codenumber,
                 st.subjecttypename,
                 sb.subjectname,
+                sb.id as subjectId,
                 shft.shiftName,
                 sec.sectionName,
                 sess.sessionName,
@@ -140,7 +142,7 @@ export async function findBatchesByStudentUid(uid: string): Promise<BatchCustom[
         // Create a unique key for each batch
         for (const row of results) {
             const { coursename, classname, sectionName, sessionName, shiftName,
-                subjectname, subjecttypename, paperName } = row;
+                subjectname, subjecttypename, paperName, subjectId } = row;
 
             const batchKey = `${coursename}|${classname}|${sectionName}|${sessionName}|${shiftName}`;
 
@@ -159,6 +161,7 @@ export async function findBatchesByStudentUid(uid: string): Promise<BatchCustom[
             // Add the paper to the batch
             const batch = batchMap.get(batchKey);
             batch.papers.push({
+                subjectId,
                 subjectname,
                 subjecttypename,
                 paperName
