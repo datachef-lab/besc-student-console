@@ -280,16 +280,34 @@ export default function MaterialsSettingsPage() {
 
   const handleDeleteMaterial = async (materialId: number) => {
     try {
+      console.log(`Deleting material with ID: ${materialId}`);
+
       const response = await fetch(`/api/course-materials?id=${materialId}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete material");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          `Failed to delete material: ${
+            errorData.message || response.statusText
+          }`
+        );
+      }
+
+      const result = await response.json().catch(() => ({}));
+      console.log("Delete operation successful:", result);
+
+      // Since we don't directly know which subject this material belongs to,
+      // we need to refresh all subjects' materials
+      if (subjects && subjects.length > 0) {
+        // Find the subject that contains this material
+        for (const subject of subjects) {
+          await refreshSubjectMaterials(subject.subjectId);
+        }
       }
     } catch (error) {
       console.error("Error deleting material:", error);
-      // You might want to show a toast notification here
     }
   };
 
@@ -361,7 +379,7 @@ export default function MaterialsSettingsPage() {
                     {subjects.length > 0 ? (
                       subjects.map((subject, index) => (
                         <SubjectRow
-                          key={`subject-${subject.subjectId}`}
+                          key={`subject-${subject.subjectId}-${index}`}
                           index={index}
                           subject={subject}
                           openAddModal={openAddModal}

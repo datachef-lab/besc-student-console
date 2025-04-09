@@ -10,6 +10,18 @@ const nextConfig: NextConfig = {
                 port: "8443",
                 pathname: "/hrclIRP/studentimages/**",
             },
+            {
+                protocol: "https",
+                hostname: "i.gr-assets.com",
+                port: "",
+                pathname: "/**",
+            },
+            {
+                protocol: "https",
+                hostname: "m.media-amazon.com",
+                port: "",
+                pathname: "/**",
+            },
         ],
     },
 };

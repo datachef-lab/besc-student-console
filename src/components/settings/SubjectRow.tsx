@@ -44,7 +44,6 @@ export default function SubjectRow({
   // Define fetchCourseMaterials outside the useEffect
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchCourseMaterials = async () => {
-
     try {
       // Fetch materials for all subjects
       const response = await fetch(
@@ -67,9 +66,16 @@ export default function SubjectRow({
 
   const handleConfirmDelete = async () => {
     if (materialToDelete) {
-      await onDeleteMaterial(materialToDelete.id as number);
-      setIsDeleteDialogOpen(false);
-      setMaterialToDelete(null);
+      try {
+        await onDeleteMaterial(materialToDelete.id as number);
+        // Refresh the materials list after deletion
+        await fetchCourseMaterials();
+      } catch (error) {
+        console.error("Error during deletion process:", error);
+      } finally {
+        setIsDeleteDialogOpen(false);
+        setMaterialToDelete(null);
+      }
     }
   };
 
