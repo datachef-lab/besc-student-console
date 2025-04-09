@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TableCell, TableRow } from "../ui/table";
 import { Button } from "../ui/button";
 import { Trash2, Pencil, Plus, Link2, File } from "lucide-react";
@@ -23,7 +23,6 @@ type SubjectRowProps = {
   openAddModal: (subjectId: number) => void;
   openEditModal: (material: DbCourseMaterial) => void;
   onDeleteMaterial: (materialId: number) => Promise<void>;
-  materials: DbCourseMaterial[];
 };
 
 export default function SubjectRow({
@@ -32,11 +31,34 @@ export default function SubjectRow({
   openAddModal,
   openEditModal,
   onDeleteMaterial,
-  materials,
 }: SubjectRowProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [materials, setMaterials] = useState<DbCourseMaterial[]>([]);
   const [materialToDelete, setMaterialToDelete] =
     useState<DbCourseMaterial | null>(null);
+
+  useEffect(() => {
+    fetchCourseMaterials();
+  }, [subject]);
+
+  // Define fetchCourseMaterials outside the useEffect
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchCourseMaterials = async () => {
+
+    try {
+      // Fetch materials for all subjects
+      const response = await fetch(
+        `/api/course-materials?subjectId=${subject.subjectId}`
+      );
+      const materials = await response.json();
+      setMaterials(materials);
+    } catch (error) {
+      console.error(
+        `Error fetching materials for subject ${subject.subjectId}:`,
+        error
+      );
+    }
+  };
 
   const handleDeleteClick = (material: DbCourseMaterial) => {
     setMaterialToDelete(material);
