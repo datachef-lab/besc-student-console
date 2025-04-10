@@ -97,9 +97,7 @@ export default function AcademicsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">
-        Academic Information
-      </h1>
+      <h1 className="text-2xl font-bold tracking-tight">Course Catalogue</h1>
 
       {batches.length === 0 ? (
         <div className="text-center py-12">

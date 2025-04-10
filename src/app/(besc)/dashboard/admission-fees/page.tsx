@@ -219,147 +219,151 @@ export default function AdmissionFeesPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Admissions & Fees</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Enrollment & Fees</h1>
 
-      <div className="grid grid-cols-1 gap-4">
-        {feesData.map((fee) => (
-          <React.Fragment key={fee.id}>
-            {selectedFee === fee.id ? (
+      <div className="space-y-6">
+        {selectedFee !== null ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="w-full"
+          >
+            <Card
+              className="w-full cursor-pointer bg-muted/50"
+              onClick={() => handleCardClick(selectedFee)}
+            >
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl font-bold">
+                      {feesData[selectedFee].name}
+                    </CardTitle>
+                    <p className="text-lg text-muted-foreground">
+                      Due: {formatDate(feesData[selectedFee].dueDate)}
+                    </p>
+                  </div>
+                  <Badge
+                    className={getStatusColor(feesData[selectedFee].status)}
+                  >
+                    <span className="flex items-center gap-1">
+                      {getStatusIcon(feesData[selectedFee].status)}
+                      {feesData[selectedFee].status
+                        .replace("_", " ")
+                        .toUpperCase()}
+                    </span>
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <p className="text-sm font-medium">Total Amount</p>
+                      <p className="text-lg font-bold">
+                        {formatCurrency(feesData[selectedFee].totalAmount)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Paid Amount</p>
+                      <p className="text-lg font-bold">
+                        {formatCurrency(feesData[selectedFee].paidAmount)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Due Date</p>
+                      <p className="text-sm font-medium flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />{" "}
+                        {formatDate(feesData[selectedFee].dueDate)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <h3 className="text-lg font-semibold mb-2">Installments</h3>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>No.</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Due Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Paid On</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {feesData[selectedFee].installments.map(
+                          (installment, idx) => (
+                            <TableRow key={installment.id}>
+                              <TableCell>{idx + 1}</TableCell>
+                              <TableCell>
+                                {formatCurrency(installment.amount)}
+                              </TableCell>
+                              <TableCell>
+                                {formatDate(installment.dueDate)}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  className={getStatusColor(installment.status)}
+                                >
+                                  <span className="flex items-center gap-1">
+                                    {getStatusIcon(installment.status)}
+                                    {installment.status.toUpperCase()}
+                                  </span>
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {installment.paidOn
+                                  ? formatDate(installment.paidOn)
+                                  : "-"}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Click to close
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {feesData.map((fee, index) => (
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
+                key={fee.id}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
                 <Card
-                  className="w-full cursor-pointer border-2"
-                  onClick={() => handleCardClick(fee.id)}
+                  className="h-32 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleCardClick(index)}
                 >
                   <CardHeader className="pb-2">
-                    <div className="flex justify-between items-center">
-                      <CardTitle>{fee.name}</CardTitle>
-                      <Badge className={getStatusColor(fee.status)}>
-                        <span className="flex items-center gap-1">
-                          {getStatusIcon(fee.status)}
-                          {fee.status.replace("_", " ").toUpperCase()}
-                        </span>
-                      </Badge>
-                    </div>
+                    <CardTitle className="line-clamp-1">{fee.name}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex justify-between items-center mb-2">
-                      <div>
-                        <p className="text-sm font-medium">Total Amount</p>
-                        <p className="text-lg font-bold">
-                          {formatCurrency(fee.totalAmount)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Paid Amount</p>
-                        <p className="text-lg font-bold">
-                          {formatCurrency(fee.paidAmount)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Due Date</p>
-                        <p className="text-sm font-medium flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />{" "}
-                          {formatDate(fee.dueDate)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-6">
-                      <h3 className="text-md font-semibold mb-2">
-                        Installments
-                      </h3>
-                      <div className="rounded-md border">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>No.</TableHead>
-                              <TableHead>Amount</TableHead>
-                              <TableHead>Due Date</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead>Paid On</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {fee.installments.map((installment, idx) => (
-                              <TableRow key={installment.id}>
-                                <TableCell>{idx + 1}</TableCell>
-                                <TableCell>
-                                  {formatCurrency(installment.amount)}
-                                </TableCell>
-                                <TableCell>
-                                  {formatDate(installment.dueDate)}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge
-                                    className={getStatusColor(
-                                      installment.status
-                                    )}
-                                  >
-                                    <span className="flex items-center gap-1">
-                                      {getStatusIcon(installment.status)}
-                                      {installment.status.toUpperCase()}
-                                    </span>
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  {installment.paidOn
-                                    ? formatDate(installment.paidOn)
-                                    : "-"}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-0">
-                    <p className="text-xs text-muted-foreground w-full text-center">
-                      Click to close
+                    <p className="text-sm text-muted-foreground line-clamp-1 flex items-center gap-1">
+                      <Calendar className="w-4 h-4" /> Due:{" "}
+                      {formatDate(fee.dueDate)}
                     </p>
-                  </CardFooter>
-                </Card>
-              </motion.div>
-            ) : (
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Card
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleCardClick(fee.id)}
-                >
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-medium text-lg">{fee.name}</h3>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                          <Calendar className="w-4 h-4" /> Due:{" "}
-                          {formatDate(fee.dueDate)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <Badge className={getStatusColor(fee.status)}>
-                          <span className="flex items-center gap-1">
-                            {getStatusIcon(fee.status)}
-                            {fee.status.replace("_", " ").toUpperCase()}
-                          </span>
-                        </Badge>
-                        <p className="text-lg font-bold mt-1">
-                          {formatCurrency(fee.totalAmount)}
-                        </p>
-                      </div>
-                    </div>
+                    <Badge
+                      className={`mt-2 text-xs ${getStatusColor(fee.status)}`}
+                    >
+                      <span className="flex items-center gap-1">
+                        {getStatusIcon(fee.status)}
+                        {fee.status.replace("_", " ").toUpperCase()}
+                      </span>
+                    </Badge>
                   </CardContent>
                 </Card>
               </motion.div>
-            )}
-          </React.Fragment>
-        ))}
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

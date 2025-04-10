@@ -12,9 +12,11 @@ import {
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { useStudent } from "@/context/StudentContext";
+import { useRouter } from "next/navigation";
 
 export default function HomeContent() {
   const { student, batches, loading } = useStudent();
+  const router = useRouter();
 
   if (loading) return <p>Loading...</p>;
   if (!student) return null;
@@ -144,9 +146,7 @@ export default function HomeContent() {
                       <p className="w-[120px] font-semibold min-w-0">Course</p>
                       <p>:</p>
                       <p className="truncate">
-                        {batches
-                          ? batches[batches.length - 1]?.coursename
-                          : ""}
+                        {batches ? batches[batches.length - 1]?.coursename : ""}
                       </p>
                     </div>
                     <div className="flex gap-2 items-center">
@@ -230,7 +230,7 @@ export default function HomeContent() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent Activities</CardTitle>
+            <CardTitle className="text-lg">Notification Corner</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -272,17 +272,31 @@ export default function HomeContent() {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { title: "Course Material", icon: BookOpen },
+                {
+                  title: "Course Material",
+                  icon: BookOpen,
+                  url: "/dashboard/academics",
+                },
                 {
                   title: "University Results",
                   icon: GraduationCap,
+                  url: "/dashboard/exams",
                 },
-                { title: "College Events", icon: CalendarHeart },
-                { title: "University Exams", icon: NotebookPen },
+                {
+                  title: "College Events",
+                  icon: CalendarHeart,
+                  url: "/academics",
+                },
+                {
+                  title: "University Exams",
+                  icon: NotebookPen,
+                  url: "/academics",
+                },
               ].map((link, index) => (
                 <button
                   key={index}
                   className="p-4 border rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center gap-2"
+                  onClick={() => router.push(link.url)}
                 >
                   <link.icon className="w-6 h-6 text-gray-600" />
                   <span className="text-sm font-medium">{link.title}</span>

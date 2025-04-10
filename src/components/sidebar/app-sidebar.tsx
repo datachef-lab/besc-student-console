@@ -123,7 +123,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isActive: pathname === "/dashboard/documents",
     },
     {
-      title: "Admission & Fees",
+      title: "Enrollment & Fees",
       url: "/dashboard/admission-fees",
       icon: GalleryVerticalEnd,
       isActive: pathname === "/dashboard/admission-fees",
