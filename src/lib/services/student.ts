@@ -32,7 +32,7 @@ export async function findStudentByUid(uid: string): Promise<Student | null> {
             [uid]
         );
 
-        console.log("Query results:", rows);
+        // console.log("Query results:", rows);
 
         if (!rows || rows.length === 0) {
             console.log(`No student found with UID: ${uid}`);
@@ -53,6 +53,7 @@ export async function formatResponse(student: DbStudent | null) {
     }
 
     try {
+        console.log("student.nationalityId:", student.nationalityId);
         const nationality = await findNationalityById(student.nationalityId);
 
         let formattedStudent: Student = {
@@ -61,6 +62,8 @@ export async function formatResponse(student: DbStudent | null) {
             pos: null,
             code: null
         };
+
+        console.log("in lib/services/student/ | nationality:", nationality)
 
         if (nationality) {
             const { pos, code, nationalityName } = nationality;

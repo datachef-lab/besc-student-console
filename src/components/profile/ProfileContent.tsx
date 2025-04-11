@@ -135,6 +135,7 @@ export default function ProfileContent() {
                   <p className="text-sm font-medium text-gray-500">
                     Nationality
                   </p>
+                  {/* {JSON.stringify(student, null, 4)} */}
                   <p>{student?.nationalityName?.trim() || "Not Specified"}</p>
                 </div>
                 <div className="space-y-1">
@@ -229,7 +230,11 @@ export default function ProfileContent() {
                   <p className="text-sm font-medium text-gray-500">
                     Admission Year
                   </p>
-                  <p>{student.admissionYear || "Not Available"}</p>
+                  <p>
+                    {student.admissiondate
+                      ? new Date(student.admissiondate).getFullYear()
+                      : "Not Available"}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">

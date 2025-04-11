@@ -112,9 +112,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     {
       title: "Course Catalogue",
-      url: "/dashboard/academics",
+      url: "/dashboard/course-catalogue",
       icon: BookOpen,
-      isActive: pathname === "/dashboard/academics",
+      isActive: pathname === "/dashboard/course-catalogue",
     },
     {
       title: "Documents",
@@ -124,9 +124,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     {
       title: "Enrollment & Fees",
-      url: "/dashboard/admission-fees",
+      url: "/dashboard/enrollment-fees",
       icon: GalleryVerticalEnd,
-      isActive: pathname === "/dashboard/admission-fees",
+      isActive: pathname === "/dashboard/enrollment-fees",
     },
     {
       title: "Library",

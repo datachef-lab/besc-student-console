@@ -4,6 +4,8 @@ import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+
+
 export default function LandingPage() {
   // Robust solution to prevent white flash
   useEffect(() => {

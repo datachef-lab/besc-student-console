@@ -69,7 +69,7 @@ export default function AcademicsPage() {
         }
       });
     }
-  }, [selectedBatch, batches]);
+  }, [selectedBatch, batches, refreshSubjectMaterials]);
 
   if (loading) {
     return (
