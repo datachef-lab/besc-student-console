@@ -314,7 +314,7 @@ export default function LandingPage() {
                       </div>
                       <span className="text-yellow-400 font-medium">
                         9:30 AM Tomorrow
-                      </span>
+              </span>
                     </div>
                   </div>
                 </div>
@@ -483,7 +483,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-2 text-white">
                   {feature.title}
-                </h3>
+            </h3>
                 <p className="text-indigo-200">{feature.description}</p>
               </div>
             ))}

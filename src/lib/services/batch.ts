@@ -130,9 +130,9 @@ export async function findBatchesByStudentUid(uid: string): Promise<BatchCustom[
         console.log("Result length:", results.length);
         console.log("First result:", results[0]);
 
-        // Step 3: Format the result
+    // Step 3: Format the result
         if (!results || results.length === 0) {
-            console.log("No batches found for the student.");
+        console.log("No batches found for the student.");
             return []; // Return an empty array if no batches are found
         }
 
@@ -150,10 +150,10 @@ export async function findBatchesByStudentUid(uid: string): Promise<BatchCustom[
                 // Create a new batch
                 batchMap.set(batchKey, {
                     coursename,
-                    classname,
-                    sectionName,
-                    sessionName,
-                    shiftName,
+            classname,
+            sectionName,
+            sessionName,
+            shiftName,
                     papers: []
                 });
             }

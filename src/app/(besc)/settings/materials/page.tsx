@@ -313,7 +313,7 @@ export default function MaterialsSettingsPage() {
 
   // Add loading state UI
   if (isLoading) {
-    return (
+  return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
@@ -333,8 +333,8 @@ export default function MaterialsSettingsPage() {
           <div className="flex items-center gap-2">
             <FileText className="text-primary h-5 w-5" />
             <h1 className="text-xl font-medium">Course Materials</h1>
-          </div>
-        </div>
+              </div>
+            </div>
         <p className="text-sm text-muted-foreground">
           Manage course material links for students across all courses
         </p>
@@ -354,8 +354,8 @@ export default function MaterialsSettingsPage() {
           <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
             <div>
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
+              <Table>
+                <TableHeader>
                     <TableRow className="border-b bg-muted/30 hover:bg-muted/30">
                       {[
                         "Sr. No",
@@ -372,9 +372,9 @@ export default function MaterialsSettingsPage() {
                           {header}
                         </TableHead>
                       ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                     {/* Group materials by subject */}
                     {subjects.length > 0 ? (
                       subjects.map((subject, index) => (
@@ -388,7 +388,7 @@ export default function MaterialsSettingsPage() {
                         />
                       ))
                     ) : (
-                      <TableRow>
+                    <TableRow>
                         <TableCell colSpan={6} className="text-center py-8">
                           <div className="flex flex-col items-center gap-2">
                             <FileText className="h-8 w-8 text-muted-foreground opacity-40" />
@@ -401,10 +401,10 @@ export default function MaterialsSettingsPage() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
             </div>
           </div>
         </div>

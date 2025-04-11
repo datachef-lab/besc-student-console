@@ -155,7 +155,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <Image
                   width={32}
                   height={32}
-                  src={"/logo.png"}
+                  src={"/besc-logo.jpeg"}
                   alt={"The Bhawanipur Education Society College Logo"}
                   className="w-8 h-8 rounded-lg object-cover"
                 />

@@ -215,10 +215,10 @@ export default function SignInPage() {
           className="flex w-full items-center justify-center bg-gradient-to-br from-indigo-800 to-indigo-900 p-8 md:w-5/12 md:p-12"
         >
           <div className="w-full max-w-md space-y-8">
-            <div>
+        <div>
               <h2 className="text-center text-3xl font-bold tracking-tight text-white">
-                Sign in to your account
-              </h2>
+            Sign in to your account
+          </h2>
               <p className="mt-2 text-center text-sm text-indigo-200">
                 Enter your credentials below to access the portal
               </p>
@@ -411,7 +411,7 @@ export default function SignInPage() {
                 Contact administration
               </Link>
             </p>
-          </div>
+        </div>
         </motion.div>
       </div>
     </div>
