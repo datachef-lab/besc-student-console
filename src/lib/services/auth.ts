@@ -120,7 +120,7 @@ export function setAuthCookies(tokens: AuthTokens) {
         value: tokens.accessToken,
         httpOnly: true,
         secure: false,
-        sameSite: 'strict',
+           sameSite: 'strict',
         maxAge: 15 * 60, // 15 minutes in seconds
         path: '/',
     });
