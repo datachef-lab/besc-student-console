@@ -225,10 +225,10 @@ export default function ExamsContent() {
               ))}
             </SelectContent>
           </Select>
-        </div>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -258,16 +258,16 @@ export default function ExamsContent() {
           >
             <Card className="border-2 border-amber-200 shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-white to-amber-100">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
+          <div className="flex items-center justify-between">
+            <div>
                     <p className="text-sm text-amber-600 font-medium">
                       Next Exam
                     </p>
                     <p className="text-3xl font-bold text-amber-700">2 days</p>
-                  </div>
+            </div>
                   <div className="bg-amber-50 p-3 rounded-xl border border-amber-200">
                     <Clock size={24} className="text-amber-600" />
-                  </div>
+            </div>
                 </div>
               </CardContent>
             </Card>
@@ -289,8 +289,8 @@ export default function ExamsContent() {
                   </div>
                   <div className="bg-purple-50 p-3 rounded-xl border border-purple-200">
                     <FileText size={24} className="text-purple-600" />
-                  </div>
-                </div>
+          </div>
+        </div>
               </CardContent>
             </Card>
           </motion.div>
@@ -302,17 +302,17 @@ export default function ExamsContent() {
           >
             <Card className="border-2 border-emerald-200 shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-white to-emerald-100">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
+          <div className="flex items-center justify-between">
+            <div>
                     <p className="text-sm text-emerald-600 font-medium">
                       Average Score
                     </p>
                     <p className="text-3xl font-bold text-emerald-700">78%</p>
-                  </div>
+            </div>
                   <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200">
                     <BarChart size={24} className="text-emerald-600" />
-                  </div>
-                </div>
+            </div>
+          </div>
               </CardContent>
             </Card>
           </motion.div>
@@ -365,7 +365,7 @@ export default function ExamsContent() {
                           <div className="bg-blue-50 p-3 rounded-lg flex-shrink-0">
                             <Calendar className="w-6 h-6 text-blue-600" />
                           </div>
-                          <div>
+            <div>
                             <h3 className="text-lg font-semibold text-gray-800">
                               {exam.name}
                             </h3>
@@ -388,10 +388,10 @@ export default function ExamsContent() {
                               <div className="flex items-center">
                                 <BarChart className="w-4 h-4 mr-1.5 text-gray-400" />
                                 {exam.venue}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+            </div>
+            </div>
+          </div>
+        </div>
                         <div className="mt-3 md:mt-0">
                           <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-100">
                             {exam.status}
@@ -419,7 +419,7 @@ export default function ExamsContent() {
                           <div className="bg-emerald-50 p-3 rounded-lg flex-shrink-0">
                             <GraduationCap className="w-6 h-6 text-emerald-600" />
                           </div>
-                          <div>
+            <div>
                             <h3 className="text-lg font-semibold text-gray-800">
                               {exam.name}
                             </h3>
@@ -438,14 +438,14 @@ export default function ExamsContent() {
                               <div className="flex items-center">
                                 <FileText className="w-4 h-4 mr-1.5 text-gray-400" />
                                 {exam.duration}
-                              </div>
+            </div>
                               <div className="flex items-center">
                                 <BarChart className="w-4 h-4 mr-1.5 text-gray-400" />
                                 {exam.venue}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+            </div>
+          </div>
+        </div>
+      </div>
                         <div className="flex flex-col items-end gap-3">
                           <div className="bg-emerald-50 px-5 py-2 rounded-lg border border-emerald-100 text-center">
                             <span className="text-xl font-bold text-emerald-600">
@@ -454,14 +454,14 @@ export default function ExamsContent() {
                             <p className="text-xs text-emerald-600 font-medium">
                               Score
                             </p>
-                          </div>
+                    </div>
                           <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
                             {exam.status}
                           </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
                 </motion.div>
               ))}
             </TabsContent>
@@ -521,7 +521,7 @@ export default function ExamsContent() {
                             {exam.status}
                           </span>
                         </div>
-                      </div>
+        </div>
                     </CardContent>
                   </Card>
                 </motion.div>

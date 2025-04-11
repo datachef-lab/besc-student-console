@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const pathname = usePathname(); // Get the current route
 
   const isProtectedRoute =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/settings");
+    pathname && (pathname.startsWith("/dashboard") || pathname.startsWith("/settings"));
 
   const login = (accessToken: string, userData: Student) => {
     setAccessToken(accessToken);
@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const logout = useCallback(async () => {
-    if (pathname.startsWith("/dashboard") || pathname.startsWith("/settings")) {
+    if (pathname && (pathname.startsWith("/dashboard") || pathname.startsWith("/settings"))) {
       try {
         await axiosInstance.post("/api/auth/logout");
         setAccessToken(null);

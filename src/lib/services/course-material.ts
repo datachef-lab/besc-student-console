@@ -237,3 +237,25 @@ export async function deleteCourseMaterial(id: number) {
         return null;
     }
 }
+
+// Add this new function to fetch materials for multiple subjects
+export async function findCourseMaterialsBySubjects(subjectIds: number[]) {
+    if (!subjectIds.length) return [];
+
+    // Create placeholders for the SQL IN clause
+    const placeholders = subjectIds.map(() => '?').join(',');
+
+    const sqlQuery = `
+        SELECT * FROM course_materials WHERE subject_id_fk IN (${placeholders})
+    `;
+
+    try {
+        console.log(`Fetching materials for ${subjectIds.length} subjects in batch: ${subjectIds.join(', ')}`);
+        const results = await query(sqlQuery, subjectIds) as DbCourseMaterial[];
+        console.log(`Found ${results.length} materials for the requested subjects`);
+        return results ?? [];
+    } catch (error) {
+        console.error(`Error fetching materials for subjects [${subjectIds.join(', ')}]:`, error);
+        return [];
+    }
+}

@@ -113,7 +113,7 @@ export default function LandingPage() {
                 <div className="border-t border-indigo-700 my-1"></div>
                 <Link
                   href="/logout"
-                  className="block px-4 py-2 text-sm text-yellow-400 hover:bg-indigo-700 flex items-center gap-2"
+                  className="px-4 py-2 text-sm text-yellow-400 hover:bg-indigo-700 flex items-center gap-2"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

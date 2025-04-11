@@ -126,7 +126,7 @@ const mockFeesData: Fee[] = [
   },
 ];
 
-export default function AdmissionFeesPage() {
+export default function EnrollmentFeesPage() {
   const [feesData, setFeesData] = useState<Fee[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFee, setSelectedFee] = useState<number | null>(null);

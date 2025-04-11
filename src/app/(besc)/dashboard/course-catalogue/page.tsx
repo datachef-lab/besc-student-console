@@ -25,59 +25,67 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BatchSubject } from "@/types/academics/batch-subjects";
 
 export default function CourseCataloguePage() {
   const { batches, loading } = useStudent();
   const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
   const [materialLinks, setMaterialLinks] = useState<DbCourseMaterial[]>([]);
-  const [subjects, setSubjects] = useState<BatchSubject[]>([]);
+  const [isLoadingMaterials, setIsLoadingMaterials] = useState<boolean>(false);
 
-  const refreshSubjectMaterials = async (subjectId: number) => {
+  // Fetch materials for all subjects in a batch with a single API call
+  const fetchBatchMaterials = async (
+    batchSubjects: Array<{ subjectId?: number }>
+  ) => {
+    if (!batchSubjects || batchSubjects.length === 0) return;
+
     try {
-      console.log(`Explicitly refreshing materials for subject ${subjectId}`);
-      const response = await fetch(
-        `/api/course-materials?subjectId=${subjectId}`
+      setIsLoadingMaterials(true);
+
+      // Extract all subject IDs from the batch
+      const subjectIds = batchSubjects
+        .filter((subject) => subject.subjectId)
+        .map((subject) => subject.subjectId!);
+
+      if (subjectIds.length === 0) return;
+
+      // Create URL with all subject IDs as query parameters
+      const queryParams = new URLSearchParams();
+      subjectIds.forEach((id) =>
+        queryParams.append("subjectIds", id.toString())
       );
-      const materials = await response.json();
 
       console.log(
-        `Fetched ${materials.length} materials for subject ${subjectId}`
+        `Fetching materials for ${subjectIds.length} subjects with a single API call`
+      );
+      const response = await fetch(
+        `/api/batch-course-materials?${queryParams.toString()}`
       );
 
-      setMaterialLinks((prev) => {
-        const filteredMaterials = prev.filter(
-          (m) => m.subject_id_fk !== subjectId
+      if (!response.ok) {
+        throw new Error(
+          `API returned ${response.status}: ${await response.text()}`
         );
-        return [...filteredMaterials, ...materials];
-      });
+      }
 
-      setSubjects(
-        subjects.map((subject) =>
-          subject.subjectId === subjectId
-            ? { ...subject, _refreshTimestamp: Date.now() }
-            : subject
-        )
+      const materials = await response.json();
+      console.log(
+        `Successfully fetched ${materials.length} materials for all subjects`
       );
+      setMaterialLinks(materials);
     } catch (error) {
-      console.error(
-        `Error refreshing materials for subject ${subjectId}:`,
-        error
-      );
+      console.error("Error fetching batch materials:", error);
+    } finally {
+      setIsLoadingMaterials(false);
     }
   };
 
-  // Fetch materials when batch is selected
+  // Use the batch API when selecting a batch
   useEffect(() => {
     if (selectedBatch !== null && batches[selectedBatch]?.papers) {
       const currentBatchPapers = batches[selectedBatch].papers;
-      currentBatchPapers.forEach((paper) => {
-        if (paper.subjectId) {
-          refreshSubjectMaterials(paper.subjectId);
-        }
-      });
+      fetchBatchMaterials(currentBatchPapers);
     }
-  }, [selectedBatch, batches, refreshSubjectMaterials]);
+  }, [selectedBatch, batches]);
 
   // Add useEffect for escape key handling
   useEffect(() => {
@@ -194,7 +202,19 @@ export default function CourseCataloguePage() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="mb-4">
+                      <div className="mb-4 relative">
+                        {/* Loading indicator */}
+                        {isLoadingMaterials && (
+                          <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10 rounded-xl">
+                            <div className="flex flex-col items-center">
+                              <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-300 border-t-indigo-600 mb-2"></div>
+                              <p className="text-sm text-indigo-600">
+                                Loading course materials...
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
                         <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
                           <Book className="w-5 h-5 mr-2 text-indigo-600" />
                           Subjects & Papers

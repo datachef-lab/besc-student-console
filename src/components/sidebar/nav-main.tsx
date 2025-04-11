@@ -148,31 +148,31 @@ export function NavMain({
                       className="pl-10 overflow-hidden"
                     >
                       <SidebarMenuSub>
-                      <div className="relative pl-4 border-l border-zinc-200 dark:border-zinc-700 mt-1 mb-1 space-y-1">
-                        {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              className="relative px-3 py-1.5 text-sm rounded-md transition-all duration-200 hover:text-indigo-600 dark:hover:text-indigo-400 group"
-                            >
-                              <Link href={subItem.url}>
-                                <span className="relative z-10">
-                                  {subItem.title}
-                                </span>
-                                <motion.span
-                                  className="absolute inset-0 rounded-md bg-zinc-100 dark:bg-zinc-800/50 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  initial={false}
-                                  whileHover={{
-                                    opacity: 1,
-                                    transition: { duration: 0.2 },
-                                  }}
-                                  whileTap={{ scale: 0.98 }}
-                                />
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </div>
+                        <div className="relative pl-4 border-l border-zinc-200 dark:border-zinc-700 mt-1 mb-1 space-y-1">
+                          {item.items?.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton
+                                asChild
+                                className="relative px-3 py-1.5 text-sm rounded-md transition-all duration-200 hover:text-indigo-600 dark:hover:text-indigo-400 group"
+                              >
+                                <Link href={subItem.url}>
+                                  <span className="relative z-10">
+                                    {subItem.title}
+                                  </span>
+                                  <motion.span
+                                    className="absolute inset-0 rounded-md bg-zinc-100 dark:bg-zinc-800/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    initial={false}
+                                    whileHover={{
+                                      opacity: 1,
+                                      transition: { duration: 0.2 },
+                                    }}
+                                    whileTap={{ scale: 0.98 }}
+                                  />
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </div>
                       </SidebarMenuSub>
                     </motion.div>
                   )}

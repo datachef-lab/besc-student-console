@@ -246,9 +246,9 @@ export default function HomeContent() {
                 </Badge>
               )}
 
-              <Badge className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 border border-white/30">
+              {/* <Badge className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 border border-white/30">
                 Computer Science
-              </Badge>
+              </Badge> */}
             </div>
           </div>
         </div>

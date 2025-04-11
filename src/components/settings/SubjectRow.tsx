@@ -42,8 +42,7 @@ export default function SubjectRow({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subject]);
 
-  // Define fetchCourseMaterials outside the useEffect
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const fetchCourseMaterials = async () => {
     try {
       // Fetch materials for all subjects
