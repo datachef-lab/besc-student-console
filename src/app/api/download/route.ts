@@ -14,14 +14,24 @@ export async function GET(request: NextRequest) {
         // Decode the URL-encoded file path
         const decodedPath = decodeURIComponent(filePath);
 
-        // For security, ensure the filePath starts with course-materials
-        if (!decodedPath.startsWith('course-materials/')) {
-            console.error('Invalid file path:', decodedPath);
+        console.log('Requested file path:', decodedPath);
+
+        // For security, ensure the filePath contains 'course-materials' somewhere in the path
+        if (!decodedPath.includes('course-materials')) {
+            console.error('Invalid file path - missing course-materials in path:', decodedPath);
             return NextResponse.json({ error: 'Invalid file path' }, { status: 403 });
         }
 
-        // Construct the absolute path
-        const absolutePath = path.resolve(process.cwd(), decodedPath);
+        // Use the original path if it's an absolute path
+        // (useful for paths stored in the database that might be absolute)
+        let absolutePath = decodedPath;
+
+        // If it's not an absolute path, resolve it relative to the current working directory
+        if (!path.isAbsolute(decodedPath)) {
+            absolutePath = path.resolve(process.cwd(), decodedPath);
+        }
+
+        console.log('Resolved absolute path:', absolutePath);
 
         // Check if file exists
         try {

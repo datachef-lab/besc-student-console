@@ -22,9 +22,6 @@ import { BatchSubject } from "@/types/academics/batch-subjects";
 export default function AcademicsPage() {
   const { batches, loading } = useStudent();
   const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
-  const [materials, setMaterials] = useState<
-    Record<number, DbCourseMaterial[]>
-  >({});
   const [materialLinks, setMaterialLinks] = useState<DbCourseMaterial[]>([]);
   const [subjects, setSubjects] = useState<BatchSubject[]>([]);
 
@@ -186,12 +183,15 @@ export default function AcademicsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 className="h-6 px-2"
-                                                onClick={() =>
+                                                onClick={(e) => {
+                                                  e.stopPropagation(); // Prevent card collapse when clicking button
                                                   window.open(
-                                                    `/api/course-materials/download/${material.id}`,
+                                                    `/api/download?filePath=${encodeURIComponent(
+                                                      material.file_path || ""
+                                                    )}`,
                                                     "_blank"
-                                                  )
-                                                }
+                                                  );
+                                                }}
                                               >
                                                 <Download className="h-3 w-3 mr-1" />
                                                 {material.title}
@@ -201,12 +201,13 @@ export default function AcademicsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 className="h-6 px-2"
-                                                onClick={() =>
+                                                onClick={(e) => {
+                                                  e.stopPropagation(); // Prevent card collapse when clicking button
                                                   window.open(
                                                     material.url,
                                                     "_blank"
-                                                  )
-                                                }
+                                                  );
+                                                }}
                                               >
                                                 <ExternalLink className="h-3 w-3 mr-1" />
                                                 {material.title}

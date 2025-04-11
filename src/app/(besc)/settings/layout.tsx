@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Loader2, House, Settings, FileText } from "lucide-react";
+import { Loader2, House, Settings, FileText, LogOut } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,7 +20,7 @@ export default function SettingsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -46,6 +46,15 @@ export default function SettingsLayout({
     }
   }, [user, isLoading, router]);
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/sign-in");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   // Show loading state while auth is checking
   if (isLoading || isRedirecting) {
     return (
@@ -70,7 +79,7 @@ export default function SettingsLayout({
           <h2 className="text-xl font-semibold">BESC Student Console</h2>
         </div>
 
-        <nav className="space-y-1">
+        <nav className="space-y-1 flex-1">
           {settingLinks.map((link) => (
             <Link
               key={link.name}
@@ -86,6 +95,20 @@ export default function SettingsLayout({
             </Link>
           ))}
         </nav>
+
+        {/* Logout button at the bottom of sidebar */}
+        <div className="mt-auto pt-4 border-t">
+          <button
+            onClick={handleLogout}
+            className={cn(
+              buttonVariants({ variant: "ghost" }),
+              "w-full justify-start gap-2 px-2 py-1.5 text-red-500 hover:text-red-600 hover:bg-red-100/20"
+            )}
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -118,6 +141,15 @@ export default function SettingsLayout({
               )}
             </BreadcrumbList>
           </Breadcrumb>
+
+          {/* Add logout to header for smaller screens */}
+          <button
+            onClick={handleLogout}
+            className="ml-auto flex items-center gap-1 text-red-500 hover:text-red-600"
+          >
+            <LogOut size={16} />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
         </header>
 
         {/* Mobile navigation bar */}

@@ -42,8 +42,6 @@ export default function MaterialsSettingsPage() {
       file_path: null,
     });
 
-  const [materialLinks, setMaterialLinks] = useState<DbCourseMaterial[]>([]);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -161,41 +159,6 @@ export default function MaterialsSettingsPage() {
     console.log("Selected semester:", selectedSemester);
   }, [selectedCourse, selectedSemester]);
 
-  // Debug effect to monitor material links
-  useEffect(() => {
-    console.log("Current material links:", materialLinks);
-  }, [materialLinks]);
-
-  // Define fetchCourseMaterials outside the useEffect
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const fetchCourseMaterials = async () => {
-    if (!subjects.length) return;
-
-    try {
-      // Fetch materials for all subjects
-      const materialsPromises = subjects.map((subject) =>
-        fetch(`/api/course-materials?subjectId=${subject.subjectId}`)
-          .then((res) => res.json())
-          .catch((err) => {
-            console.error(
-              `Error fetching materials for subject ${subject.subjectId}:`,
-              err
-            );
-            return [];
-          })
-      );
-
-      const materialsArrays = await Promise.all(materialsPromises);
-      const allMaterials = materialsArrays.flat();
-
-      console.log(`Fetched ${allMaterials.length} total materials`);
-      setMaterialLinks(allMaterials);
-    } catch (error) {
-      console.error("Error fetching course materials:", error);
-      setMaterialLinks([]);
-    }
-  };
-
   // Function to refresh materials for a specific subject
   const refreshSubjectMaterials = async (subjectId: number) => {
     try {
@@ -208,15 +171,6 @@ export default function MaterialsSettingsPage() {
       console.log(
         `Fetched ${materials.length} materials for subject ${subjectId}`
       );
-
-      // Update the materialLinks state by replacing materials for this subject
-      // and keeping materials for other subjects
-      setMaterialLinks((prev) => {
-        const filteredMaterials = prev.filter(
-          (m) => m.subject_id_fk !== subjectId
-        );
-        return [...filteredMaterials, ...materials];
-      });
 
       // Also force the UI to update by changing the subject reference
       setSubjects(
@@ -233,11 +187,6 @@ export default function MaterialsSettingsPage() {
       );
     }
   };
-
-  // Add new effect to fetch course materials when subjects change
-  useEffect(() => {
-    fetchCourseMaterials();
-  }, [fetchCourseMaterials, subjects]);
 
   const openAddModal = (subjectId: number) => {
     setIsEditing(false);
@@ -331,19 +280,34 @@ export default function MaterialsSettingsPage() {
 
   const handleDeleteMaterial = async (materialId: number) => {
     try {
+      console.log(`Deleting material with ID: ${materialId}`);
+
       const response = await fetch(`/api/course-materials?id=${materialId}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete material");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          `Failed to delete material: ${
+            errorData.message || response.statusText
+          }`
+        );
       }
 
-      // Update the materialLinks state by removing the deleted material
-      setMaterialLinks((prev) => prev.filter((m) => m.id !== materialId));
+      const result = await response.json().catch(() => ({}));
+      console.log("Delete operation successful:", result);
+
+      // Since we don't directly know which subject this material belongs to,
+      // we need to refresh all subjects' materials
+      if (subjects && subjects.length > 0) {
+        // Find the subject that contains this material
+        for (const subject of subjects) {
+          await refreshSubjectMaterials(subject.subjectId);
+        }
+      }
     } catch (error) {
       console.error("Error deleting material:", error);
-      // You might want to show a toast notification here
     }
   };
 
@@ -415,13 +379,12 @@ export default function MaterialsSettingsPage() {
                     {subjects.length > 0 ? (
                       subjects.map((subject, index) => (
                         <SubjectRow
-                          key={`subject-${subject.subjectId}`}
+                          key={`subject-${subject.subjectId}-${index}`}
                           index={index}
                           subject={subject}
                           openAddModal={openAddModal}
                           openEditModal={openEditModal}
                           onDeleteMaterial={handleDeleteMaterial}
-                          materials={materialLinks}
                         />
                       ))
                     ) : (
