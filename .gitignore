@@ -11,7 +11,7 @@
 !.yarn/versions
 
 /data
-course-materials
+/course-materials
 
 # testing
 /coverage
