@@ -676,7 +676,7 @@ export default function HomeContent() {
                     </div>
                     <p className="text-gray-700 font-medium">All caught up!</p>
                     <p className="text-gray-500 text-sm mt-1">
-                      You don't have any notifications right now.
+                      You don&apos;t have any notifications right now.
                     </p>
                     <button
                       onClick={() => setNotifications(allNotifications)}
