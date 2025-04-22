@@ -27,7 +27,7 @@ export function NavUser() {
 
   const handleLogout = async () => {
     await logout();
-    router.push("/sign-in");
+    router.push("/");
   };
 
   const initials = user?.name
