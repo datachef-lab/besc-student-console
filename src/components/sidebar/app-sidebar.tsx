@@ -5,10 +5,16 @@ import {
   BookOpen,
   //   Frame,
   GalleryVerticalEnd,
+  House,
+  IndianRupee,
+  Library,
   Map,
+  NotebookPen,
   PieChart,
+  ScrollText,
   Settings2,
   SquareTerminal,
+  User,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -23,69 +29,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
-
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "BESC",
-      logo: GalleryVerticalEnd,
-      plan: "#student-console",
-    },
-  ],
-  navMain: [
-    {
-      title: "Home",
-      url: "/dashboard",
-      icon: SquareTerminal, // Or use HomeIcon if available
-      isActive: true,
-    },
-    // {
-    //   title: "Attendance",
-    //   url: "/dashboard/attendance",
-    //   icon: Frame, // Represents a structured view (calendar-style)
-    // },
-    {
-      title: "Exams",
-      url: "/dashboard/exams",
-      icon: PieChart, // Represents stats or progress
-    },
-    // {
-    //   title: "Assignments",
-    //   url: "/dashboard/assignments",
-    //   icon: BookOpen, // Represents coursework
-    // },
-    {
-      title: "Documents",
-      url: "/dashboard/documents",
-      icon: Map, // Represents academic navigation
-    },
-    {
-      title: "Admission & Fees",
-      url: "/dashboard/admission-fees",
-      icon: GalleryVerticalEnd, // Represents forms or structured data
-    },
-    {
-      title: "Library",
-      url: "/dashboard/library",
-      icon: BookOpen, // Represents books
-    },
-    {
-      title: "Profile",
-      url: "/dashboard/profile",
-      icon: Settings2, // Represents settings
-    },
-  ],
-  projects: [],
-};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
@@ -95,7 +40,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Home",
       url: "/dashboard",
-      icon: SquareTerminal,
+      icon: House,
       isActive: pathname === "/dashboard",
     },
     // {
@@ -107,7 +52,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Exams",
       url: "/dashboard/exams",
-      icon: PieChart,
+      icon: NotebookPen,
       isActive: pathname === "/dashboard/exams",
     },
     {
@@ -119,36 +64,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Documents",
       url: "/dashboard/documents",
-      icon: Map,
+      icon: ScrollText,
       isActive: pathname === "/dashboard/documents",
     },
     {
       title: "Enrollment & Fees",
       url: "/dashboard/enrollment-fees",
-      icon: GalleryVerticalEnd,
+      icon: IndianRupee,
       isActive: pathname === "/dashboard/enrollment-fees",
     },
     {
       title: "Library",
       url: "/dashboard/library",
-      icon: BookOpen,
+      icon: Library,
       isActive: pathname === "/dashboard/library",
     },
     {
       title: "Profile",
       url: "/dashboard/profile",
-      icon: Settings2,
+      icon: User,
       isActive: pathname === "/dashboard/profile",
     },
   ];
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar variant="floating" collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              size="lg"
+              size="xl"
               className="cursor-default hover:bg-transparent"
             >
               <div className="flex aspect-square w-8 h-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
@@ -171,12 +116,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMainItems} />
-        {data.projects.length > 0 && <NavProjects projects={data.projects} />}
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 }

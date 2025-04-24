@@ -67,8 +67,8 @@ export function NavMain({
               }}
               className={cn(
                 "group/collapsible overflow-hidden rounded-lg transition-all duration-200",
-                isHovered && "bg-zinc-100/50 dark:bg-zinc-800/20",
-                item.isActive && "bg-zinc-100 dark:bg-zinc-800/30"
+                isHovered && "bg-sidebar-accent/50",
+                item.isActive && "bg-sidebar-accent/70"
               )}
             >
               <SidebarMenuItem>
@@ -80,30 +80,38 @@ export function NavMain({
                     onMouseLeave={() => setHoveredItem(null)}
                     className={cn(
                       "relative group flex items-center px-3 py-2.5 rounded-md transition-all duration-200",
-                      "hover:text-indigo-600 dark:hover:text-indigo-400",
+                      "hover:text-white",
                       item.isActive &&
-                        "bg-gradient-to-r from-indigo-50 to-transparent dark:from-indigo-950/30 dark:to-transparent text-indigo-600 dark:text-indigo-400 font-medium"
+                        "bg-gradient-to-r from-sidebar-accent to-transparent text-white font-medium"
                     )}
                   >
                     {item.icon && (
                       <motion.div
                         className={cn(
-                          "mr-3 text-zinc-500 dark:text-zinc-400 transition-colors",
+                          "mr-3 text-white/80 transition-colors group-data-[collapsible=icon]:mr-0 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:z-20",
                           item.isActive &&
-                            "text-indigo-500 dark:text-indigo-400"
+                            "text-white group-data-[collapsible=icon]:text-white group-data-[collapsible=icon]:drop-shadow-md"
                         )}
-                        whileHover={{ rotate: 5, scale: 1.1 }}
+                        whileHover={{
+                          rotate: 5,
+                          scale: 1.1,
+                          transition: {
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 10,
+                          },
+                        }}
                         transition={{
                           type: "spring",
                           stiffness: 400,
                           damping: 10,
                         }}
                       >
-                        <item.icon className="h-5 w-5" />
+                        <item.icon className="h-5 w-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5" />
                       </motion.div>
                     )}
 
-                    <span className="flex-1 truncate font-medium">
+                    <span className="flex-1 truncate font-medium group-data-[collapsible=icon]:hidden">
                       {item.title}
                     </span>
 
@@ -111,22 +119,35 @@ export function NavMain({
                       <motion.div
                         animate={{ rotate: isExpanded ? 90 : 0 }}
                         transition={{ duration: 0.2 }}
-                        className="ml-auto opacity-60"
+                        className="ml-auto opacity-60 group-data-[collapsible=icon]:hidden"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </motion.div>
                     )}
 
                     {item.isActive && (
-                      <motion.div
-                        className="absolute left-0 top-0 w-1 h-full bg-indigo-500 dark:bg-indigo-400 rounded-full"
-                        layoutId="activeIndicator"
-                        transition={{
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 30,
-                        }}
-                      />
+                      <>
+                        {/* Active indicator for expanded sidebar */}
+                        <motion.div
+                          className="absolute left-0 top-0 w-1 h-full bg-white rounded-full group-data-[collapsible=icon]:hidden"
+                          layoutId="activeIndicator"
+                          transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 30,
+                          }}
+                        />
+                        {/* Active indicator for collapsed sidebar */}
+                        <motion.div
+                          className="absolute inset-0 bg-sidebar-accent rounded-md opacity-0 group-data-[collapsible=icon]:opacity-100 group-data-[collapsible=icon]:border-2 group-data-[collapsible=icon]:border-white -z-10"
+                          layoutId="activeIndicatorCollapsed"
+                          transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 30,
+                          }}
+                        />
+                      </>
                     )}
                   </SidebarMenuButton>
                 </Link>
