@@ -24,6 +24,8 @@ import {
   Layers3,
   Users,
   ClipboardList,
+  Code,
+  Database,
 } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -259,7 +261,7 @@ export default function HomeContent() {
   });
 
   return (
-    <div className="p-4 md:p-8 space-y-8 bg-white min-h-screen">
+    <div className="space-y-8 min-h-screen">
       {/* Refined Welcome Banner */}
       <div className="relative bg-[#925FE2] text-white rounded-2xl shadow-lg overflow-hidden p-6 md:p-8 flex items-center justify-between min-h-[180px]">
         <div className="z-10 relative">
@@ -382,35 +384,29 @@ export default function HomeContent() {
               {enrolledCourses.map((course) => (
                 <Card
                   key={course.id}
-                  className="border-0 shadow-md rounded-2xl overflow-hidden bg-[#F3F0FF] hover:shadow-lg transition-shadow group p-5"
+                  className="border-0 shadow-md rounded-2xl overflow-hidden bg-white hover:bg-[#F9F7FF] hover:shadow-lg transition-all group p-5"
                 >
                   <CardContent className="flex flex-col items-start text-left relative min-h-[160px] p-0">
-                    <div className="absolute top-0 right-0 opacity-80">
-                      {course.id === 1 && (
-                        <Image
-                          src="/placeholders/oop-icon.svg"
-                          alt=""
-                          width={80}
-                          height={80}
-                          className="object-contain translate-x-2 -translate-y-2 opacity-50"
-                        />
-                      )}
-                      {course.id === 2 && (
-                        <Image
-                          src="/placeholders/dbms-icon.svg"
-                          alt=""
-                          width={80}
-                          height={80}
-                          className="object-contain translate-x-2 -translate-y-2 opacity-50"
-                        />
-                      )}
+                    <div className="w-12 h-12 mb-3 rounded-lg flex items-center justify-center bg-[#F3F0FF]">
+                      <div className="w-6 h-6 text-[#925FE2]">
+                        {course.id % 3 === 0 ? (
+                          <BookOpen className="w-6 h-6" />
+                        ) : course.id % 3 === 1 ? (
+                          <Code className="w-6 h-6" />
+                        ) : (
+                          <Database className="w-6 h-6" />
+                        )}
+                      </div>
                     </div>
-                    <h3 className="text-base font-medium text-[#7644C4] mb-2 mt-1 pr-10 z-10 leading-tight">
+                    <span className="text-xs font-medium text-gray-500 mb-1">
+                      Course Code: CS{course.id + 100}
+                    </span>
+                    <h3 className="text-base font-medium text-gray-800 mb-2 leading-tight">
                       {course.title}
                     </h3>
                     <Button
                       size="sm"
-                      className="w-auto mt-auto z-10 bg-[#925FE2] hover:bg-purple-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-md"
+                      className="w-auto mt-auto z-10 bg-[#925FE2] hover:bg-purple-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm"
                     >
                       View
                     </Button>
