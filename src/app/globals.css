@@ -50,14 +50,14 @@
 
     --radius: 0.75rem;
 
-    /* Sidebar styling - purple theme */
-    --sidebar-background: 263 69% 63%;
+    /* Sidebar styling - purple theme matching welcome header (#925FE2) */
+    --sidebar-background: 263 80% 60%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 263 69% 63%;
+    --sidebar-primary: 263 80% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 263 69% 75%;
+    --sidebar-accent: 263 80% 70%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 263 69% 55%;
+    --sidebar-border: 263 80% 50%;
     --sidebar-ring: 263 80% 70%;
 
     /* Notification color filters for SVG icons */
@@ -122,15 +122,15 @@
     --chart-4: 25 95% 60%;
     --chart-5: 275 95% 60%;
 
-    /* Sidebar styling - dark purple theme */
-    --sidebar-background: 263 69% 40%;
+    /* Sidebar styling - dark purple theme matching welcome header (#925FE2) */
+    --sidebar-background: 263 80% 60%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 263 69% 40%;
+    --sidebar-primary: 263 80% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 263 69% 50%;
+    --sidebar-accent: 263 80% 70%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 263 69% 30%;
-    --sidebar-ring: 263 80% 60%;
+    --sidebar-border: 263 80% 50%;
+    --sidebar-ring: 263 80% 70%;
   }
 }
 
@@ -255,4 +255,9 @@
 .text-white img {
   filter: invert(100%) sepia(100%) saturate(0%) hue-rotate(297deg)
     brightness(103%) contrast(102%);
+}
+
+/* Override filter for images that should not have filters applied */
+.no-filter img {
+  filter: none !important;
 }

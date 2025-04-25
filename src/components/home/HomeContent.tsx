@@ -16,11 +16,18 @@ import {
   LineChart,
   ArrowRight,
   Calendar,
-  PieChart,
+  PieChart as LucidePieChart,
   Star,
+  Link as LinkIcon,
+  BookCopy,
+  TrendingUp,
+  Layers3,
+  Users,
+  ClipboardList,
 } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useStudent } from "@/context/StudentContext";
 import {
   Sheet,
@@ -29,6 +36,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 type NotificationType = "assignment" | "quiz" | "class" | "exam" | "feedback";
 type NotificationColor =
@@ -184,615 +192,308 @@ export default function HomeContent() {
 
   if (!student) return null;
 
+  // Placeholder data based on the image - replace with actual data
+  const basicInfo = {
+    credits: 40,
+    cgpa: 8.3,
+    semester: "3rd",
+  };
+
+  const attendancePercent = 90.5;
+  const attendanceData = [
+    { name: "Present", value: attendancePercent },
+    { name: "Absent", value: 100 - attendancePercent },
+  ];
+  const ATTENDANCE_COLORS = ["#8b5cf6", "#f3e8ff"]; // Purple, Light Purple Background
+
+  const courseInstructors = [
+    {
+      id: 1,
+      name: "Instructor 1",
+      img: "https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg",
+    },
+    {
+      id: 2,
+      name: "Instructor 2",
+      img: "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
+    },
+    {
+      id: 3,
+      name: "Instructor 3",
+      img: "https://t4.ftcdn.net/jpg/03/83/25/83/360_F_383258331_D8imaEMl8Q3lf7EKU2Pi78Cn0R7KkW9o.jpg",
+    },
+  ];
+
+  const dailyNotices = [
+    {
+      id: 1,
+      title: "Prelim payment due",
+      description: "Sorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    },
+    {
+      id: 2,
+      title: "Exam schedule",
+      description:
+        "Norem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.",
+    },
+  ];
+
+  const enrolledCourses = [
+    {
+      id: 1,
+      title: "Object oriented programming",
+      icon: "/placeholders/oop-icon.svg",
+    },
+    {
+      id: 2,
+      title: "Fundamentals of database systems",
+      icon: "/placeholders/dbms-icon.svg",
+    },
+  ];
+
+  const today = new Date();
+  const dateString = today.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
-    <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br">
-      {/* Welcome Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="border shadow-lg overflow-hidden bg-purple-50 text-purple-900 h-full border-purple-200">
-            <CardContent className="p-6 h-full flex flex-col">
-              <div className="flex flex-col md:flex-row gap-5 items-center md:items-start flex-grow">
-                <div className="flex-shrink-0 relative z-10">
-                  <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-purple-200 shadow-xl flex items-center justify-center backdrop-blur-sm">
-                    {student?.imgFile ? (
-                      <Image
-                        src={`https://74.207.233.48:8443/hrclIRP/studentimages/${student?.imgFile}`}
-                        alt={student?.name || "student-profile-image"}
-                        className="h-full w-full object-cover [filter:none]"
-                        width={96}
-                        height={96}
-                      />
-                    ) : (
-                      <User className="h-12 w-12 text-white" />
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex-grow text-center md:text-left">
-                  <div className="space-y-1">
-                    <h1 className="text-3xl font-bold">
-                      Hello, {student?.name?.split(" ")[0]}
-                    </h1>
-                    <p className="text-purple-600">
-                      Welcome to your student dashboard
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
-                      <Badge className="bg-purple-200 text-purple-800 hover:bg-purple-300 border border-purple-300 px-3 py-1.5">
-                        {!student?.alumni ? "Current Student" : "Alumni"}
-                      </Badge>
-                      {!student?.alumni && (
-                        <Badge className="bg-purple-300 text-purple-800 hover:bg-purple-400 border border-purple-400 px-3 py-1.5">
-                          Semester 4
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Stats Summary */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-auto pt-6 border-t border-purple-100">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">85%</div>
-                  <div className="text-xs text-purple-600">Attendance</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">8.2</div>
-                  <div className="text-xs text-purple-600">Current SGPA</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">4</div>
-                  <div className="text-xs text-purple-600">Pending Tasks</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">76</div>
-                  <div className="text-xs text-purple-600">Credits Earned</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <div className="p-4 md:p-8 space-y-8 bg-white min-h-screen">
+      {/* Refined Welcome Banner */}
+      <div className="relative bg-[#925FE2] text-white rounded-2xl shadow-lg overflow-hidden p-6 md:p-8 flex items-center justify-between min-h-[180px]">
+        <div className="z-10 relative">
+          <div className="flex items-center gap-2 text-sm font-medium opacity-90 mb-2">
+            <Calendar className="w-4 h-4" />
+            <span>{dateString}</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-1">
+            Welcome back, {student?.name?.split(" ")[0] || "Student"}!!
+          </h1>
+          <p className="text-base opacity-90 max-w-md">
+            Always stay updated in your student portal
+          </p>
         </div>
-
-        {/* Quick Actions Card */}
-        <div className="lg:col-span-1">
-          <Card className="border-0 shadow-lg h-full bg-white flex flex-col">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium text-gray-800">
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 flex-grow flex flex-col justify-between">
-              <a
-                href="/dashboard/course-catalogue"
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-purple-50 hover:border-purple-200 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center">
-                    <BookOpen className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <span className="font-medium text-gray-800">
-                    Course Material
-                  </span>
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-600 transition-colors" />
-              </a>
-
-              <a
-                href="/dashboard/exams"
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-purple-50 hover:border-purple-200 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center">
-                    <GraduationCap className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <span className="font-medium text-gray-800">
-                    Exam Results
-                  </span>
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-600 transition-colors" />
-              </a>
-
-              <a
-                href="/academics"
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-purple-50 hover:border-purple-200 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Calendar className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <span className="font-medium text-gray-800">
-                    Class Schedule
-                  </span>
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-600 transition-colors" />
-              </a>
-
-              <a
-                href="/academics"
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-purple-50 hover:border-purple-200 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <span className="font-medium text-gray-800">Assignments</span>
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-600 transition-colors" />
-              </a>
-            </CardContent>
-          </Card>
+        <div className="absolute right-0 bottom-0 top-0 -mr-10 md:mr-0 z-0 hidden sm:flex items-center justify-center no-filter">
+          <Image
+            src="/illustrations/welcome-illustration.png"
+            alt="Welcome Illustration"
+            width={320}
+            height={220}
+            className="object-contain h-full w-auto"
+            priority
+            style={{ filter: "none" }}
+          />
         </div>
       </div>
 
-      {/* Student Information & Academic Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Student Information */}
-        <Card className="border-0 shadow-lg overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b pb-3">
-            <CardTitle className="text-base text-gray-800 flex items-center">
-              <User className="h-4 w-4 mr-2 text-purple-600" />
-              Student Information
+      {/* Main Content Grid - Adjusted gap */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1.1fr] gap-6">
+        {/* Column 1: Basic Info - Refined Styling */}
+        <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
+          <CardHeader className="pb-3 pt-5 px-6">
+            <CardTitle className="text-base font-semibold text-black">
+              Basic Info
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-5 space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-3">
-                Registration Details
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Roll No</span>
-                  <span className="text-sm font-medium text-gray-900 bg-purple-50 px-3 py-1 rounded-full">
-                    {student?.univlstexmrollno || "-"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Registration No</span>
-                  <span className="text-sm font-medium text-gray-900 bg-purple-50 px-3 py-1 rounded-full">
-                    {student?.univregno || "-"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Class Roll No</span>
-                  <span className="text-sm font-medium text-gray-900 bg-purple-50 px-3 py-1 rounded-full">
-                    {student?.rollNumber || "-"}
-                  </span>
-                </div>
-              </div>
+          <CardContent className="px-6 pb-6 pt-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500 text-base">Credits</span>
+              <span className="font-semibold text-gray-800 text-xl">
+                {basicInfo.credits}
+              </span>
             </div>
-
-            <div className="pt-2 border-t border-gray-100">
-              <h3 className="text-sm font-medium text-gray-500 mb-3">
-                Course Information
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Framework</span>
-                  <span className="text-sm font-medium text-gray-900 bg-purple-50 px-3 py-1 rounded-full">
-                    {!student?.coursetype || student?.coursetype === "NA"
-                      ? "-"
-                      : student?.coursetype}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Course</span>
-                  <span className="text-sm font-medium text-gray-900 bg-purple-50 px-3 py-1 rounded-full">
-                    {batches ? batches[batches.length - 1]?.coursename : "-"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Section</span>
-                  <span className="text-sm font-medium text-gray-900 bg-purple-50 px-3 py-1 rounded-full">
-                    {(batches && batches[batches.length - 1]?.sectionName) ||
-                      "-"}
-                  </span>
-                </div>
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500 text-base">CGPA</span>
+              <span className="font-semibold text-gray-800 text-xl">
+                {basicInfo.cgpa}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500 text-base">Semester</span>
+              <span className="font-semibold text-gray-800 text-xl">
+                {basicInfo.semester}
+              </span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Academic Performance */}
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card className="border-0 shadow-lg overflow-hidden bg-white hover:shadow-xl transition-all">
-            <CardContent className="p-0 flex flex-col h-full">
-              <div className="p-5 flex-grow">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Attendance
-                    </h3>
-                    <p className="text-sm text-gray-500">Current Semester</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-purple-600" />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-3xl font-bold text-gray-900">
-                      85%
-                    </span>
-                    <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border-0">
-                      Good Standing
-                    </Badge>
-                  </div>
-                  <div className="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
-                    <div
-                      className="bg-purple-600 h-full rounded-full"
-                      style={{ width: "85%" }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-gray-500">
-                    <span>Min Required: 75%</span>
-                    <span>Your Attendance: 85%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-purple-50 p-3 border-t border-purple-100">
-                <a
-                  href="#"
-                  className="text-sm text-purple-700 font-medium hover:text-purple-900 flex items-center justify-center"
+        {/* Column 2: Attendance - Implemented Recharts Pie Chart */}
+        <Card className="border-0 shadow-md rounded-2xl overflow-hidden flex flex-col items-center justify-center p-6 bg-white">
+          <h3 className="text-base font-semibold text-black mb-4">
+            Attendance
+          </h3>
+          <div className="relative w-[180px] h-[180px] flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={attendanceData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={0}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  paddingAngle={0}
+                  dataKey="value"
+                  startAngle={90}
+                  endAngle={450}
                 >
-                  View Detailed Attendance{" "}
-                  <ArrowRight className="ml-1 h-3 w-3" />
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg overflow-hidden bg-white hover:shadow-xl transition-all">
-            <CardContent className="p-0 flex flex-col h-full">
-              <div className="p-5 flex-grow">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Current SGPA
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Last Semester Results
-                    </p>
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                    <LineChart className="h-5 w-5 text-purple-600" />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-3xl font-bold text-gray-900">
-                      8.2
-                    </span>
-                    <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200 border-0">
-                      First Division
-                    </Badge>
-                  </div>
-                  <div className="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
-                    <div
-                      className="bg-purple-600 h-full rounded-full"
-                      style={{ width: "82%" }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-gray-500">
-                    <span>Class Average: 7.5</span>
-                    <span>Your SGPA: 8.2</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-purple-50 p-3 border-t border-purple-100">
-                <a
-                  href="#"
-                  className="text-sm text-purple-700 font-medium hover:text-purple-900 flex items-center justify-center"
-                >
-                  View Academic History <ArrowRight className="ml-1 h-3 w-3" />
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg overflow-hidden bg-white hover:shadow-xl transition-all">
-            <CardContent className="p-0 flex flex-col h-full">
-              <div className="p-5 flex-grow">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Assignments
-                    </h3>
-                    <p className="text-sm text-gray-500">Pending Tasks</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-purple-600" />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-3xl font-bold text-gray-900">4</span>
-                    <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-0">
-                      Due Soon
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-700">Data Structures</span>
-                      <span className="text-gray-500">Due in 2 days</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-700">Web Development</span>
-                      <span className="text-gray-500">Due in 3 days</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-purple-50 p-3 border-t border-purple-100">
-                <a
-                  href="#"
-                  className="text-sm text-purple-700 font-medium hover:text-purple-900 flex items-center justify-center"
-                >
-                  View All Assignments <ArrowRight className="ml-1 h-3 w-3" />
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg overflow-hidden bg-white hover:shadow-xl transition-all">
-            <CardContent className="p-0 flex flex-col h-full">
-              <div className="p-5 flex-grow">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Credits
-                    </h3>
-                    <p className="text-sm text-gray-500">Course Progress</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Award className="h-5 w-5 text-purple-600" />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-3xl font-bold text-gray-900">76</span>
-                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 border-0">
-                      63% Complete
-                    </Badge>
-                  </div>
-                  <div className="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
-                    <div
-                      className="bg-purple-600 h-full rounded-full"
-                      style={{ width: "63%" }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-gray-500">
-                    <span>Credits Earned: 76</span>
-                    <span>Total Required: 120</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-purple-50 p-3 border-t border-purple-100">
-                <a
-                  href="#"
-                  className="text-sm text-purple-700 font-medium hover:text-purple-900 flex items-center justify-center"
-                >
-                  View Credit Details <ArrowRight className="ml-1 h-3 w-3" />
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Notifications and Upcoming Events */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Notifications */}
-        <div className="lg:col-span-2">
-          <Card className="border-0 shadow-lg overflow-hidden h-full">
-            <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b pb-3">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-base text-gray-800 flex items-center">
-                  <Bell className="h-4 w-4 mr-2 text-purple-600" />
-                  Recent Notifications
-                </CardTitle>
-                <button
-                  onClick={() => setNotificationSheetOpen(true)}
-                  className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full hover:bg-purple-200 transition-colors flex items-center gap-1"
-                >
-                  View all
-                  {notifications.filter((n) => !n.isRead).length > 0 && (
-                    <span className="bg-purple-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-                      {notifications.filter((n) => !n.isRead).length}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-5 space-y-3 flex flex-col h-full">
-              <div className="space-y-3 flex-grow">
-                {notifications
-                  .filter((n) => !n.isRead)
-                  .slice(0, 4)
-                  .map((notification) => (
-                    <div
-                      key={notification.id}
-                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                    >
-                      <div
-                        className={`w-10 h-10 rounded-full bg-${notification.color}-100 flex items-center justify-center flex-shrink-0`}
-                      >
-                        {notification.type === "assignment" && (
-                          <FileText
-                            className={`h-5 w-5 text-${notification.color}-600`}
-                          />
-                        )}
-                        {notification.type === "quiz" && (
-                          <BookOpen
-                            className={`h-5 w-5 text-${notification.color}-600`}
-                          />
-                        )}
-                        {notification.type === "class" && (
-                          <GraduationCap
-                            className={`h-5 w-5 text-${notification.color}-600`}
-                          />
-                        )}
-                        {notification.type === "exam" && (
-                          <PieChart
-                            className={`h-5 w-5 text-${notification.color}-600`}
-                          />
-                        )}
-                        {notification.type === "feedback" && (
-                          <Star
-                            className={`h-5 w-5 text-${notification.color}-600`}
-                          />
-                        )}
-                      </div>
-                      <div className="flex-grow">
-                        <div className="flex justify-between items-start">
-                          <h4 className="text-sm font-medium text-gray-900">
-                            {notification.title}
-                          </h4>
-                          <span
-                            className={`text-xs bg-${notification.color}-50 text-${notification.color}-700 px-2 py-0.5 rounded-full`}
-                          >
-                            {notification.time}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {notification.course}
-                        </p>
-                      </div>
-                    </div>
+                  {attendanceData.map((_, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={ATTENDANCE_COLORS[index % ATTENDANCE_COLORS.length]}
+                      stroke={index === 0 ? "#6b3c96" : "none"}
+                      strokeWidth={index === 0 ? 2 : 0}
+                    />
                   ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute flex items-center justify-center inset-0">
+              <span className="text-3xl font-bold text-white">
+                {attendancePercent}%
+              </span>
+            </div>
+          </div>
+        </Card>
 
-                {notifications.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                      <Bell className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <p className="text-gray-700 font-medium">All caught up!</p>
-                    <p className="text-gray-500 text-sm mt-1">
-                      You don&apos;t have any notifications right now.
-                    </p>
-                    <button
-                      onClick={() => setNotifications(allNotifications)}
-                      className="mt-4 px-4 py-2 text-sm font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-lg transition-colors"
-                    >
-                      Restore notifications
-                    </button>
-                  </div>
-                )}
-              </div>
+        {/* Column 3: Course Instructors & Daily Notice - Refined Styling */}
+        <div className="space-y-6">
+          {/* Course Instructors Card */}
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
+            <CardHeader className="pt-5 pb-2 px-6 flex flex-row items-center justify-between">
+              <CardTitle className="text-base font-semibold text-black">
+                Course Instructors
+              </CardTitle>
+              <Button
+                variant="link"
+                size="sm"
+                className="text-[#925FE2] hover:text-purple-800 h-auto p-0 text-sm font-medium"
+              >
+                See all
+              </Button>
+            </CardHeader>
+            <CardContent className="px-6 pt-2 pb-5 flex items-center space-x-[-10px]">
+              {courseInstructors.slice(0, 5).map((instructor) => (
+                <Image
+                  key={instructor.id}
+                  src={instructor.img}
+                  alt={instructor.name}
+                  width={56}
+                  height={56}
+                  className="rounded-full border-3 border-white object-cover shadow-sm"
+                />
+              ))}
+              {courseInstructors.length === 0 && (
+                <p className="text-sm text-gray-500 pl-2">
+                  No instructors listed.
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
-              {notifications.length > 0 && (
-                <div className="pt-3 mt-2 border-t border-gray-100 text-center">
-                  <button
-                    onClick={() => setNotificationSheetOpen(true)}
-                    className="inline-flex items-center gap-2 text-sm text-purple-700 font-medium hover:text-purple-900 bg-purple-50 px-4 py-2 rounded-lg transition-colors"
+          {/* Daily Notice Card */}
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
+            <CardHeader className="pt-5 pb-2 px-6 flex flex-row items-center justify-between">
+              <CardTitle className="text-base font-semibold text-black">
+                Daily Notice
+              </CardTitle>
+              <Button
+                variant="link"
+                size="sm"
+                className="text-[#925FE2] hover:text-purple-800 h-auto p-0 text-sm font-medium"
+              >
+                See all
+              </Button>
+            </CardHeader>
+            <CardContent className="px-6 pt-2 pb-5 space-y-4">
+              {dailyNotices.slice(0, 2).map((notice) => (
+                <div key={notice.id}>
+                  <h4 className="font-semibold text-sm text-black mb-1">
+                    {notice.title}
+                  </h4>
+                  <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">
+                    {notice.description}
+                  </p>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="text-[#925FE2] hover:text-purple-800 h-auto p-0 mt-1 text-xs font-medium"
                   >
-                    View all notifications
-                    {notifications.filter((n) => !n.isRead).length > 0 && (
-                      <span className="bg-purple-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                        {notifications.filter((n) => !n.isRead).length}
-                      </span>
-                    )}
-                  </button>
+                    See more
+                  </Button>
                 </div>
+              ))}
+              {dailyNotices.length === 0 && (
+                <p className="text-sm text-gray-500">No notices today.</p>
               )}
             </CardContent>
           </Card>
         </div>
+      </div>
 
-        {/* Upcoming Events */}
-        <div className="lg:col-span-1">
-          <Card className="border-0 shadow-lg overflow-hidden h-full">
-            <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b pb-3">
-              <CardTitle className="text-base text-gray-800 flex items-center">
-                <CalendarCheck className="h-4 w-4 mr-2 text-purple-600" />
-                Upcoming Events
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 flex flex-col h-full">
-              <div className="space-y-3 flex-grow">
-                <div className="flex gap-3 items-start">
-                  <div className="w-12 h-12 rounded-lg bg-purple-100 flex flex-col items-center justify-center flex-shrink-0 border border-purple-200">
-                    <span className="text-xs font-bold text-purple-700">
-                      MAY
-                    </span>
-                    <span className="text-base font-bold text-purple-700">
-                      15
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900">
-                      Mid-semester Examination
-                    </h4>
-                    <p className="text-xs text-gray-600 flex items-center mt-1">
-                      <MapPin className="h-3 w-3 mr-1 text-gray-400" />
-                      Computer Science Department
-                    </p>
-                  </div>
+      {/* Enrolled Courses Section - Refined Styling */}
+      <div className="pt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Enrolled Courses
+          </h2>
+          <Button
+            variant="link"
+            size="sm"
+            className="text-[#925FE2] hover:text-purple-800 text-sm font-medium"
+          >
+            See all
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+          {enrolledCourses.map((course) => (
+            <Card
+              key={course.id}
+              className="border-0 shadow-md rounded-2xl overflow-hidden bg-[#F3F0FF] hover:shadow-lg transition-shadow group p-5"
+            >
+              <CardContent className="flex flex-col items-start text-left relative min-h-[160px] p-0">
+                <div className="absolute top-0 right-0 opacity-80">
+                  {course.id === 1 && (
+                    <Image
+                      src="/placeholders/oop-icon.svg"
+                      alt=""
+                      width={80}
+                      height={80}
+                      className="object-contain translate-x-2 -translate-y-2 opacity-50"
+                    />
+                  )}
+                  {course.id === 2 && (
+                    <Image
+                      src="/placeholders/dbms-icon.svg"
+                      alt=""
+                      width={80}
+                      height={80}
+                      className="object-contain translate-x-2 -translate-y-2 opacity-50"
+                    />
+                  )}
                 </div>
-
-                <div className="flex gap-3 items-start">
-                  <div className="w-12 h-12 rounded-lg bg-purple-100 flex flex-col items-center justify-center flex-shrink-0 border border-purple-200">
-                    <span className="text-xs font-bold text-purple-700">
-                      MAY
-                    </span>
-                    <span className="text-base font-bold text-purple-700">
-                      20
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900">
-                      Guest Lecture Series
-                    </h4>
-                    <p className="text-xs text-gray-600 flex items-center mt-1">
-                      <MapPin className="h-3 w-3 mr-1 text-gray-400" />
-                      Main Auditorium, 10:00 AM
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 items-start">
-                  <div className="w-12 h-12 rounded-lg bg-purple-100 flex flex-col items-center justify-center flex-shrink-0 border border-purple-200">
-                    <span className="text-xs font-bold text-purple-700">
-                      JUN
-                    </span>
-                    <span className="text-base font-bold text-purple-700">
-                      05
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900">
-                      Project Submission Deadline
-                    </h4>
-                    <p className="text-xs text-gray-600 flex items-center mt-1">
-                      <MapPin className="h-3 w-3 mr-1 text-gray-400" />
-                      All departments
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-3 mt-2 border-t border-gray-100 text-center">
-                <a
-                  href="#"
-                  className="inline-block text-sm text-purple-700 font-medium hover:text-purple-900 bg-purple-50 px-4 py-2 rounded-lg transition-colors"
+                <h3 className="text-base font-medium text-[#7644C4] mb-2 mt-1 pr-10 z-10 leading-tight">
+                  {course.title}
+                </h3>
+                <Button
+                  size="sm"
+                  className="w-auto mt-auto z-10 bg-[#925FE2] hover:bg-purple-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-md"
                 >
-                  View full calendar
-                </a>
-              </div>
-            </CardContent>
-          </Card>
+                  View
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+          {enrolledCourses.length === 0 && (
+            <p className="text-sm text-gray-500 col-span-full text-center py-6">
+              No courses enrolled.
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Notifications Sheet */}
+      {/* Notifications Sheet - Kept as is, assuming styling is acceptable */}
       <Sheet
         open={notificationSheetOpen}
         onOpenChange={setNotificationSheetOpen}
