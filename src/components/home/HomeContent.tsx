@@ -287,77 +287,146 @@ export default function HomeContent() {
         </div>
       </div>
 
-      {/* Main Content Grid - Adjusted gap */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1.1fr] gap-6">
-        {/* Column 1: Basic Info - Refined Styling */}
-        <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
-          <CardHeader className="pb-3 pt-5 px-6">
-            <CardTitle className="text-base font-semibold text-black">
-              Basic Info
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-6 pb-6 pt-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500 text-base">Credits</span>
-              <span className="font-semibold text-gray-800 text-xl">
-                {basicInfo.credits}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500 text-base">CGPA</span>
-              <span className="font-semibold text-gray-800 text-xl">
-                {basicInfo.cgpa}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500 text-base">Semester</span>
-              <span className="font-semibold text-gray-800 text-xl">
-                {basicInfo.semester}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Main Content Grid with nested grid structure */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1.1fr] gap-6">
+        {/* Left Column with nested grid */}
+        <div className="space-y-6">
+          {/* Row 1: Basic Info and Attendance */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Basic Info Card */}
+            <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
+              <CardHeader className="pb-3 pt-5 px-6">
+                <CardTitle className="text-base font-semibold text-black">
+                  Basic Info
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 pb-6 pt-2 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-base">Credits</span>
+                  <span className="font-semibold text-gray-800 text-xl">
+                    {basicInfo.credits}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-base">CGPA</span>
+                  <span className="font-semibold text-gray-800 text-xl">
+                    {basicInfo.cgpa}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-base">Semester</span>
+                  <span className="font-semibold text-gray-800 text-xl">
+                    {basicInfo.semester}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Column 2: Attendance - Implemented Recharts Pie Chart */}
-        <Card className="border-0 shadow-md rounded-2xl overflow-hidden flex flex-col items-center justify-center p-6 bg-white">
-          <h3 className="text-base font-semibold text-black mb-4">
-            Attendance
-          </h3>
-          <div className="relative w-[180px] h-[180px] flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={attendanceData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={0}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  paddingAngle={0}
-                  dataKey="value"
-                  startAngle={90}
-                  endAngle={450}
+            {/* Attendance Card */}
+            <Card className="border-0 shadow-md rounded-2xl overflow-hidden flex flex-col items-center justify-center p-6 bg-white">
+              <h3 className="text-base font-semibold text-black mb-4">
+                Attendance
+              </h3>
+              <div className="relative w-[180px] h-[180px] flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={attendanceData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={0}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      paddingAngle={0}
+                      dataKey="value"
+                      startAngle={90}
+                      endAngle={450}
+                    >
+                      {attendanceData.map((_, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={
+                            ATTENDANCE_COLORS[index % ATTENDANCE_COLORS.length]
+                          }
+                          stroke={index === 0 ? "#6b3c96" : "none"}
+                          strokeWidth={index === 0 ? 2 : 0}
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute flex items-center justify-center inset-0">
+                  <span className="text-3xl font-bold text-white">
+                    {attendancePercent}%
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Row 2: Enrolled Courses */}
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Enrolled Courses
+              </h2>
+              <Button
+                variant="link"
+                size="sm"
+                className="text-[#925FE2] hover:text-purple-800 text-sm font-medium"
+              >
+                See all
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {enrolledCourses.map((course) => (
+                <Card
+                  key={course.id}
+                  className="border-0 shadow-md rounded-2xl overflow-hidden bg-[#F3F0FF] hover:shadow-lg transition-shadow group p-5"
                 >
-                  {attendanceData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={ATTENDANCE_COLORS[index % ATTENDANCE_COLORS.length]}
-                      stroke={index === 0 ? "#6b3c96" : "none"}
-                      strokeWidth={index === 0 ? 2 : 0}
-                    />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute flex items-center justify-center inset-0">
-              <span className="text-3xl font-bold text-white">
-                {attendancePercent}%
-              </span>
+                  <CardContent className="flex flex-col items-start text-left relative min-h-[160px] p-0">
+                    <div className="absolute top-0 right-0 opacity-80">
+                      {course.id === 1 && (
+                        <Image
+                          src="/placeholders/oop-icon.svg"
+                          alt=""
+                          width={80}
+                          height={80}
+                          className="object-contain translate-x-2 -translate-y-2 opacity-50"
+                        />
+                      )}
+                      {course.id === 2 && (
+                        <Image
+                          src="/placeholders/dbms-icon.svg"
+                          alt=""
+                          width={80}
+                          height={80}
+                          className="object-contain translate-x-2 -translate-y-2 opacity-50"
+                        />
+                      )}
+                    </div>
+                    <h3 className="text-base font-medium text-[#7644C4] mb-2 mt-1 pr-10 z-10 leading-tight">
+                      {course.title}
+                    </h3>
+                    <Button
+                      size="sm"
+                      className="w-auto mt-auto z-10 bg-[#925FE2] hover:bg-purple-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-md"
+                    >
+                      View
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+              {enrolledCourses.length === 0 && (
+                <p className="text-sm text-gray-500 col-span-full text-center py-6">
+                  No courses enrolled.
+                </p>
+              )}
             </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Column 3: Course Instructors & Daily Notice - Refined Styling */}
+        {/* Right Column: Course Instructors & Daily Notice */}
         <div className="space-y-6">
           {/* Course Instructors Card */}
           <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
@@ -432,68 +501,7 @@ export default function HomeContent() {
         </div>
       </div>
 
-      {/* Enrolled Courses Section - Refined Styling */}
-      <div className="pt-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Enrolled Courses
-          </h2>
-          <Button
-            variant="link"
-            size="sm"
-            className="text-[#925FE2] hover:text-purple-800 text-sm font-medium"
-          >
-            See all
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-          {enrolledCourses.map((course) => (
-            <Card
-              key={course.id}
-              className="border-0 shadow-md rounded-2xl overflow-hidden bg-[#F3F0FF] hover:shadow-lg transition-shadow group p-5"
-            >
-              <CardContent className="flex flex-col items-start text-left relative min-h-[160px] p-0">
-                <div className="absolute top-0 right-0 opacity-80">
-                  {course.id === 1 && (
-                    <Image
-                      src="/placeholders/oop-icon.svg"
-                      alt=""
-                      width={80}
-                      height={80}
-                      className="object-contain translate-x-2 -translate-y-2 opacity-50"
-                    />
-                  )}
-                  {course.id === 2 && (
-                    <Image
-                      src="/placeholders/dbms-icon.svg"
-                      alt=""
-                      width={80}
-                      height={80}
-                      className="object-contain translate-x-2 -translate-y-2 opacity-50"
-                    />
-                  )}
-                </div>
-                <h3 className="text-base font-medium text-[#7644C4] mb-2 mt-1 pr-10 z-10 leading-tight">
-                  {course.title}
-                </h3>
-                <Button
-                  size="sm"
-                  className="w-auto mt-auto z-10 bg-[#925FE2] hover:bg-purple-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-md"
-                >
-                  View
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-          {enrolledCourses.length === 0 && (
-            <p className="text-sm text-gray-500 col-span-full text-center py-6">
-              No courses enrolled.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Notifications Sheet - Kept as is, assuming styling is acceptable */}
+      {/* Notifications Sheet */}
       <Sheet
         open={notificationSheetOpen}
         onOpenChange={setNotificationSheetOpen}
