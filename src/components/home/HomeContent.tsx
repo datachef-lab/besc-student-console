@@ -5,30 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BookOpen,
   GraduationCap,
-  User,
-  CalendarCheck,
   FileText,
-  Clock,
-  Award,
   Bell,
-  MapPin,
   X,
-  LineChart,
-  ArrowRight,
   Calendar,
-  PieChart as LucidePieChart,
   Star,
-  Link as LinkIcon,
-  BookCopy,
-  TrendingUp,
-  Layers3,
   Users,
   ClipboardList,
   Code,
   Database,
 } from "lucide-react";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useStudent } from "@/context/StudentContext";
 import {
@@ -38,7 +25,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 type NotificationType = "assignment" | "quiz" | "class" | "exam" | "feedback";
 type NotificationColor =
@@ -135,6 +121,38 @@ const allNotifications: Notification[] = [
   },
 ];
 
+// Map Tailwind color classes for notifications
+const colorMap = {
+  blue: {
+    bg: "bg-blue-100",
+    text: "text-blue-700",
+  },
+  emerald: {
+    bg: "bg-emerald-100",
+    text: "text-emerald-700",
+  },
+  amber: {
+    bg: "bg-amber-100",
+    text: "text-amber-700",
+  },
+  rose: {
+    bg: "bg-rose-100",
+    text: "text-rose-700",
+  },
+  indigo: {
+    bg: "bg-indigo-100",
+    text: "text-indigo-700",
+  },
+  violet: {
+    bg: "bg-violet-100",
+    text: "text-violet-700",
+  },
+  red: {
+    bg: "bg-red-100",
+    text: "text-red-700",
+  },
+};
+
 type NotificationFilter = "all" | "unread" | "important";
 
 export default function HomeContent() {
@@ -194,37 +212,12 @@ export default function HomeContent() {
 
   if (!student) return null;
 
-  // Placeholder data based on the image - replace with actual data
+  // Basic info data
   const basicInfo = {
     credits: 40,
     cgpa: 8.3,
     semester: "3rd",
   };
-
-  const attendancePercent = 90.5;
-  const attendanceData = [
-    { name: "Present", value: attendancePercent },
-    { name: "Absent", value: 100 - attendancePercent },
-  ];
-  const ATTENDANCE_COLORS = ["#8b5cf6", "#f3e8ff"]; // Purple, Light Purple Background
-
-  const courseInstructors = [
-    {
-      id: 1,
-      name: "Instructor 1",
-      img: "https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg",
-    },
-    {
-      id: 2,
-      name: "Instructor 2",
-      img: "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-    },
-    {
-      id: 3,
-      name: "Instructor 3",
-      img: "https://t4.ftcdn.net/jpg/03/83/25/83/360_F_383258331_D8imaEMl8Q3lf7EKU2Pi78Cn0R7KkW9o.jpg",
-    },
-  ];
 
   const dailyNotices = [
     {
@@ -251,6 +244,16 @@ export default function HomeContent() {
       title: "Fundamentals of database systems",
       icon: "/placeholders/dbms-icon.svg",
     },
+    {
+      id: 3,
+      title: "Computer Networks",
+      icon: "/placeholders/network-icon.svg",
+    },
+    {
+      id: 4,
+      title: "Web Development",
+      icon: "/placeholders/web-icon.svg",
+    },
   ];
 
   const today = new Date();
@@ -262,7 +265,7 @@ export default function HomeContent() {
 
   return (
     <div className="space-y-8 min-h-screen">
-      {/* Refined Welcome Banner */}
+      {/* Welcome Banner with Notification Button */}
       <div className="relative bg-[#925FE2] text-white rounded-2xl shadow-lg overflow-hidden p-6 md:p-8 flex items-center justify-between min-h-[180px]">
         <div className="z-10 relative">
           <div className="flex items-center gap-2 text-sm font-medium opacity-90 mb-2">
@@ -270,13 +273,29 @@ export default function HomeContent() {
             <span>{dateString}</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-1">
-            Welcome back, {student?.name?.split(" ")[0] || "Student"}!!
+            Welcome back, {student?.name?.split(" ")[0] || "Student"}!
           </h1>
           <p className="text-base opacity-90 max-w-md">
             Always stay updated in your student portal
           </p>
+
+          {/* Notification button - Moved to be part of the welcome text section */}
+          <button
+            onClick={() => setNotificationSheetOpen(true)}
+            className="mt-4 bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors inline-flex items-center gap-2"
+            aria-label="View notifications"
+          >
+            <Bell className="w-5 h-5 text-white" />
+            <span className="text-white text-sm">Notifications</span>
+            {notifications.filter((n) => !n.isRead).length > 0 && (
+              <span className="bg-red-500 text-white text-xs min-w-5 h-5 rounded-full flex items-center justify-center px-1">
+                {notifications.filter((n) => !n.isRead).length}
+              </span>
+            )}
+          </button>
         </div>
-        <div className="absolute right-0 bottom-0 top-0 -mr-10 md:mr-0 z-0 hidden sm:flex items-center justify-center no-filter">
+
+        <div className="absolute right-0 bottom-0 top-0 -mr-10 md:mr-0 z-0 hidden sm:flex items-center justify-center">
           <Image
             src="/illustrations/welcome-illustration.png"
             alt="Welcome Illustration"
@@ -289,13 +308,12 @@ export default function HomeContent() {
         </div>
       </div>
 
-      {/* Main Content Grid with nested grid structure */}
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1.1fr] gap-6">
-        {/* Left Column with nested grid */}
+        {/* Left Column */}
         <div className="space-y-6">
-          {/* Row 1: Basic Info and Attendance */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Basic Info Card */}
+          {/* Basic Info */}
+          <div className="mb-6">
             <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
               <CardHeader className="pb-3 pt-5 px-6">
                 <CardTitle className="text-base font-semibold text-black">
@@ -323,50 +341,9 @@ export default function HomeContent() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Attendance Card */}
-            <Card className="border-0 shadow-md rounded-2xl overflow-hidden flex flex-col items-center justify-center p-6 bg-white">
-              <h3 className="text-base font-semibold text-black mb-4">
-                Attendance
-              </h3>
-              <div className="relative w-[180px] h-[180px] flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={attendanceData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={0}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      paddingAngle={0}
-                      dataKey="value"
-                      startAngle={90}
-                      endAngle={450}
-                    >
-                      {attendanceData.map((_, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={
-                            ATTENDANCE_COLORS[index % ATTENDANCE_COLORS.length]
-                          }
-                          stroke={index === 0 ? "#6b3c96" : "none"}
-                          strokeWidth={index === 0 ? 2 : 0}
-                        />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute flex items-center justify-center inset-0">
-                  <span className="text-3xl font-bold text-white">
-                    {attendancePercent}%
-                  </span>
-                </div>
-              </div>
-            </Card>
           </div>
 
-          {/* Row 2: Enrolled Courses */}
+          {/* Enrolled Courses */}
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-gray-800">
@@ -381,7 +358,7 @@ export default function HomeContent() {
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {enrolledCourses.map((course) => (
+              {enrolledCourses.slice(0, 4).map((course) => (
                 <Card
                   key={course.id}
                   className="border-0 shadow-md rounded-2xl overflow-hidden bg-white hover:bg-[#F9F7FF] hover:shadow-lg transition-all group p-5"
@@ -422,41 +399,8 @@ export default function HomeContent() {
           </div>
         </div>
 
-        {/* Right Column: Course Instructors & Daily Notice */}
+        {/* Right Column */}
         <div className="space-y-6">
-          {/* Course Instructors Card */}
-          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
-            <CardHeader className="pt-5 pb-2 px-6 flex flex-row items-center justify-between">
-              <CardTitle className="text-base font-semibold text-black">
-                Course Instructors
-              </CardTitle>
-              <Button
-                variant="link"
-                size="sm"
-                className="text-[#925FE2] hover:text-purple-800 h-auto p-0 text-sm font-medium"
-              >
-                See all
-              </Button>
-            </CardHeader>
-            <CardContent className="px-6 pt-2 pb-5 flex items-center space-x-[-10px]">
-              {courseInstructors.slice(0, 5).map((instructor) => (
-                <Image
-                  key={instructor.id}
-                  src={instructor.img}
-                  alt={instructor.name}
-                  width={56}
-                  height={56}
-                  className="rounded-full border-3 border-white object-cover shadow-sm"
-                />
-              ))}
-              {courseInstructors.length === 0 && (
-                <p className="text-sm text-gray-500 pl-2">
-                  No instructors listed.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
           {/* Daily Notice Card */}
           <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
             <CardHeader className="pt-5 pb-2 px-6 flex flex-row items-center justify-between">
@@ -575,21 +519,10 @@ export default function HomeContent() {
 
           <div className="p-6 space-y-4">
             {filteredNotifications.map((notification) => {
-              const getNotificationIconSrc = (type: NotificationType) => {
-                switch (type) {
-                  case "assignment":
-                    return "/illustrations/notifications/assignment.svg";
-                  case "quiz":
-                    return "/illustrations/notifications/quiz.svg";
-                  case "class":
-                    return "/illustrations/notifications/class.svg";
-                  case "exam":
-                    return "/illustrations/notifications/exam.svg";
-                  case "feedback":
-                    return "/illustrations/notifications/feedback.svg";
-                  default:
-                    return "/illustrations/notifications/assignment.svg";
-                }
+              // Get color classes based on notification color
+              const colorClasses = colorMap[notification.color] || {
+                bg: "bg-gray-100",
+                text: "text-gray-700",
               };
 
               return (
@@ -602,14 +535,27 @@ export default function HomeContent() {
                 >
                   <div className="flex gap-4">
                     <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-${notification.color}-100`}
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${colorClasses.bg}`}
                     >
-                      <Image
-                        src={getNotificationIconSrc(notification.type)}
-                        alt={notification.type}
-                        width={24}
-                        height={24}
-                      />
+                      {notification.type === "assignment" && (
+                        <FileText className={`w-5 h-5 ${colorClasses.text}`} />
+                      )}
+                      {notification.type === "quiz" && (
+                        <ClipboardList
+                          className={`w-5 h-5 ${colorClasses.text}`}
+                        />
+                      )}
+                      {notification.type === "class" && (
+                        <Users className={`w-5 h-5 ${colorClasses.text}`} />
+                      )}
+                      {notification.type === "exam" && (
+                        <GraduationCap
+                          className={`w-5 h-5 ${colorClasses.text}`}
+                        />
+                      )}
+                      {notification.type === "feedback" && (
+                        <Star className={`w-5 h-5 ${colorClasses.text}`} />
+                      )}
                     </div>
 
                     <div className="flex-grow">
@@ -637,7 +583,7 @@ export default function HomeContent() {
 
                         <div className="flex items-start gap-2">
                           <span
-                            className={`text-xs whitespace-nowrap bg-${notification.color}-50 text-${notification.color}-700 px-2 py-0.5 rounded-full`}
+                            className={`text-xs whitespace-nowrap ${colorClasses.bg} ${colorClasses.text} px-2 py-0.5 rounded-full`}
                           >
                             {notification.time}
                           </span>
@@ -682,15 +628,10 @@ export default function HomeContent() {
               );
             })}
 
-            {notifications.length === 0 && (
+            {filteredNotifications.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-50 rounded-lg">
                 <div className="w-20 h-20 rounded-full bg-white shadow-sm flex items-center justify-center mb-4">
-                  <Image
-                    src="/illustrations/notifications/empty.svg"
-                    alt="No notifications"
-                    width={40}
-                    height={40}
-                  />
+                  <Bell className="w-8 h-8 text-gray-300" />
                 </div>
                 <p className="text-gray-800 font-medium text-lg mb-2">
                   All caught up!

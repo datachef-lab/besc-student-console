@@ -3,23 +3,15 @@
 import * as React from "react";
 import {
   BookOpen,
-  //   Frame,
-  GalleryVerticalEnd,
   House,
   IndianRupee,
   Library,
-  Map,
   NotebookPen,
-  PieChart,
   ScrollText,
-  Settings2,
-  SquareTerminal,
-  User,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { NavMain } from "@/components/sidebar/nav-main";
-import { NavProjects } from "@/components/sidebar/nav-projects";
 import { NavUser } from "@/components/sidebar/nav-user";
 import {
   Sidebar,
@@ -38,7 +30,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Define navigation items
   const navMainItems = [
     {
-      title: "Home",
+      title: "Dashboard",
       url: "/dashboard",
       icon: House,
       isActive: pathname === "/dashboard",
