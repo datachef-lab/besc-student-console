@@ -26,6 +26,7 @@ import Image from "next/image";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  console.log("pathname:", pathname);
 
   // Define navigation items
   const navMainItems = [
@@ -101,7 +102,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMainItems} />
+        <NavMain items={navMainItems} className="p-0" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
