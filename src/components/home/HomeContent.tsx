@@ -214,6 +214,9 @@ export default function HomeContent() {
 
   // Basic info data
   const basicInfo = {
+    cuReg: "0101220728",
+    cuRoll: "123456",
+    course: "BCOM",
     credits: 40,
     cgpa: 8.3,
     semester: "3rd",
@@ -322,6 +325,22 @@ export default function HomeContent() {
               </CardHeader>
               <CardContent className="px-6 pb-6 pt-2 space-y-4">
                 <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-base">
+                    CU Registration Number
+                  </span>
+                  <span className="font-semibold text-gray-800 text-xl">
+                    {basicInfo.cuReg}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-base">
+                    CU Roll Number
+                  </span>
+                  <span className="font-semibold text-gray-800 text-xl">
+                    {basicInfo.cuRoll}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
                   <span className="text-gray-500 text-base">Credits</span>
                   <span className="font-semibold text-gray-800 text-xl">
                     {basicInfo.credits}
@@ -331,6 +350,12 @@ export default function HomeContent() {
                   <span className="text-gray-500 text-base">CGPA</span>
                   <span className="font-semibold text-gray-800 text-xl">
                     {basicInfo.cgpa}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-base">Course</span>
+                  <span className="font-semibold text-gray-800 text-xl">
+                    {basicInfo.course}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
