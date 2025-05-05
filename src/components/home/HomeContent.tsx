@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BookOpen,
@@ -156,12 +156,58 @@ const colorMap = {
 type NotificationFilter = "all" | "unread" | "important";
 
 export default function HomeContent() {
-  const { student, loading, batches } = useStudent();
+  const { student, loading, batches, error, refetch } = useStudent();
   const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
   const [notifications, setNotifications] = useState(allNotifications);
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>("all");
+  const [isContentReady, setIsContentReady] = useState(false);
 
-  
+  // Stream determination logic
+  let stream;
+  if (batches && batches.length > 0) {
+    switch (batches[0].coursename.trim().toUpperCase()) {
+      case "BBA":
+        stream = "BBA";
+        break;
+      case "B.COM":
+        stream = "BCOM";
+        break;
+      case "B.A.":
+        stream = "BA";
+        break;
+      case "B.SC":
+        stream = "BSC";
+        break;
+      case "B.SC.":
+        stream = "BSC";
+        break;
+      case "B.ED":
+        stream = "BED";
+        break;
+      case "M.COM":
+        stream = "MCOM";
+        break;
+      case "M.A.":
+        stream = "MA";
+        break;
+      default:
+        stream = "BCOM";
+        break;
+    }
+  }
+
+  // Prevent flickering by holding the loading state until content is ready
+  useEffect(() => {
+    if (!loading && student && batches && batches.length > 0) {
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        setIsContentReady(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else if (loading) {
+      setIsContentReady(false);
+    }
+  }, [loading, student, batches]);
 
   const dismissNotification = (id: number) => {
     setNotifications(
@@ -205,36 +251,132 @@ export default function HomeContent() {
 
   const filteredNotifications = getFilteredNotifications();
 
-  if (loading)
+  // Show loading UI until content is fully ready
+  if (loading || !isContentReady) {
     return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-purple-300 border-t-purple-600"></div>
+      <div className="flex flex-col items-center justify-center h-[80vh] bg-white/95 rounded-xl p-8 shadow-sm">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-pulse w-24 h-24 rounded-full bg-purple-100 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
+          </div>
+          <p className="text-purple-800 font-medium animate-pulse">
+            Loading your dashboard...
+          </p>
+          <p className="text-gray-500 text-sm text-center max-w-md">
+            Please wait while we retrieve your latest information
+          </p>
+        </div>
       </div>
     );
+  }
 
-  if (!student) return null;
+  // Various error states (these will only show after loading is complete)
 
-  // Basic info data
-  const basicInfo = {
-    cuReg: "0101220728",
-    cuRoll: "123456",
-    course: "BCOM",
-    credits: 40,
-    cgpa: 8.3,
-    semester: "3rd",
-  };
+  // Error handling for API errors
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] bg-white rounded-xl p-8 shadow-sm">
+        <div className="flex flex-col items-center gap-4 max-w-md text-center">
+          <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
+            <X className="h-10 w-10 text-red-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900">
+            Something went wrong
+          </h3>
+          <p className="text-gray-600">{error}</p>
+          <Button
+            className="mt-4 bg-purple-600 hover:bg-purple-700 text-white"
+            onClick={() => refetch()}
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Error handling for missing data
+  if (!student) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] bg-white rounded-xl p-8 shadow-sm">
+        <div className="flex flex-col items-center gap-4 max-w-md text-center">
+          <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
+            <X className="h-10 w-10 text-red-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900">
+            Unable to load student data
+          </h3>
+          <p className="text-gray-600">
+            We couldn&apos;t retrieve your student information. Please try
+            refreshing the page or contact support if the problem persists.
+          </p>
+          <Button
+            className="mt-4 bg-purple-600 hover:bg-purple-700 text-white"
+            onClick={() => refetch()}
+          >
+            Refresh Data
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Error handling for missing batches
+  if (!batches || batches.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] bg-white rounded-xl p-8 shadow-sm">
+        <div className="flex flex-col items-center gap-4 max-w-md text-center">
+          <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center">
+            <Users className="h-10 w-10 text-amber-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900">
+            No course enrollment found
+          </h3>
+          <p className="text-gray-600">
+            We couldn&apos;t find any course enrollment information for your
+            account. If you believe this is an error, please contact the
+            administration.
+          </p>
+          <Button
+            className="mt-4 bg-purple-600 hover:bg-purple-700 text-white"
+            onClick={() => refetch()}
+          >
+            Refresh Data
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const dailyNotices = [
     {
       id: 1,
       title: "Prelim payment due",
-      description: "Sorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      description:
+        "Next semester fee payment is due by May 15. Please visit the fees section to complete your payment and avoid late fees.",
+      link: "/dashboard/fees",
     },
     {
       id: 2,
       title: "Exam schedule",
       description:
-        "Norem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.",
+        "Check the exams section for your personal schedule and room assignments.",
+      link: "/dashboard/exams",
+    },
+    {
+      id: 3,
+      title: "Course Catalogue",
+      description:
+        "Registration for next semester courses opens on May 20. Review available courses and plan your schedule in advance.",
+      link: "/dashboard/course-catalogue",
+    },
+    {
+      id: 4,
+      title: "College Website",
+      description:
+        "The college website has been updated with the latest academic calendar and campus news. Visit for more details.",
+      link: "https://www.bhawanipurcollege.edu.in",
+      external: true,
     },
   ];
 
@@ -331,7 +473,7 @@ export default function HomeContent() {
                     CU Registration Number
                   </span>
                   <span className="font-semibold text-gray-800 text-xl">
-                    {basicInfo.cuReg}
+                    {student?.univregno}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -339,31 +481,39 @@ export default function HomeContent() {
                     CU Roll Number
                   </span>
                   <span className="font-semibold text-gray-800 text-xl">
-                    {basicInfo.cuRoll}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">Credits</span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {basicInfo.credits}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">CGPA</span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {basicInfo.cgpa}
+                    {student?.univlstexmrollno}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500 text-base">Course</span>
                   <span className="font-semibold text-gray-800 text-xl">
-                    {basicInfo.course}
+                    {batches[0].coursename} ({stream})
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">Semester</span>
+                  <span className="text-gray-500 text-base">
+                    Semester
+                    <span className="text-red-500">
+                      {student.active ? "*" : ""}
+                    </span>
+                  </span>
                   <span className="font-semibold text-gray-800 text-xl">
-                    {basicInfo.semester}
+                    {batches[batches.length - 1].classname}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-base">
+                    Shift & Session
+                  </span>
+                  <span className="font-semibold text-gray-800 text-xl">
+                    {batches[batches.length - 1].shiftName || "N/A"} |{" "}
+                    {batches[batches.length - 1].sessionName || "N/A"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-base">Section</span>
+                  <span className="font-semibold text-gray-800 text-xl">
+                    {batches[batches.length - 1].sectionName || "N/A"}
                   </span>
                 </div>
               </CardContent>
@@ -443,21 +593,30 @@ export default function HomeContent() {
               </Button>
             </CardHeader>
             <CardContent className="px-6 pt-2 pb-5 space-y-4">
-              {dailyNotices.slice(0, 2).map((notice) => (
-                <div key={notice.id}>
-                  <h4 className="font-semibold text-sm text-black mb-1">
+              {dailyNotices.slice(0, 4).map((notice) => (
+                <div
+                  key={notice.id}
+                  className="border-b border-gray-100 pb-3 last:border-0 last:pb-0 group hover:bg-gray-50 rounded-lg transition-all cursor-pointer -mx-2 px-2"
+                  onClick={() => {
+                    if (notice.external) {
+                      window.open(notice.link, "_blank", "noopener,noreferrer");
+                    } else if (notice.link) {
+                      window.location.href = notice.link;
+                    }
+                  }}
+                >
+                  <h4 className="font-semibold text-sm text-black mb-1 group-hover:text-purple-700 transition-colors">
                     {notice.title}
                   </h4>
-                  <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">
+                  <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
                     {notice.description}
                   </p>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="text-[#925FE2] hover:text-purple-800 h-auto p-0 mt-1 text-xs font-medium"
-                  >
-                    See more
-                  </Button>
+                  {notice.external && (
+                    <div className="flex items-center gap-1 mt-1.5 text-xs text-purple-600">
+                      <FileText className="h-3 w-3" />
+                      <span>External link</span>
+                    </div>
+                  )}
                 </div>
               ))}
               {dailyNotices.length === 0 && (
