@@ -12,7 +12,7 @@ export async function findExamsByStudentId(studentId: number) {
             em.sessid,
             sess.sessionName,
             em.examdate,
-            em.fromhr,
+            em.frmhr,
             em.frmmnt,
             em.tohr,
             em.tomnt,
@@ -40,6 +40,7 @@ export async function findExamsByStudentId(studentId: number) {
             AND pl.id = em.paperid
             AND r.id = es.roomid
             AND sess.id = em.sessid
+        ORDER BY em.entrydate desc
         ;`;
     const exams = await query(sqlQuery) as Exam[];
     console.log("exams", exams);

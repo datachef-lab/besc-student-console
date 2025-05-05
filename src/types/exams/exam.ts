@@ -3,7 +3,7 @@ export interface DbExam {
     testid: number;
     classid: number;
     examdate: Date;
-    fromhr: number;
+    frmhr: number;
     frmmnt: number;
     tohr: Date;
     tomnt: Date;
