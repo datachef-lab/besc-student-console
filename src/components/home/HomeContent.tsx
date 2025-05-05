@@ -156,10 +156,12 @@ const colorMap = {
 type NotificationFilter = "all" | "unread" | "important";
 
 export default function HomeContent() {
-  const { student, loading } = useStudent();
+  const { student, loading, batches } = useStudent();
   const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
   const [notifications, setNotifications] = useState(allNotifications);
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>("all");
+
+  
 
   const dismissNotification = (id: number) => {
     setNotifications(

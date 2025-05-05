@@ -74,7 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isActive: pathname === "/dashboard/library",
     },
     {
-      title: "Attendance",
+      title: "Profile",
       url: "/dashboard/profile",
       icon: Settings2,
       isActive: pathname === "/dashboard/profile",
