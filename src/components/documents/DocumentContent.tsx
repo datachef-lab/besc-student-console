@@ -73,8 +73,8 @@ export default function DocumentContent({ scannedDocs }: DocumentContentProps) {
 
     setError(null);
 
-    let stream = "BCOM";
-    switch (batches[0].coursename.trim().toUpperCase()) {
+    let stream;
+    switch (batches[batches.length - 1].coursename.trim().toUpperCase()) {
       case "BBA":
         stream = "BBA";
         break;
