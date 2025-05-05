@@ -413,7 +413,7 @@ export default function HomeContent() {
   return (
     <div className="space-y-8 min-h-screen">
       {/* Welcome Banner with Notification Button */}
-      <div className="relative bg-[#925FE2] text-white rounded-2xl shadow-lg overflow-hidden p-6 md:p-8 flex items-center justify-between min-h-[180px]">
+      <div className="relative bg-[#a674fe] text-white rounded-2xl shadow-lg overflow-hidden p-6 md:p-8 flex items-center justify-between min-h-[180px]">
         <div className="z-10 relative">
           <div className="flex items-center gap-2 text-sm font-medium opacity-90 mb-2">
             <Calendar className="w-4 h-4" />
@@ -444,7 +444,11 @@ export default function HomeContent() {
 
         <div className="absolute right-0 bottom-0 top-0 -mr-10 md:mr-0 z-0 hidden sm:flex items-center justify-center">
           <Image
-            src="/illustrations/welcome-illustration.png"
+            src={
+              student?.sexId === 1
+                ? "/illustrations/welcome-illustration-male.png"
+                : "/illustrations/welcome-illustration-female.png"
+            }
             alt="Welcome Illustration"
             width={320}
             height={220}
