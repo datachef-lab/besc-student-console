@@ -8,6 +8,7 @@ import {
   Library,
   NotebookPen,
   ScrollText,
+  Settings2,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -71,6 +72,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/dashboard/library",
       icon: Library,
       isActive: pathname === "/dashboard/library",
+    },
+    {
+      title: "Attendance",
+      url: "/dashboard/profile",
+      icon: Settings2,
+      isActive: pathname === "/dashboard/profile",
     },
   ];
 

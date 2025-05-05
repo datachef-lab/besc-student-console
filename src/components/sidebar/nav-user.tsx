@@ -17,11 +17,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
+import { useStudent } from "@/context/StudentContext";
 
 export function NavUser() {
   const { user, logout } = useAuth();
+  const { student } = useStudent();
   const router = useRouter();
   const { isMobile } = useSidebar();
 
@@ -49,6 +51,11 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1"
             >
               <Avatar className="h-8 w-8 rounded-lg group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:mx-auto">
+                <AvatarImage
+                  src={`https://74.207.233.48:8443/hrclIRP/studentimages/${student?.imgFile}`}
+                  alt={student?.name || "student-profile-image"}
+                />
+
                 <AvatarFallback className="rounded-lg bg-primary text-primary-foreground text-sm group-data-[collapsible=icon]:text-base">
                   {initials}
                 </AvatarFallback>
