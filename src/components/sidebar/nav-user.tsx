@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { LogOut, User, ChevronDown, Settings } from "lucide-react";
+import { LogOut, ChevronDown, Settings } from "lucide-react";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -17,17 +17,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
+import { useStudent } from "@/context/StudentContext";
 
 export function NavUser() {
   const { user, logout } = useAuth();
+  const { student } = useStudent();
   const router = useRouter();
   const { isMobile } = useSidebar();
 
   const handleLogout = async () => {
     await logout();
-    router.push("/sign-in");
+    router.push("/");
   };
 
   const initials = user?.name
@@ -46,14 +48,19 @@ export function NavUser() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback className="rounded-lg bg-primary text-primary-foreground">
+              <Avatar className="h-8 w-8 rounded-lg group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:mx-auto">
+                <AvatarImage
+                  src={`https://74.207.233.48:8443/hrclIRP/studentimages/${student?.imgFile}`}
+                  alt={student?.name || "student-profile-image"}
+                />
+
+                <AvatarFallback className="rounded-lg bg-primary text-primary-foreground text-sm group-data-[collapsible=icon]:text-base">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">
                   {user?.name || "Student"}
                 </span>
@@ -61,7 +68,7 @@ export function NavUser() {
                   {user?.codeNumber || ""}
                 </span>
               </div>
-              <ChevronDown className="ml-auto h-4 w-4" />
+              <ChevronDown className="ml-auto h-4 w-4 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -87,20 +94,18 @@ export function NavUser() {
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              {user?.isAdmin && (
-                <DropdownMenuItem onClick={() => router.push("/settings")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Admin Settings</span>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            {user?.isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => router.push("/settings")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Admin Settings</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>

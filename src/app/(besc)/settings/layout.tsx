@@ -39,7 +39,7 @@ export default function SettingsLayout({
     // Only redirect if auth is finished loading and user is not an admin
     if (!isLoading && user === null) {
       setIsRedirecting(true);
-      router.push("/sign-in");
+      router.push("/");
     } else if (!isLoading && user !== null && !user.isAdmin) {
       setIsRedirecting(true);
       router.push("/dashboard");
@@ -49,7 +49,7 @@ export default function SettingsLayout({
   const handleLogout = async () => {
     try {
       await logout();
-      router.push("/sign-in");
+      router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }

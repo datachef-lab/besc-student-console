@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
 @layer base {
     :root {
         /* Main background - using a deeper blue for better contrast */
@@ -52,15 +50,15 @@
 
         --radius: 0.75rem;
 
-        /* Sidebar styling - more contrast */
-        --sidebar-background: 245 70% 98%;
-        --sidebar-foreground: 224 80% 10%;
-        --sidebar-primary: 245 70% 50%;
+        /* Sidebar styling - purple theme matching welcome header (#925FE2) */
+        --sidebar-background: 263 80% 60%;
+        --sidebar-foreground: 0 0% 100%;
+        --sidebar-primary: 263 80% 60%;
         --sidebar-primary-foreground: 0 0% 100%;
-        --sidebar-accent: 245 70% 95%;
-        --sidebar-accent-foreground: 245 70% 50%;
-        --sidebar-border: 220 30% 85%;
-        --sidebar-ring: 245 70% 50%;
+        --sidebar-accent: 263 80% 70%;
+        --sidebar-accent-foreground: 0 0% 100%;
+        --sidebar-border: 263 80% 50%;
+        --sidebar-ring: 263 80% 70%;
 
         /* Notification color filters for SVG icons */
         --blue-filter: invert(42%) sepia(93%) saturate(1352%) hue-rotate(199deg) brightness(101%) contrast(101%);
@@ -117,19 +115,17 @@
         --chart-4: 25 95% 60%;
         --chart-5: 275 95% 60%;
 
-        /* Sidebar styling - better separation in dark mode */
-        --sidebar-background: 224 50% 6%;
-        --sidebar-foreground: 210 40% 98%;
-        --sidebar-primary: 220 100% 60%;
+        /* Sidebar styling - dark purple theme matching welcome header (#925FE2) */
+        --sidebar-background: 263 80% 60%;
+        --sidebar-foreground: 0 0% 100%;
+        --sidebar-primary: 263 80% 60%;
         --sidebar-primary-foreground: 0 0% 100%;
-        --sidebar-accent: 223 47% 15%;
-        --sidebar-accent-foreground: 210 40% 98%;
-        --sidebar-border: 223 47% 20%;
-        --sidebar-ring: 220 100% 60%;
+        --sidebar-accent: 263 80% 70%;
+        --sidebar-accent-foreground: 0 0% 100%;
+        --sidebar-border: 263 80% 50%;
+        --sidebar-ring: 263 80% 70%;
     }
 }
-
-
 
 @layer base {
     * {
@@ -243,4 +239,54 @@
 
 .text-white img {
     filter: invert(100%) sepia(100%) saturate(0%) hue-rotate(297deg) brightness(103%) contrast(102%);
+}
+
+/* Override filter for images that should not have filters applied */
+.no-filter img {
+    filter: none !important;
+}
+
+/* Add custom styles for active sidebar items */
+@layer components {
+
+    /* Override all border styles for active sidebar items */
+    .group\/collapsible[data-state="open"] {
+        background-color: #eff1f7 !important;
+        border: none !important;
+        border-right: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Target the specific active menu item */
+    [data-active="true"] {
+        background-color: #eff1f7 !important;
+        color: #7e22ce !important;
+        font-weight: bold !important;
+        border: none !important;
+        border-right: 0 !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Make sure all children also have no borders */
+    [data-active="true"] * {
+        --sidebar-accent-foreground: #7e22ce !important;
+        border: none !important;
+        border-right: 0 !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Ensure menu items don't have borders */
+    [data-sidebar="menu-item"] {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Handle any possible element that might have a border */
+    .Collapsible[open] {
+        border: none !important;
+        box-shadow: none !important;
+    }
 }
