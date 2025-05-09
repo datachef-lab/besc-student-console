@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifyRefreshToken, generateTokens, getUserByEmail } from '@/lib/services/auth';
+import { verifyRefreshToken, generateTokens, getUserByEmail, getUserByUid } from '@/lib/services/auth';
 import { Student } from '@/types/academics/student';
 
 export async function GET() {
@@ -19,6 +19,8 @@ export async function GET() {
 
         // Verify refresh token
         const payload = verifyRefreshToken(refreshToken);
+        console.log("in refresh, payload:", payload);
+
         if (!payload) {
             return NextResponse.json(
                 { error: 'Invalid refresh token' },
@@ -28,7 +30,8 @@ export async function GET() {
 
         let user: Student | null = null;
 
-        if (payload.isAdmin) {
+        // Handle both uid (admin) and email (regular users)
+        if (payload.uid === 'admin' || payload.isAdmin) {
             user = {
                 id: 0,
                 name: 'Admin',
@@ -136,21 +139,18 @@ export async function GET() {
                 pos: 0,
                 code: 'ADMIN'
             };
-        } else {
-            // Get user from database
+        } else if (payload.uid) {
+            // Try to get user by uid first (for student users with uid)
+            user = await getUserByUid(payload.uid);
+        } else if (payload.email) {
+            // Fall back to email lookup
             user = await getUserByEmail(payload.email);
-            if (!user) {
-                return NextResponse.json(
-                    { error: 'User not found' },
-                    { status: 404 }
-                );
-            }
         }
 
         if (!user) {
             return NextResponse.json(
-                { error: 'Failed to get user data' },
-                { status: 500 }
+                { error: 'User not found' },
+                { status: 404 }
             );
         }
 
@@ -161,14 +161,25 @@ export async function GET() {
         cookieStore.set('refreshToken', tokens.refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
             path: '/'
         });
 
-        // Return new access token
+        // Return new access token and consistent user data
         return NextResponse.json({
             accessToken: tokens.accessToken,
-            user: user,
+            user: {
+                id: user.id,
+                name: user.name,
+                uid: user.codeNumber,
+                email: user.email || user.institutionalemail,
+                isAdmin: user.isAdmin,
+                isSuspended: user.isSuspended || false,
+                restrictedFeatures: user.restrictedFeatures || []
+            }
+        }, {
+            headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
         console.error('Token refresh error:', error);

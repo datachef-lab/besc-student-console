@@ -88,6 +88,8 @@ export async function POST(req: NextRequest) {
                 institutionalemail: 'admin@example.com',
                 email: 'admin@example.com',
                 isAdmin: true,
+                isSuspended: false,
+                restrictedFeatures: [],
                 // Add required fields with default values
                 mailingPinNo: '',
                 resiPinNo: '',
@@ -196,7 +198,9 @@ export async function POST(req: NextRequest) {
                     name: 'Admin',
                     uid: 'admin',
                     email: 'admin@example.com',
-                    isAdmin: true
+                    isAdmin: true,
+                    isSuspended: false,
+                    restrictedFeatures: []
                 },
                 accessToken: tokens.accessToken,
                 redirectTo: '/settings'
@@ -227,7 +231,9 @@ export async function POST(req: NextRequest) {
                     name: user.name,
                     uid: user.codeNumber,
                     email: user.institutionalemail,
-                    isAdmin: user.isAdmin
+                    isAdmin: user.isAdmin,
+                    isSuspended: user.isSuspended || false,
+                    restrictedFeatures: user.restrictedFeatures || []
                 },
                 accessToken: tokens.accessToken,
                 redirectTo: '/dashboard'

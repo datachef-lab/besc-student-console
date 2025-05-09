@@ -49,6 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     (pathname.startsWith("/dashboard") || pathname.startsWith("/settings"));
 
   const login = (accessToken: string, userData: Student) => {
+    console.log("Login function called, setting access token");
     setAccessToken(accessToken);
     setUser(userData);
   };
@@ -88,10 +89,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user: Student;
       }>("/api/auth/refresh", { withCredentials: true });
 
-      console.log("Token refresh response:", response.data);
-      setAccessToken(response.data.accessToken);
-      setUser(response.data.user);
-      return response.data.accessToken;
+      console.log("Token refresh response received");
+
+      if (response.data && response.data.accessToken) {
+        console.log("Setting refreshed access token");
+        setAccessToken(response.data.accessToken);
+        setUser(response.data.user);
+        return response.data.accessToken;
+      }
+      return null;
     } catch (error) {
       console.error("Failed to refresh token:", error);
       logout();
@@ -100,8 +106,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [logout, isProtectedRoute]);
 
   useEffect(() => {
-    if (!isProtectedRoute) return; // ✅ Skip request if not on protected route
-
     const checkSession = async () => {
       try {
         console.log("Checking existing session...");
@@ -110,14 +114,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           user: Student;
         }>("/api/auth/me", { withCredentials: true });
 
-        console.log("Session check response:", response.data);
-        setAccessToken(response.data.accessToken);
-        // Ensure we have the codeNumber from the user data
-        if (response.data.user) {
-          setUser({
-            ...response.data.user,
-            codeNumber: response.data.user.codeNumber,
-          });
+        console.log("Session check response received");
+
+        if (response.data && response.data.accessToken) {
+          console.log("Setting access token from /api/auth/me");
+          setAccessToken(response.data.accessToken);
+
+          // Ensure we have the codeNumber from the user data
+          if (response.data.user) {
+            setUser({
+              ...response.data.user,
+              codeNumber: response.data.user.codeNumber,
+            });
+          }
         }
       } catch (error) {
         console.log(

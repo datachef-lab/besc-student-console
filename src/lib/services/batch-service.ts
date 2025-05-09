@@ -1,7 +1,7 @@
 "use server";
 
 import { query } from "@/db";
-import { BatchCustom } from "@/types/academics/batch";
+import Batch, { BatchCustom, } from "@/types/academics/batch";
 import { RowDataPacket } from "mysql2";
 
 export async function findAllBatches(page: number = 1, pageSize: number = 10) {
@@ -130,9 +130,9 @@ export async function findBatchesByStudentUid(uid: string): Promise<BatchCustom[
         console.log("Result length:", results.length);
         console.log("First result:", results[0]);
 
-    // Step 3: Format the result
+        // Step 3: Format the result
         if (!results || results.length === 0) {
-        console.log("No batches found for the student.");
+            console.log("No batches found for the student.");
             return []; // Return an empty array if no batches are found
         }
 
@@ -150,10 +150,10 @@ export async function findBatchesByStudentUid(uid: string): Promise<BatchCustom[
                 // Create a new batch
                 batchMap.set(batchKey, {
                     coursename,
-            classname,
-            sectionName,
-            sessionName,
-            shiftName,
+                    classname,
+                    sectionName,
+                    sessionName,
+                    shiftName,
                     papers: []
                 });
             }
@@ -179,12 +179,67 @@ export async function findBatchesByStudentUid(uid: string): Promise<BatchCustom[
     }
 }
 
-// export async function findBatchesOrderByCourse() {
-//     const sqlQuery = `
-//         SELECT
+export async function findBatchesMetadataByCourseId(courseId: number) {
+    const batches: Batch[] = [];
 
-//         FROM
+    const sqlQuery = `
+        SELECT 
+            batch.*,
+            crs.coursename,
+            c.classname,
+            sec.sectionName,
+            sess.sessionName,
+            shft.shiftName
+        FROM 
+            studentpaperlinkingmain AS batch
+        JOIN 
+            course AS crs ON batch.courseid = crs.id
+        JOIN 
+            classes AS c ON batch.classid = c.id
+        JOIN 
+            section AS sec ON batch.sectionid = sec.id
+        JOIN 
+            currentsessionmaster AS sess ON batch.sessionid = sess.id
+        JOIN 
+            shift AS shft ON batch.shiftid = shft.id
+        WHERE 
+            batch.courseId = ${courseId}
+        ORDER BY 
+            batch.sessionId DESC
+    ;`;
 
-//         WHERE
-//     `;
-// }
+    const result = await query<RowDataPacket[]>(sqlQuery) as Batch[];
+
+    for (const tmpBatch of result) {
+        const sqlQuery = `
+        SELECT
+            COUNT(st.id) AS totalCount
+        FROM 
+            studentpersonaldetails st,
+            studentpaperlinkingmain batch,
+            
+            studentpaperlinkingpaperlist paper,
+            
+            studentpaperlinkingstudentlist sl
+
+        WHERE
+            batch.id = ${tmpBatch.id}
+            AND paper.parent_id = ${tmpBatch.id}
+            AND sl.parent_id = paper.id
+            AND sl.studentId = st.id
+    `;
+
+        const { totalCount } = (await query<RowDataPacket[]>(sqlQuery) as { totalCount: number }[])[0];
+
+        if (totalCount > 0) {
+            batches.push(tmpBatch);
+        }
+
+
+    }
+
+
+
+
+    return batches;
+}
