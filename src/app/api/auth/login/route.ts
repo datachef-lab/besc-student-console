@@ -89,6 +89,8 @@ export async function POST(req: NextRequest) {
                 institutionalemail: 'admin@example.com',
                 email: 'admin@example.com',
                 isAdmin: true,
+                isSuspended: false,
+                restrictedFeatures: [],
                 // Add required fields with default values
                 mailingPinNo: '',
                 resiPinNo: '',
