@@ -39,14 +39,24 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { DbStudent } from "@/types/academics/student";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getFilteredRowModel,
+  flexRender,
+  ColumnDef,
+} from "@tanstack/react-table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { StudentAccessControl } from "@/types/academics/access-control";
 
-// Extended type with guaranteed array for restrictedFeatures
-type StudentWithAccess = DbStudent & {
+// Extended type with guaranteed array for restrictedFeatures and isSuspended
+type StudentWithAccess = StudentAccessControl & {
   restrictedFeatures: string[];
   isSuspended?: boolean;
+  imgFile?: string;
 };
 
 // Types for student stats
@@ -67,9 +77,64 @@ function getInitials(name: string): string {
     .substring(0, 2);
 }
 
+// Add a function to compute the status string and badges
+function getStudentStatus(student: StudentWithAccess) {
+  if (student.isSuspended) {
+    return {
+      status: "Suspended",
+      color: "bg-red-100 text-red-700",
+      badges: [],
+    };
+  }
+  const restricted = Array.isArray(student.restrictedFeatures)
+    ? student.restrictedFeatures
+    : typeof student.restrictedFeatures === "string"
+    ? (() => {
+        try {
+          return JSON.parse(student.restrictedFeatures);
+        } catch {
+          return [];
+        }
+      })()
+    : [];
+  let status = "";
+  let color = "";
+  // Check for alumni by leavingdate first
+  if (student.leavingdate && student.leavingdate !== "") {
+    status = "Alumni";
+    color = "bg-purple-100 text-purple-700";
+  } else if (!student.active && !student.alumni) {
+    status = "Dropped Out";
+    color = "bg-gray-100 text-gray-700";
+  } else if (!student.active && student.alumni) {
+    status = "Alumni";
+    color = "bg-purple-100 text-purple-700";
+  } else if (student.active && !student.alumni) {
+    status = "Active";
+    color = "bg-green-100 text-green-700";
+  } else if (student.active && student.alumni) {
+    status = "Supplementary";
+    color = "bg-amber-100 text-amber-700";
+  }
+  const badges = [];
+  if (restricted.includes("library")) badges.push("Library access restricted");
+  if (restricted.includes("documents"))
+    badges.push("Course materials restricted");
+  return { status, color, badges };
+}
+
+// Add a status color and label map for use in the Select
+const statusLabelMap: Record<string, string> = {
+  active: "Active",
+  alumni: "Alumni",
+  supplementary: "Supplementary",
+  droppedout: "Dropped Out",
+  suspended: "Suspended",
+};
+
 export default function AccessControlPage() {
   const { accessToken } = useAuth();
-  const [students, setStudents] = useState<DbStudent[]>([]);
+  const [students, setStudents] = useState<StudentWithAccess[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -151,8 +216,32 @@ export default function AccessControlPage() {
           );
         }
 
-        const data = await response.json();
-        setStudents(data || []);
+        const result = (await response.json()) as {
+          page: number;
+          size: number;
+          totalPages: number;
+          data: StudentAccessControl[];
+        };
+        setStudents(
+          (result.data || []).map((s): StudentWithAccess => {
+            const sWithUnknown = s as unknown;
+            return {
+              ...s,
+              restrictedFeatures: Array.isArray(
+                (sWithUnknown as { restrictedFeatures?: unknown })
+                  .restrictedFeatures
+              )
+                ? (sWithUnknown as { restrictedFeatures: string[] })
+                    .restrictedFeatures
+                : [],
+              isSuspended:
+                (sWithUnknown as { isSuspended?: boolean }).isSuspended ??
+                false,
+              imgFile:
+                (sWithUnknown as { imgFile?: string }).imgFile ?? undefined,
+            };
+          })
+        );
       } catch (err) {
         console.error("Error fetching students:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -208,10 +297,9 @@ export default function AccessControlPage() {
     }
   };
 
-  const openStudentDialog = (student: DbStudent) => {
+  const openStudentDialog = (student: StudentWithAccess) => {
     // Ensure restrictedFeatures is always an array
     let restrictedFeatures: string[] = [];
-
     if (student.restrictedFeatures) {
       if (typeof student.restrictedFeatures === "string") {
         try {
@@ -226,13 +314,160 @@ export default function AccessControlPage() {
         restrictedFeatures = student.restrictedFeatures;
       }
     }
-
     setSelectedStudent({
       ...student,
       restrictedFeatures,
+      leavingdate: student.leavingdate ? String(student.leavingdate) : null,
     });
     setIsDialogOpen(true);
   };
+
+  // Move columns definition here so openStudentDialog is in scope
+  const columns: ColumnDef<StudentWithAccess>[] = [
+    {
+      header: "Name",
+      accessorKey: "name",
+      cell: ({ row }) => {
+        const student = row.original;
+        return (
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-8 w-8 rounded-full">
+              <AvatarImage
+                src={
+                  student.imgFile
+                    ? `https://74.207.233.48:8443/hrclIRP/studentimages/${student.imgFile}`
+                    : undefined
+                }
+                alt={student.name || "student-profile-image"}
+              />
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                {getInitials(student.name || "")}
+              </AvatarFallback>
+            </Avatar>
+            <span>{student.name}</span>
+          </div>
+        );
+      },
+    },
+    {
+      header: "Code",
+      accessorKey: "codeNumber",
+      cell: ({ getValue }) => (
+        <span className="text-xs">{getValue<string>()}</span>
+      ),
+    },
+    {
+      header: "Univ. Reg. No.",
+      accessorKey: "univregno",
+      cell: ({ getValue }) => (
+        <span className="text-xs">{getValue<string>()}</span>
+      ),
+    },
+    {
+      header: "Univ. Roll No.",
+      accessorKey: "univlstexmrollno",
+      cell: ({ getValue }) => (
+        <span className="text-xs">{getValue<string>()}</span>
+      ),
+    },
+    {
+      header: "CU Form No.",
+      accessorKey: "cuformno",
+      cell: ({ getValue }) => (
+        <span className="text-xs">{getValue<string>()}</span>
+      ),
+    },
+    {
+      header: "Email",
+      accessorKey: "institutionalemail",
+      cell: ({ getValue }) => (
+        <span
+          className="text-sm max-w-[180px] truncate"
+          title={getValue<string>()}
+        >
+          {getValue<string>()}
+        </span>
+      ),
+    },
+    {
+      header: "Status",
+      accessorKey: "status",
+      cell: ({ row }) => {
+        const { status, color, badges } = getStudentStatus(row.original);
+        return (
+          <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-200 ${color}`}
+          >
+            {status}
+            {badges.map((badge: string, i: number) => (
+              <span
+                key={i}
+                className="ml-1 px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-800 text-[10px] font-semibold"
+                title={badge}
+              >
+                {badge === "Library access restricted"
+                  ? "Library"
+                  : badge === "Course materials restricted"
+                  ? "Materials"
+                  : badge}
+              </span>
+            ))}
+          </span>
+        );
+      },
+    },
+    {
+      header: "Actions",
+      id: "actions",
+      cell: ({ row }) => (
+        <Button
+          variant="default"
+          size="sm"
+          className="h-8 px-4 hover-scale flex items-center gap-1 shadow"
+          onClick={() => openStudentDialog(row.original)}
+        >
+          <span>Manage</span>
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </Button>
+      ),
+    },
+  ];
+
+  // Table setup
+  const table = useReactTable({
+    data: students,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      globalFilter: searchQuery,
+      pagination: { pageIndex: page - 1, pageSize },
+    },
+    onGlobalFilterChange: setSearchQuery,
+    onPaginationChange: (updater) => {
+      if (typeof updater === "function") {
+        const newState = updater({ pageIndex: page - 1, pageSize });
+        setPage(newState.pageIndex + 1);
+      } else if (typeof updater === "object") {
+        setPage(updater.pageIndex + 1);
+      }
+    },
+    manualPagination: false,
+    manualFiltering: false,
+  });
 
   // Show loading state on initial load
   if (isLoading && students.length === 0) {
@@ -298,8 +533,8 @@ export default function AccessControlPage() {
           type="search"
           placeholder="Search students by name, code, email..."
           className="pl-9 w-full"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={table.getState().globalFilter || ""}
+          onChange={(e) => table.setGlobalFilter(e.target.value)}
         />
         {isLoading && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -312,18 +547,26 @@ export default function AccessControlPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead>Name</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id} className="bg-gray-50">
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="text-left">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
             </TableHeader>
             <TableBody>
-              {students.length === 0 ? (
+              {table.getRowModel().rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="text-center py-10"
+                  >
                     <UserX className="h-10 w-10 text-muted-foreground/40 mx-auto mb-2" />
                     <p className="text-muted-foreground text-sm">
                       {searchQuery.trim() !== ""
@@ -333,75 +576,23 @@ export default function AccessControlPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                students.map((student) => (
-                  <TableRow key={student.id} className="hover:bg-gray-50">
-                    <TableCell className="font-medium">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-8 w-8 rounded-full">
-                          <AvatarImage
-                            src={`https://74.207.233.48:8443/hrclIRP/studentimages/${student.imgFile}`}
-                            alt={student.name || "student-profile-image"}
-                          />
-                          <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                            {getInitials(student.name || "")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{student.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {student.codeNumber}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {student.institutionalemail}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
-                          student.isSuspended
-                            ? "bg-red-100 text-red-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {student.isSuspended ? "Suspended" : "Active"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8"
-                        onClick={() => openStudentDialog(student)}
-                      >
-                        Manage
-                      </Button>
-                    </TableCell>
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} className="hover:bg-gray-50">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
-
-          <div className="flex justify-between items-center p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              disabled={page === 1}
-              className="h-8"
-            >
-              Previous
-            </Button>
-            <span className="text-xs text-muted-foreground">Page {page}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={students.length < pageSize}
-              className="h-8"
-            >
-              Next
-            </Button>
+          <div className="py-5">
+            <DataTablePagination table={table} />
           </div>
         </CardContent>
       </Card>
@@ -413,7 +604,11 @@ export default function AccessControlPage() {
               <div className="flex items-center space-x-3 mb-2">
                 <Avatar className="h-12 w-12 rounded-full">
                   <AvatarImage
-                    src={`https://74.207.233.48:8443/hrclIRP/studentimages/${selectedStudent.imgFile}`}
+                    src={
+                      selectedStudent.imgFile
+                        ? `https://74.207.233.48:8443/hrclIRP/studentimages/${selectedStudent.imgFile}`
+                        : undefined
+                    }
                     alt={selectedStudent.name || "student-profile-image"}
                   />
                   <AvatarFallback className="bg-primary text-primary-foreground text-base">
@@ -426,38 +621,72 @@ export default function AccessControlPage() {
                 Control which features this student can access
               </DialogDescription>
             </DialogHeader>
-
             <div className="space-y-4 py-2">
               <div className="flex items-center justify-between pb-2 border-b">
                 <div>
-                  <Label htmlFor="suspended" className="font-medium">
+                  <Label htmlFor="status" className="font-medium">
                     Account Status
                   </Label>
                 </div>
                 <Select
-                  defaultValue={
-                    selectedStudent.isSuspended ? "suspended" : "active"
-                  }
+                  value={(() => {
+                    if (!selectedStudent) return "active";
+                    if (selectedStudent.isSuspended) return "suspended";
+                    if (selectedStudent.leavingdate && selectedStudent.alumni)
+                      return "alumni";
+                    if (!selectedStudent.active && !selectedStudent.alumni)
+                      return "droppedout";
+                    if (!selectedStudent.active && selectedStudent.alumni)
+                      return "alumni";
+                    if (selectedStudent.active && !selectedStudent.alumni)
+                      return "active";
+                    if (selectedStudent.active && selectedStudent.alumni)
+                      return "supplementary";
+                    return "active";
+                  })()}
                   onValueChange={(value) => {
-                    setSelectedStudent({
-                      ...selectedStudent,
-                      isSuspended: value === "suspended",
+                    setSelectedStudent((prev) => {
+                      if (!prev) return prev;
+                      const updates: Partial<StudentWithAccess> = {};
+                      if (value === "suspended") updates.isSuspended = true;
+                      else updates.isSuspended = false;
+                      if (value === "alumni") {
+                        updates.active = false;
+                        updates.alumni = true;
+                        updates.leavingdate = prev.leavingdate
+                          ? String(prev.leavingdate)
+                          : new Date().toISOString();
+                      } else if (value === "droppedout") {
+                        updates.active = false;
+                        updates.alumni = false;
+                        updates.leavingdate = undefined;
+                      } else if (value === "active") {
+                        updates.active = true;
+                        updates.alumni = false;
+                        updates.leavingdate = undefined;
+                      } else if (value === "supplementary") {
+                        updates.active = true;
+                        updates.alumni = true;
+                        updates.leavingdate = undefined;
+                      }
+                      return { ...prev, ...updates };
                     });
                   }}
                 >
-                  <SelectTrigger className="w-[120px] h-8">
+                  <SelectTrigger className="w-[160px] h-8">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
+                    {Object.keys(statusLabelMap).map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {statusLabelMap[key]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-3">
                 <h4 className="text-sm font-medium">Feature Access</h4>
-
                 {[
                   {
                     id: "courseCatalogue",
@@ -517,7 +746,6 @@ export default function AccessControlPage() {
                 ))}
               </div>
             </div>
-
             <DialogFooter>
               <Button
                 variant="outline"

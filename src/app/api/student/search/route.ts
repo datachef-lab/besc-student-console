@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findStudentsBySearch } from "@/lib/services/student-service";
+// import { findStudentsBySearch } from "@/lib/services/student-service";
 import { verifyAccessToken } from "@/lib/auth";
+import { findAll } from "@/lib/services/access-control";
 
 export async function GET(request: NextRequest) {
     try {
+        console.log("API route hit");
         // Verify access token
         const authHeader = request.headers.get("authorization");
         if (!authHeader) {
@@ -26,11 +28,11 @@ export async function GET(request: NextRequest) {
         console.log(`Searching students with query: '${query}', page: ${page}, size: ${size}`);
 
         // Search students with the query
-        const students = await findStudentsBySearch(page, size, query);
+        const result = await findAll(page, size, query);
 
-        console.log(`Found ${students?.length || 0} students matching query`);
-
-        return NextResponse.json(students || []);
+        console.log(`Found ${result.data.length || 0} students matching query`);
+        console.log("result:", result)
+        return NextResponse.json(result);
     } catch (error) {
         console.error("Error searching students:", error);
         return NextResponse.json(
