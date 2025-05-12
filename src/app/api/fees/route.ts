@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStudentByUid } from "@/app/actions/student-actions";
 import { findFeesByStudentId } from "@/lib/services/instalment.service";
 
 export async function GET(req: NextRequest) {
