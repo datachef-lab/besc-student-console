@@ -25,10 +25,6 @@ export type DbStudent = {
     dateOfBirth: Date | undefined;
     nationalityId: number | undefined; // 0 means not entered
 
-    // Access control properties
-    isSuspended?: boolean;
-    restrictedFeatures?: string[] | string;
-
     rollNumber: string | undefined; // class roll, 0 means entered
 
 
