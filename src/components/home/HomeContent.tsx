@@ -460,73 +460,67 @@ export default function HomeContent() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1.1fr] gap-6">
-        {/* Left Column */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
+        {/* Left Column - Basic Info and Enrolled Courses */}
         <div className="space-y-6">
           {/* Basic Info */}
-          <div className="mb-6">
-            <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
-              <CardHeader className="pb-3 pt-5 px-6">
-                <CardTitle className="text-base font-semibold text-black">
-                  Basic Info
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 pt-2 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">
-                    CU Registration Number
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
+            <CardHeader className="pb-2 pt-3 px-5">
+              <CardTitle className="text-base font-semibold text-black">
+                Basic Info
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-5 pb-3 pt-0 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-sm">
+                  CU Registration Number
+                </span>
+                <span className="font-semibold text-gray-800 text-base">
+                  {student?.univregno}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-sm">CU Roll Number</span>
+                <span className="font-semibold text-gray-800 text-base">
+                  {student?.univlstexmrollno}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-sm">Course</span>
+                <span className="font-semibold text-gray-800 text-base">
+                  {batches[0].coursename} ({stream})
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-sm">
+                  Semester
+                  <span className="text-red-500">
+                    {student.active ? "*" : ""}
                   </span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {student?.univregno}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">
-                    CU Roll Number
-                  </span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {student?.univlstexmrollno}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">Course</span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {batches[0].coursename} ({stream})
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">
-                    Semester
-                    <span className="text-red-500">
-                      {student.active ? "*" : ""}
-                    </span>
-                  </span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {batches[batches.length - 1].classname}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">
-                    Shift & Session
-                  </span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {batches[batches.length - 1].shiftName || "N/A"} |{" "}
-                    {batches[batches.length - 1].sessionName || "N/A"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">Section</span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {batches[batches.length - 1].sectionName || "N/A"}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </span>
+                <span className="font-semibold text-gray-800 text-base">
+                  {batches[batches.length - 1].classname}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-sm">Shift & Session</span>
+                <span className="font-semibold text-gray-800 text-base">
+                  {batches[batches.length - 1].shiftName || "N/A"} |{" "}
+                  {batches[batches.length - 1].sessionName || "N/A"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-sm">Section</span>
+                <span className="font-semibold text-gray-800 text-base">
+                  {batches[batches.length - 1].sectionName || "N/A"}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Enrolled Courses */}
           <div>
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-3">
               <h2 className="text-lg font-semibold text-gray-800">
                 Enrolled Courses
               </h2>
@@ -538,53 +532,47 @@ export default function HomeContent() {
                 See all
               </Button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {enrolledCourses.slice(0, 4).map((course) => (
                 <Card
                   key={course.id}
-                  className="border-0 shadow-md rounded-2xl overflow-hidden bg-white hover:bg-[#F9F7FF] hover:shadow-lg transition-all group p-5"
+                  className="border-0 shadow-md rounded-2xl overflow-hidden bg-white hover:bg-[#F9F7FF] hover:shadow-lg transition-all group p-4"
                 >
-                  <CardContent className="flex flex-col items-start text-left relative min-h-[160px] p-0">
-                    <div className="w-12 h-12 mb-3 rounded-lg flex items-center justify-center bg-[#F3F0FF]">
-                      <div className="w-6 h-6 text-[#925FE2]">
+                  <CardContent className="flex flex-col items-start text-left relative min-h-[140px] p-0">
+                    <div className="w-10 h-10 mb-2 rounded-lg flex items-center justify-center bg-[#F3F0FF]">
+                      <div className="w-5 h-5 text-[#925FE2]">
                         {course.id % 3 === 0 ? (
-                          <BookOpen className="w-6 h-6" />
+                          <BookOpen className="w-5 h-5" />
                         ) : course.id % 3 === 1 ? (
-                          <Code className="w-6 h-6" />
+                          <Code className="w-5 h-5" />
                         ) : (
-                          <Database className="w-6 h-6" />
+                          <Database className="w-5 h-5" />
                         )}
                       </div>
                     </div>
-                    <span className="text-xs font-medium text-gray-500 mb-1">
+                    <span className="text-xs font-medium text-gray-500">
                       Course Code: CS{course.id + 100}
                     </span>
-                    <h3 className="text-base font-medium text-gray-800 mb-2 leading-tight">
+                    <h3 className="text-sm font-medium text-gray-800 mb-2 leading-tight mt-1">
                       {course.title}
                     </h3>
                     <Button
                       size="sm"
-                      className="w-auto mt-auto z-10 bg-[#925FE2] hover:bg-purple-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm"
+                      className="w-auto mt-auto z-10 bg-[#925FE2] hover:bg-purple-700 text-white px-4 py-1.5 rounded-lg text-xs font-medium shadow-sm"
                     >
                       View
                     </Button>
                   </CardContent>
                 </Card>
               ))}
-              {enrolledCourses.length === 0 && (
-                <p className="text-sm text-gray-500 col-span-full text-center py-6">
-                  No courses enrolled.
-                </p>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Daily Notice Card */}
+        {/* Right Column - Daily Notice */}
+        <div>
           <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
-            <CardHeader className="pt-5 pb-2 px-6 flex flex-row items-center justify-between">
+            <CardHeader className="pt-3 pb-2 px-5 flex flex-row items-center justify-between">
               <CardTitle className="text-base font-semibold text-black">
                 Daily Notice
               </CardTitle>
@@ -596,7 +584,7 @@ export default function HomeContent() {
                 See all
               </Button>
             </CardHeader>
-            <CardContent className="px-6 pt-2 pb-5 space-y-4">
+            <CardContent className="px-5 pt-1 pb-3 space-y-3">
               {dailyNotices.slice(0, 4).map((notice) => (
                 <div
                   key={notice.id}
@@ -623,9 +611,6 @@ export default function HomeContent() {
                   )}
                 </div>
               ))}
-              {dailyNotices.length === 0 && (
-                <p className="text-sm text-gray-500">No notices today.</p>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -709,7 +694,6 @@ export default function HomeContent() {
 
           <div className="p-6 space-y-4">
             {filteredNotifications.map((notification) => {
-              // Get color classes based on notification color
               const colorClasses = colorMap[notification.color] || {
                 bg: "bg-gray-100",
                 text: "text-gray-700",
@@ -817,7 +801,6 @@ export default function HomeContent() {
                 </div>
               );
             })}
-
             {filteredNotifications.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-50 rounded-lg">
                 <div className="w-20 h-20 rounded-full bg-white shadow-sm flex items-center justify-center mb-4">
