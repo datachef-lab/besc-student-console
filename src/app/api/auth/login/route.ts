@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTokens, setAuthCookies, getUserByUid } from '@/lib/services/auth';
+import { findAccessControlByStudentId } from '@/lib/services/access-control';
 
 // export async function POST(req: NextRequest) {
 //     try {
@@ -151,7 +152,7 @@ export async function POST(req: NextRequest) {
                 emercontactpersonmob: '',
                 emercontactpersonphr: '',
                 emercontactpersonpho: '',
-                leavingdate: new Date(),
+                leavingdate: new Date().toISOString(),
                 univregno: '',
                 univlstexmrollno: '',
                 communityid: 0,
@@ -196,7 +197,9 @@ export async function POST(req: NextRequest) {
                     name: 'Admin',
                     uid: 'admin',
                     email: 'admin@example.com',
-                    isAdmin: true
+                    isAdmin: true,
+                    isSuspended: false,
+                    restrictedFeatures: []
                 },
                 accessToken: tokens.accessToken,
                 redirectTo: '/settings'
@@ -221,14 +224,16 @@ export async function POST(req: NextRequest) {
             const tokens = generateTokens(user);
 
             const response = setAuthCookies(tokens);
+            const accessControl = await findAccessControlByStudentId(user.id as number);
             return NextResponse.json({
                 user: {
                     id: user.id,
                     name: user.name,
                     uid: user.codeNumber,
                     email: user.institutionalemail,
-                    isAdmin: user.isAdmin
+                    isAdmin: user.isAdmin,
                 },
+                accessControl,
                 accessToken: tokens.accessToken,
                 redirectTo: '/dashboard'
             }, response);

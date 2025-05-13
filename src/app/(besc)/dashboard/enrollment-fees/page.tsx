@@ -14,7 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Calendar, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import axios from "axios";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// Define interfaces inline to avoid module resolution issues
 interface Installment {
   id: number;
   amount: number;
@@ -33,110 +36,35 @@ interface Fee {
   installments: Installment[];
 }
 
-// Mock data for demonstration
-const mockFeesData: Fee[] = [
-  {
-    id: 1,
-    name: "Tuition Fee",
-    totalAmount: 50000,
-    paidAmount: 40000,
-    dueDate: "2025-06-30",
-    status: "partially_paid",
-    installments: [
-      {
-        id: 1,
-        amount: 20000,
-        dueDate: "2025-04-15",
-        status: "paid",
-        paidOn: "2025-04-10",
-      },
-      {
-        id: 2,
-        amount: 20000,
-        dueDate: "2025-05-15",
-        status: "paid",
-        paidOn: "2025-05-12",
-      },
-      {
-        id: 3,
-        amount: 10000,
-        dueDate: "2025-06-15",
-        status: "pending",
-        paidOn: null,
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Examination Fee",
-    totalAmount: 5000,
-    paidAmount: 5000,
-    dueDate: "2025-04-30",
-    status: "paid",
-    installments: [
-      {
-        id: 1,
-        amount: 5000,
-        dueDate: "2025-04-30",
-        status: "paid",
-        paidOn: "2025-04-25",
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: "Hostel Fee",
-    totalAmount: 30000,
-    paidAmount: 0,
-    dueDate: "2025-05-15",
-    status: "pending",
-    installments: [
-      {
-        id: 1,
-        amount: 15000,
-        dueDate: "2025-05-15",
-        status: "pending",
-        paidOn: null,
-      },
-      {
-        id: 2,
-        amount: 15000,
-        dueDate: "2025-07-15",
-        status: "pending",
-        paidOn: null,
-      },
-    ],
-  },
-  {
-    id: 4,
-    name: "Library Fee",
-    totalAmount: 2000,
-    paidAmount: 2000,
-    dueDate: "2025-04-10",
-    status: "paid",
-    installments: [
-      {
-        id: 1,
-        amount: 2000,
-        dueDate: "2025-04-10",
-        status: "paid",
-        paidOn: "2025-04-05",
-      },
-    ],
-  },
-];
-
 export default function EnrollmentFeesPage() {
   const [feesData, setFeesData] = useState<Fee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedFee, setSelectedFee] = useState<number | null>(null);
 
-  // Simulate API call to fetch fees data
+  // Fetch fees data from API endpoint
   useEffect(() => {
-    setTimeout(() => {
-      setFeesData(mockFeesData);
-      setLoading(false);
-    }, 1000);
+    const fetchFeesData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // Default student ID for testing
+        const studentId = "0102232367";
+        const response = await axios.get(`/api/fees?studentId=${studentId}`);
+
+        // Ensure all data is properly serializable
+        const serializedData = JSON.parse(JSON.stringify(response.data));
+        setFeesData(serializedData);
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching fees data:", error);
+        setError("Failed to load fees data. Please try again later.");
+        setLoading(false);
+      }
+    };
+
+    fetchFeesData();
   }, []);
 
   const formatDate = (dateString: string): string => {
@@ -211,6 +139,18 @@ export default function EnrollmentFeesPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-indigo-50/20 to-purple-50/20">
       {/* Header Banner */}
@@ -242,7 +182,22 @@ export default function EnrollmentFeesPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 -mt-16 relative z-10">
         <div className="space-y-8">
-          {selectedFee !== null ? (
+          {feesData.length === 0 ? (
+            <Card className="p-8 text-center bg-white border-none rounded-2xl shadow-lg">
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="p-4 bg-blue-50 rounded-full">
+                  <Calendar className="h-10 w-10 text-blue-500" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800">
+                  No Fees Found
+                </h3>
+                <p className="text-gray-600 max-w-md">
+                  There are currently no fees assigned to your account. Check
+                  back later or contact the administration office.
+                </p>
+              </div>
+            </Card>
+          ) : selectedFee !== null ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}

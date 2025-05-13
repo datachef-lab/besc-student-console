@@ -1,18 +1,14 @@
 "use client";
-
-import { useStudent } from "@/context/StudentContext";
 import { useAuth } from "@/hooks/use-auth";
-import React, { useEffect } from "react";
+import { useStudent } from "@/context/StudentContext";
 
-export default function SharedArea({
-  children,
-}: {
+interface SharedAreaProps {
   children: React.ReactNode;
-}) {
+}
+
+export default function SharedArea({ children }: SharedAreaProps) {
   const { user } = useAuth();
-  const { student } = useStudent();
+  const { student, accessControl } = useStudent();
 
-  useEffect(() => {}, [user]);
-
-  return (user && student && children)
+  return user && student && accessControl ? <>{children}</> : null;
 }

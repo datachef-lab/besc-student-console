@@ -67,10 +67,9 @@ async function shutdownHandler() {
     }
 }
 
-// Register shutdown handlers
-process.on('SIGINT', shutdownHandler);
-process.on('SIGTERM', shutdownHandler);
-process.on('beforeExit', shutdownHandler);
+// Register shutdown handlers - but no longer directly in this file
+// The process listeners will be set up in a separate file that's only
+// loaded in a Node.js environment (not in Edge functions/middleware)
 
 export { pool, db };
 export default db;

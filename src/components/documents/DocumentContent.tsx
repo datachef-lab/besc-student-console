@@ -17,6 +17,7 @@ import { ScanDoc } from "@/lib/services/docs";
 import { useAuth } from "@/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useStudent } from "@/context/StudentContext";
+import { useRouter } from "next/navigation";
 
 interface DocumentContentProps {
   scannedDocs?: ScanDoc[];
@@ -33,7 +34,8 @@ interface Document {
 
 export default function DocumentContent({ scannedDocs }: DocumentContentProps) {
   const { user, accessToken } = useAuth();
-  const { student, batches } = useStudent();
+  const { student, batches, accessControl } = useStudent();
+  const router = useRouter();
   const [selectedSemester, setSelectedSemester] = useState<string>("all");
   const [selectedView, setSelectedView] = useState<string>("marksheets");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -53,6 +55,12 @@ export default function DocumentContent({ scannedDocs }: DocumentContentProps) {
   const loadingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const [loading, setLoading] = useState<boolean>(!hasInitialDataRef.current);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!accessControl?.access_course) {
+      router.back();
+    }
+  }, [accessControl, router]);
 
   // Clear any existing timeout on unmount
   useEffect(() => {

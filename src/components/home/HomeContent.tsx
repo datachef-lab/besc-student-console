@@ -47,80 +47,6 @@ interface Notification {
   isImportant?: boolean;
 }
 
-// Notification data with read/important status
-const allNotifications: Notification[] = [
-  {
-    id: 1,
-    title: "Assignment Submitted",
-    course: "Data Structures",
-    time: "2 hours ago",
-    type: "assignment",
-    color: "blue",
-    isRead: false,
-    isImportant: true,
-  },
-  {
-    id: 2,
-    title: "Quiz Completed",
-    course: "Database Management",
-    time: "Yesterday",
-    type: "quiz",
-    color: "emerald",
-    isRead: true,
-    isImportant: false,
-  },
-  {
-    id: 3,
-    title: "Class Attended",
-    course: "Software Engineering",
-    time: "Yesterday",
-    type: "class",
-    color: "amber",
-    isRead: true,
-    isImportant: false,
-  },
-  {
-    id: 4,
-    title: "Assignment Due",
-    course: "Web Development",
-    time: "Tomorrow",
-    type: "assignment",
-    color: "rose",
-    isRead: false,
-    isImportant: true,
-  },
-  {
-    id: 5,
-    title: "Exam Scheduled",
-    course: "Computer Networks",
-    time: "Next Week",
-    type: "exam",
-    color: "indigo",
-    isRead: false,
-    isImportant: true,
-  },
-  {
-    id: 6,
-    title: "Project Feedback",
-    course: "Software Engineering",
-    time: "3 days ago",
-    type: "feedback",
-    color: "violet",
-    isRead: true,
-    isImportant: false,
-  },
-  {
-    id: 7,
-    title: "Class Canceled",
-    course: "Operating Systems",
-    time: "Today",
-    type: "class",
-    color: "red",
-    isRead: false,
-    isImportant: true,
-  },
-];
-
 // Map Tailwind color classes for notifications
 const colorMap = {
   blue: {
@@ -158,7 +84,7 @@ type NotificationFilter = "all" | "unread" | "important";
 export default function HomeContent() {
   const { student, loading, batches, error, refetch } = useStudent();
   const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
-  const [notifications, setNotifications] = useState(allNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>("all");
   const [isContentReady, setIsContentReady] = useState(false);
 
@@ -375,7 +301,7 @@ export default function HomeContent() {
       title: "College Website",
       description:
         "The college website has been updated with the latest academic calendar and campus news. Visit for more details.",
-      link: "https://www.bhawanipurcollege.edu.in",
+      link: "https://www.thebges.edu.in/category/noticeboard/",
       external: true,
     },
   ];
@@ -693,115 +619,120 @@ export default function HomeContent() {
           </div>
 
           <div className="p-6 space-y-4">
-            {filteredNotifications.map((notification) => {
-              const colorClasses = colorMap[notification.color] || {
-                bg: "bg-gray-100",
-                text: "text-gray-700",
-              };
+            {filteredNotifications.length > 0 ? (
+              filteredNotifications.map((notification) => {
+                const colorClasses = colorMap[notification.color] || {
+                  bg: "bg-gray-100",
+                  text: "text-gray-700",
+                };
 
-              return (
-                <div
-                  key={notification.id}
-                  className={`p-4 rounded-xl bg-white border hover:border-purple-200 shadow-sm hover:shadow transition-all duration-200 relative group cursor-pointer ${
-                    !notification.isRead ? "border-l-4 border-l-purple-500" : ""
-                  }`}
-                  onClick={() => markAsRead(notification.id)}
-                >
-                  <div className="flex gap-4">
-                    <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${colorClasses.bg}`}
-                    >
-                      {notification.type === "assignment" && (
-                        <FileText className={`w-5 h-5 ${colorClasses.text}`} />
-                      )}
-                      {notification.type === "quiz" && (
-                        <ClipboardList
-                          className={`w-5 h-5 ${colorClasses.text}`}
-                        />
-                      )}
-                      {notification.type === "class" && (
-                        <Users className={`w-5 h-5 ${colorClasses.text}`} />
-                      )}
-                      {notification.type === "exam" && (
-                        <GraduationCap
-                          className={`w-5 h-5 ${colorClasses.text}`}
-                        />
-                      )}
-                      {notification.type === "feedback" && (
-                        <Star className={`w-5 h-5 ${colorClasses.text}`} />
-                      )}
-                    </div>
+                return (
+                  <div
+                    key={notification.id}
+                    className={`p-4 rounded-xl bg-white border hover:border-purple-200 shadow-sm hover:shadow transition-all duration-200 relative group cursor-pointer ${
+                      !notification.isRead
+                        ? "border-l-4 border-l-purple-500"
+                        : ""
+                    }`}
+                    onClick={() => markAsRead(notification.id)}
+                  >
+                    <div className="flex gap-4">
+                      <div
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${colorClasses.bg}`}
+                      >
+                        {notification.type === "assignment" && (
+                          <FileText
+                            className={`w-5 h-5 ${colorClasses.text}`}
+                          />
+                        )}
+                        {notification.type === "quiz" && (
+                          <ClipboardList
+                            className={`w-5 h-5 ${colorClasses.text}`}
+                          />
+                        )}
+                        {notification.type === "class" && (
+                          <Users className={`w-5 h-5 ${colorClasses.text}`} />
+                        )}
+                        {notification.type === "exam" && (
+                          <GraduationCap
+                            className={`w-5 h-5 ${colorClasses.text}`}
+                          />
+                        )}
+                        {notification.type === "feedback" && (
+                          <Star className={`w-5 h-5 ${colorClasses.text}`} />
+                        )}
+                      </div>
 
-                    <div className="flex-grow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4
-                            className={`text-sm font-medium ${
-                              !notification.isRead
-                                ? "text-gray-900 font-semibold"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {notification.title}
-                          </h4>
-                          <p
-                            className={`text-sm ${
-                              !notification.isRead
-                                ? "text-gray-600"
-                                : "text-gray-500"
-                            } mt-1`}
-                          >
-                            {notification.course}
-                          </p>
-                        </div>
-
-                        <div className="flex items-start gap-2">
-                          <span
-                            className={`text-xs whitespace-nowrap ${colorClasses.bg} ${colorClasses.text} px-2 py-0.5 rounded-full`}
-                          >
-                            {notification.time}
-                          </span>
-
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleImportant(notification.id);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-gray-100"
-                              aria-label={
-                                notification.isImportant
-                                  ? "Remove from important"
-                                  : "Mark as important"
-                              }
+                      <div className="flex-grow">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4
+                              className={`text-sm font-medium ${
+                                !notification.isRead
+                                  ? "text-gray-900 font-semibold"
+                                  : "text-gray-700"
+                              }`}
                             >
-                              <Star
-                                className={`h-4 w-4 ${
+                              {notification.title}
+                            </h4>
+                            <p
+                              className={`text-sm ${
+                                !notification.isRead
+                                  ? "text-gray-600"
+                                  : "text-gray-500"
+                              } mt-1`}
+                            >
+                              {notification.course}
+                            </p>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <span
+                              className={`text-xs whitespace-nowrap ${colorClasses.bg} ${colorClasses.text} px-2 py-0.5 rounded-full`}
+                            >
+                              {notification.time}
+                            </span>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleImportant(notification.id);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-gray-100"
+                                aria-label={
                                   notification.isImportant
-                                    ? "text-yellow-500 fill-yellow-500"
-                                    : "text-gray-400"
-                                }`}
-                              />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                dismissNotification(notification.id);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-gray-100"
-                              aria-label="Dismiss notification"
-                            >
-                              <X className="h-4 w-4 text-gray-400" />
-                            </button>
+                                    ? "Remove from important"
+                                    : "Mark as important"
+                                }
+                              >
+                                <Star
+                                  className={`h-4 w-4 ${
+                                    notification.isImportant
+                                      ? "text-yellow-500 fill-yellow-500"
+                                      : "text-gray-400"
+                                  }`}
+                                />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  dismissNotification(notification.id);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-gray-100"
+                                aria-label="Dismiss notification"
+                              >
+                                <X className="h-4 w-4 text-gray-400" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-            {filteredNotifications.length === 0 && (
+                );
+              })
+            ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-50 rounded-lg">
                 <div className="w-20 h-20 rounded-full bg-white shadow-sm flex items-center justify-center mb-4">
                   <Bell className="w-8 h-8 text-gray-300" />
@@ -813,12 +744,6 @@ export default function HomeContent() {
                   You don&apos;t have any notifications at the moment.
                   We&apos;ll notify you when something new arrives.
                 </p>
-                <button
-                  onClick={() => setNotifications(allNotifications)}
-                  className="mt-6 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm hover:shadow transition-all"
-                >
-                  Restore notifications
-                </button>
               </div>
             )}
           </div>
