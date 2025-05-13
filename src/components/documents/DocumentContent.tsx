@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useStudent } from "@/context/StudentContext";
 import { useRouter } from "next/navigation";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
 
 interface DocumentContentProps {
   scannedDocs?: ScanDoc[];
@@ -64,55 +65,64 @@ export default function DocumentContent({ scannedDocs }: DocumentContentProps) {
 
   // Clear any existing timeout on unmount
   useEffect(() => {
+    // Immediately fetch documents when component mounts
+    if (user && accessToken && !hasInitialDataRef.current) {
+      fetchDocuments();
+    }
+
     return () => {
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
       }
     };
-  }, []);
+  }, [user, accessToken]);
 
   const fetchDocuments = async () => {
     if (!user || !accessToken) return;
 
     // If we already have documents from the server, don't fetch again
     if (hasInitialDataRef.current && documents.length > 0) {
+      setLoading(false);
       return;
     }
 
+    setLoading(true);
     setError(null);
 
+    // Determine stream based on course name
     let stream = "BCOM";
-    switch (batches[0].coursename.trim().toUpperCase()) {
-      case "BBA":
-        stream = "BBA";
-        break;
-      case "B.COM":
-        stream = "BCOM";
-        break;
-      case "B.A.":
-        stream = "BA";
-        break;
-      case "B.SC":
-        stream = "BSC";
-        break;
-      case "B.SC.":
-        stream = "BSC";
-        break;
-      case "B.ED":
-        stream = "BED";
-        break;
-      case "M.COM":
-        stream = "MCOM";
-        break;
-      case "M.A.":
-        stream = "MA";
-        break;
-      default:
-        stream = "BCOM";
-        break;
-    }
-
     try {
+      if (batches && batches.length > 0) {
+        const courseName = batches[0].coursename.trim().toUpperCase();
+        switch (courseName) {
+          case "BBA":
+            stream = "BBA";
+            break;
+          case "B.COM":
+            stream = "BCOM";
+            break;
+          case "B.A.":
+            stream = "BA";
+            break;
+          case "B.SC":
+          case "B.SC.":
+            stream = "BSC";
+            break;
+          case "B.ED":
+            stream = "BED";
+            break;
+          case "M.COM":
+            stream = "MCOM";
+            break;
+          case "M.A.":
+            stream = "MA";
+            break;
+          default:
+            stream = "BCOM";
+            break;
+        }
+      }
+
       // Use the user's rollNumber if available, or fall back to a default for testing
       const rollNumber = student?.univlstexmrollno || "191017-11-0592";
 
@@ -141,43 +151,10 @@ export default function DocumentContent({ scannedDocs }: DocumentContentProps) {
     } catch (err) {
       console.error("Error fetching documents:", err);
       setError(err instanceof Error ? err.message : "Failed to load documents");
+    } finally {
+      setLoading(false);
     }
   };
-
-  // Fetch documents when component mounts or user changes
-  useEffect(() => {
-    // Don't fetch if we already have server-provided data
-    if (hasInitialDataRef.current) {
-      return;
-    }
-
-    // Clear any existing timeout
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-    }
-
-    // Only show loading state if there are no documents yet
-    if (documents.length === 0 && !loading) {
-      setLoading(true);
-    }
-
-    // Set up a new timeout
-    loadingTimeoutRef.current = setTimeout(() => {
-      if (user && accessToken) {
-        fetchDocuments().finally(() => {
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
-    }, 800); // Longer delay to avoid flickering
-
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-    };
-  }, [user, accessToken]);
 
   const handleDownload = async (filePath: string) => {
     try {
@@ -333,12 +310,11 @@ export default function DocumentContent({ scannedDocs }: DocumentContentProps) {
         </div>
 
         {loading && (
-          <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-10 flex justify-center items-center">
-            <div className="bg-white p-8 rounded-xl shadow-xl flex flex-col items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-              <p className="text-gray-600 font-medium">Loading documents...</p>
-            </div>
-          </div>
+          <LoadingIndicator
+            variant="inline"
+            message="Loading documents..."
+            subMessage="This may take a moment as we securely retrieve your documents."
+          />
         )}
 
         {error && (

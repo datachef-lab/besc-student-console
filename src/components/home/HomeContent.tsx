@@ -25,6 +25,9 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type NotificationType = "assignment" | "quiz" | "class" | "exam" | "feedback";
 type NotificationColor =
@@ -48,78 +51,80 @@ interface Notification {
 }
 
 // Notification data with read/important status
-const allNotifications: Notification[] = [
-  {
-    id: 1,
-    title: "Assignment Submitted",
-    course: "Data Structures",
-    time: "2 hours ago",
-    type: "assignment",
-    color: "blue",
-    isRead: false,
-    isImportant: true,
-  },
-  {
-    id: 2,
-    title: "Quiz Completed",
-    course: "Database Management",
-    time: "Yesterday",
-    type: "quiz",
-    color: "emerald",
-    isRead: true,
-    isImportant: false,
-  },
-  {
-    id: 3,
-    title: "Class Attended",
-    course: "Software Engineering",
-    time: "Yesterday",
-    type: "class",
-    color: "amber",
-    isRead: true,
-    isImportant: false,
-  },
-  {
-    id: 4,
-    title: "Assignment Due",
-    course: "Web Development",
-    time: "Tomorrow",
-    type: "assignment",
-    color: "rose",
-    isRead: false,
-    isImportant: true,
-  },
-  {
-    id: 5,
-    title: "Exam Scheduled",
-    course: "Computer Networks",
-    time: "Next Week",
-    type: "exam",
-    color: "indigo",
-    isRead: false,
-    isImportant: true,
-  },
-  {
-    id: 6,
-    title: "Project Feedback",
-    course: "Software Engineering",
-    time: "3 days ago",
-    type: "feedback",
-    color: "violet",
-    isRead: true,
-    isImportant: false,
-  },
-  {
-    id: 7,
-    title: "Class Canceled",
-    course: "Operating Systems",
-    time: "Today",
-    type: "class",
-    color: "red",
-    isRead: false,
-    isImportant: true,
-  },
-];
+// const allNotifications: Notification[] = [
+//   {
+//     id: 1,
+//     title: "Assignment Submitted",
+//     course: "Data Structures",
+//     time: "2 hours ago",
+//     type: "assignment",
+//     color: "blue",
+//     isRead: false,
+//     isImportant: true,
+//   },
+//   {
+//     id: 2,
+//     title: "Quiz Completed",
+//     course: "Database Management",
+//     time: "Yesterday",
+//     type: "quiz",
+//     color: "emerald",
+//     isRead: true,
+//     isImportant: false,
+//   },
+//   {
+//     id: 3,
+//     title: "Class Attended",
+//     course: "Software Engineering",
+//     time: "Yesterday",
+//     type: "class",
+//     color: "amber",
+//     isRead: true,
+//     isImportant: false,
+//   },
+//   {
+//     id: 4,
+//     title: "Assignment Due",
+//     course: "Web Development",
+//     time: "Tomorrow",
+//     type: "assignment",
+//     color: "rose",
+//     isRead: false,
+//     isImportant: true,
+//   },
+//   {
+//     id: 5,
+//     title: "Exam Scheduled",
+//     course: "Computer Networks",
+//     time: "Next Week",
+//     type: "exam",
+//     color: "indigo",
+//     isRead: false,
+//     isImportant: true,
+//   },
+//   {
+//     id: 6,
+//     title: "Project Feedback",
+//     course: "Software Engineering",
+//     time: "3 days ago",
+//     type: "feedback",
+//     color: "violet",
+//     isRead: true,
+//     isImportant: false,
+//   },
+//   {
+//     id: 7,
+//     title: "Class Canceled",
+//     course: "Operating Systems",
+//     time: "Today",
+//     type: "class",
+//     color: "red",
+//     isRead: false,
+//     isImportant: true,
+//   },
+// ];
+
+const allNotifications: Notification[] = [];
 
 // Map Tailwind color classes for notifications
 const colorMap = {
@@ -156,6 +161,7 @@ const colorMap = {
 type NotificationFilter = "all" | "unread" | "important";
 
 export default function HomeContent() {
+  const router = useRouter();
   const { student, loading, batches, error, refetch } = useStudent();
   const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
   const [notifications, setNotifications] = useState(allNotifications);
@@ -163,38 +169,38 @@ export default function HomeContent() {
   const [isContentReady, setIsContentReady] = useState(false);
 
   // Stream determination logic
-//   let stream;
-//   if (batches && batches.length > 0) {
-//     switch (batches[0].coursename.trim().toUpperCase()) {
-//       case "BBA":
-//         stream = "BBA";
-//         break;
-//       case "B.COM":
-//         stream = "BCOM";
-//         break;
-//       case "B.A.":
-//         stream = "BA";
-//         break;
-//       case "B.SC":
-//         stream = "BSC";
-//         break;
-//       case "B.SC.":
-//         stream = "BSC";
-//         break;
-//       case "B.ED":
-//         stream = "BED";
-//         break;
-//       case "M.COM":
-//         stream = "MCOM";
-//         break;
-//       case "M.A.":
-//         stream = "MA";
-//         break;
-//       default:
-//         stream = "BCOM";
-//         break;
-//     }
-//   }
+  //   let stream;
+  //   if (batches && batches.length > 0) {
+  //     switch (batches[0].coursename.trim().toUpperCase()) {
+  //       case "BBA":
+  //         stream = "BBA";
+  //         break;
+  //       case "B.COM":
+  //         stream = "BCOM";
+  //         break;
+  //       case "B.A.":
+  //         stream = "BA";
+  //         break;
+  //       case "B.SC":
+  //         stream = "BSC";
+  //         break;
+  //       case "B.SC.":
+  //         stream = "BSC";
+  //         break;
+  //       case "B.ED":
+  //         stream = "BED";
+  //         break;
+  //       case "M.COM":
+  //         stream = "MCOM";
+  //         break;
+  //       case "M.A.":
+  //         stream = "MA";
+  //         break;
+  //       default:
+  //         stream = "BCOM";
+  //         break;
+  //     }
+  //   }
 
   // Prevent flickering by holding the loading state until content is ready
   useEffect(() => {
@@ -254,19 +260,10 @@ export default function HomeContent() {
   // Show loading UI until content is fully ready
   if (loading || !isContentReady) {
     return (
-      <div className="flex flex-col items-center justify-center h-[80vh] bg-white/95 rounded-xl p-8 shadow-sm">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-pulse w-24 h-24 rounded-full bg-purple-100 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
-          </div>
-          <p className="text-purple-800 font-medium animate-pulse">
-            Loading your dashboard...
-          </p>
-          <p className="text-gray-500 text-sm text-center max-w-md">
-            Please wait while we retrieve your latest information
-          </p>
-        </div>
-      </div>
+      <LoadingIndicator
+        message="Loading your dashboard..."
+        subMessage="Please wait while we retrieve your latest information"
+      />
     );
   }
 
@@ -354,7 +351,7 @@ export default function HomeContent() {
       title: "Prelim payment due",
       description:
         "Next semester fee payment is due by May 15. Please visit the fees section to complete your payment and avoid late fees.",
-      link: "/dashboard/fees",
+      link: "/dashboard/enrollment-fees",
     },
     {
       id: 2,
@@ -375,33 +372,39 @@ export default function HomeContent() {
       title: "College Website",
       description:
         "The college website has been updated with the latest academic calendar and campus news. Visit for more details.",
-      link: "https://www.bhawanipurcollege.edu.in",
+      link: "https://www.thebges.edu.in/category/noticeboard/",
       external: true,
     },
   ];
 
-  const enrolledCourses = [
-    {
-      id: 1,
-      title: "Object oriented programming",
-      icon: "/placeholders/oop-icon.svg",
-    },
-    {
-      id: 2,
-      title: "Fundamentals of database systems",
-      icon: "/placeholders/dbms-icon.svg",
-    },
-    {
-      id: 3,
-      title: "Computer Networks",
-      icon: "/placeholders/network-icon.svg",
-    },
-    {
-      id: 4,
-      title: "Web Development",
-      icon: "/placeholders/web-icon.svg",
-    },
-  ];
+  //   const enrolledCourses = [
+  //     {
+  //       id: 1,
+  //       title: "Object oriented programming",
+  //       icon: "/placeholders/oop-icon.svg",
+  //     },
+  //     {
+  //       id: 2,
+  //       title: "Fundamentals of database systems",
+  //       icon: "/placeholders/dbms-icon.svg",
+  //     },
+  //     {
+  //       id: 3,
+  //       title: "Computer Networks",
+  //       icon: "/placeholders/network-icon.svg",
+  //     },
+  //     {
+  //       id: 4,
+  //       title: "Web Development",
+  //       icon: "/placeholders/web-icon.svg",
+  //     },
+  //   ];
+
+  const enrolledCourses: {
+    id: number;
+    title: string;
+    icon: string;
+  }[] = [];
 
   const today = new Date();
   const dateString = today.toLocaleDateString("en-US", {
@@ -456,130 +459,126 @@ export default function HomeContent() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1.1fr] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1.1fr] auto-rows-fr gap-6">
         {/* Left Column */}
-        <div className="space-y-6">
+        <div>
           {/* Basic Info */}
-          <div className="mb-6">
-            <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
-              <CardHeader className="pb-3 pt-5 px-6">
-                <CardTitle className="text-base font-semibold text-black">
-                  Basic Info
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 pt-2 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">
-                    CU Registration Number
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white h-full">
+            <CardHeader className="pb-3 pt-5 px-6">
+              <CardTitle className="text-base font-semibold text-black">
+                Basic Info
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-6 pb-6 pt-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-base">
+                  CU Registration Number
+                </span>
+                <span className="font-semibold text-gray-800 text-xl">
+                  {student?.univregno}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-base">CU Roll Number</span>
+                <span className="font-semibold text-gray-800 text-xl">
+                  {student?.univlstexmrollno}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-base">Course</span>
+                <span className="font-semibold text-gray-800 text-xl">
+                  {batches[0].coursename}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-base">
+                  Semester
+                  <span className="text-red-500">
+                    {student.active ? "*" : ""}
                   </span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {student?.univregno}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">
-                    CU Roll Number
-                  </span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {student?.univlstexmrollno}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">Course</span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {batches[0].coursename}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">
-                    Semester
-                    <span className="text-red-500">
-                      {student.active ? "*" : ""}
-                    </span>
-                  </span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {batches[batches.length - 1].classname}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">
-                    Shift & Session
-                  </span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {batches[batches.length - 1].shiftName || "N/A"} |{" "}
-                    {batches[batches.length - 1].sessionName || "N/A"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-base">Section</span>
-                  <span className="font-semibold text-gray-800 text-xl">
-                    {batches[batches.length - 1].sectionName || "N/A"}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </span>
+                <span className="font-semibold text-gray-800 text-xl">
+                  {batches[batches.length - 1].classname}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-base">Shift & Session</span>
+                <span className="font-semibold text-gray-800 text-xl">
+                  {batches[batches.length - 1].shiftName || "N/A"} |{" "}
+                  {batches[batches.length - 1].sessionName || "N/A"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-base">Section</span>
+                <span className="font-semibold text-gray-800 text-xl">
+                  {batches[batches.length - 1].sectionName || "N/A"}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Enrolled Courses */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Enrolled Courses
-              </h2>
-              <Button
-                variant="link"
-                size="sm"
-                className="text-[#925FE2] hover:text-purple-800 text-sm font-medium"
-              >
-                See all
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {enrolledCourses.slice(0, 4).map((course) => (
-                <Card
-                  key={course.id}
-                  className="border-0 shadow-md rounded-2xl overflow-hidden bg-white hover:bg-[#F9F7FF] hover:shadow-lg transition-all group p-5"
+          {enrolledCourses.length > 0 && (
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Enrolled Courses
+                </h2>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="text-[#925FE2] hover:text-purple-800 text-sm font-medium"
                 >
-                  <CardContent className="flex flex-col items-start text-left relative min-h-[160px] p-0">
-                    <div className="w-12 h-12 mb-3 rounded-lg flex items-center justify-center bg-[#F3F0FF]">
-                      <div className="w-6 h-6 text-[#925FE2]">
-                        {course.id % 3 === 0 ? (
-                          <BookOpen className="w-6 h-6" />
-                        ) : course.id % 3 === 1 ? (
-                          <Code className="w-6 h-6" />
-                        ) : (
-                          <Database className="w-6 h-6" />
-                        )}
+                  See all
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {enrolledCourses.slice(0, 4).map((course) => (
+                  <Card
+                    key={course.id}
+                    className="border-0 shadow-md rounded-2xl overflow-hidden bg-white hover:bg-[#F9F7FF] hover:shadow-lg transition-all group p-5"
+                  >
+                    <CardContent className="flex flex-col items-start text-left relative min-h-[160px] p-0">
+                      <div className="w-12 h-12 mb-3 rounded-lg flex items-center justify-center bg-[#F3F0FF]">
+                        <div className="w-6 h-6 text-[#925FE2]">
+                          {course.id % 3 === 0 ? (
+                            <BookOpen className="w-6 h-6" />
+                          ) : course.id % 3 === 1 ? (
+                            <Code className="w-6 h-6" />
+                          ) : (
+                            <Database className="w-6 h-6" />
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <span className="text-xs font-medium text-gray-500 mb-1">
-                      Course Code: CS{course.id + 100}
-                    </span>
-                    <h3 className="text-base font-medium text-gray-800 mb-2 leading-tight">
-                      {course.title}
-                    </h3>
-                    <Button
-                      size="sm"
-                      className="w-auto mt-auto z-10 bg-[#925FE2] hover:bg-purple-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm"
-                    >
-                      View
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-              {enrolledCourses.length === 0 && (
-                <p className="text-sm text-gray-500 col-span-full text-center py-6">
-                  No courses enrolled.
-                </p>
-              )}
+                      <span className="text-xs font-medium text-gray-500 mb-1">
+                        Course Code: CS{course.id + 100}
+                      </span>
+                      <h3 className="text-base font-medium text-gray-800 mb-2 leading-tight">
+                        {course.title}
+                      </h3>
+                      <Button
+                        size="sm"
+                        className="w-auto mt-auto z-10 bg-[#925FE2] hover:bg-purple-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm"
+                      >
+                        View
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+                {enrolledCourses.length === 0 && (
+                  <p className="text-sm text-gray-500 col-span-full text-center py-6">
+                    No courses enrolled.
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right Column */}
-        <div className="space-y-6">
+        <div>
           {/* Daily Notice Card */}
-          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white h-full">
             <CardHeader className="pt-5 pb-2 px-6 flex flex-row items-center justify-between">
               <CardTitle className="text-base font-semibold text-black">
                 Daily Notice
@@ -601,7 +600,7 @@ export default function HomeContent() {
                     if (notice.external) {
                       window.open(notice.link, "_blank", "noopener,noreferrer");
                     } else if (notice.link) {
-                      window.location.href = notice.link;
+                      router.push(notice.link);
                     }
                   }}
                 >
