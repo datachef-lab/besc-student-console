@@ -130,7 +130,7 @@ export type DbStudent = {
     // ecscheck
     // relationid
     // libgrupid
-    leavingdate: Date | undefined;
+    leavingdate: string | undefined;
     univregno: string | undefined;
     univlstexmrollno: string | undefined;
     communityid: number | null | 0; // 0 means not enetered, 1: GUJARATI, 2: NON-GUJARATI

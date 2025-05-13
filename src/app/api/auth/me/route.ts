@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 import { SignJWT } from "jose";
-import { getUserByEmail, verifyRefreshToken } from "@/lib/services/auth";
+import { getUserByEmail, getUserByUid, verifyRefreshToken } from "@/lib/services/auth";
+import { findAccessControlByStudentId } from "@/lib/services/access-control";
 
 export async function GET() {
     try {
@@ -21,10 +22,15 @@ export async function GET() {
         const secret = new TextEncoder().encode(process.env.JWT_SECRET);
         const payload = await verifyRefreshToken(refreshToken);
         console.log("in refresh, payload:", payload);
-        const email = payload?.email as string;
 
-        // Get user details
-        const user = await getUserByEmail(email);
+        // Look up user by either uid or email
+        let user;
+        if (payload?.uid) {
+            user = await getUserByUid(payload.uid);
+        } else if (payload?.email) {
+            user = await getUserByEmail(payload.email);
+        }
+
         if (!user) {
             return NextResponse.json(
                 { error: "User not found" },
@@ -32,8 +38,21 @@ export async function GET() {
             );
         }
 
-        // Generate new access token
-        const accessToken = await new SignJWT({ userId: user.id })
+        // Generate new access token with SAME payload structure as the original token
+        // This ensures consistency between login and refresh
+        const newTokenPayload = {
+            userId: user.id,
+            uid: user.codeNumber,
+            email: user.email || user.institutionalemail,
+            name: user.name,
+            isAdmin: user.isAdmin
+        };
+
+        const accessControl = await findAccessControlByStudentId(user.id as number);
+
+        console.log("accessControl:", accessControl)
+
+        const accessToken = await new SignJWT(newTokenPayload)
             .setProtectedHeader({ alg: "HS256" })
             .setIssuedAt()
             .setExpirationTime("1h")
@@ -44,9 +63,11 @@ export async function GET() {
             user: {
                 id: user.id,
                 name: user.name,
-                email: user.email,
+                email: user.email || user.institutionalemail,
                 codeNumber: user.codeNumber,
+                isAdmin: user.isAdmin
             },
+            accessControl
         });
     } catch (error) {
         console.error("Error in /api/auth/me:", error);

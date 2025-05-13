@@ -3,7 +3,14 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Loader2, House, Settings, FileText, LogOut } from "lucide-react";
+import {
+  Loader2,
+  House,
+  Settings,
+  FileText,
+  LogOut,
+  ShieldAlert,
+} from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -29,6 +36,11 @@ export default function SettingsLayout({
   const settingLinks = [
     { name: "General", href: "/settings", icon: Settings },
     { name: "Materials", href: "/settings/materials", icon: FileText },
+    {
+      name: "Access Control",
+      href: "/settings/access-control",
+      icon: ShieldAlert,
+    },
   ];
 
   // Get the current active link

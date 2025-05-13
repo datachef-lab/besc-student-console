@@ -32,6 +32,7 @@ export function NavMain({
   }[];
   className?: string;
 }) {
+  
   // No state needed for hover, just use empty functions
   const handleMouseEnter = () => {};
   const handleMouseLeave = () => {};

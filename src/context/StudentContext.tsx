@@ -4,98 +4,119 @@ import { Student } from "@/types/academics/student";
 import { useAuth } from "@/hooks/use-auth";
 import { BatchCustom } from "@/types/academics/batch";
 import { getStudentData } from "@/app/actions/student-actions";
+import { StudentAccessControl } from "@/types/academics/access-control";
 
 interface StudentContextType {
   student: Student | null;
   batches: BatchCustom[];
   loading: boolean;
+  accessControl: StudentAccessControl | null;
   error: string | null;
   refetch: () => Promise<void>;
 }
 
-export const StudentContext = createContext<StudentContextType | undefined>(
-  undefined
-);
+// Create the context with a default value
+const StudentContext = createContext<StudentContextType>({
+  student: null,
+  batches: [],
+  loading: true,
+  accessControl: null,
+  error: null,
+  refetch: async () => {},
+});
 
-export function StudentProvider({ children }: { children: React.ReactNode }) {
+// Custom hook to use the context
+export const useStudent = () => useContext(StudentContext);
+
+// Provider component to wrap around components that need access to the context
+export const StudentProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const { user } = useAuth();
   const [student, setStudent] = useState<Student | null>(null);
   const [batches, setBatches] = useState<BatchCustom[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [accessControl, setAccessControl] =
+    useState<StudentAccessControl | null>(null);
 
-  // Fetch student data with debouncing (minimum 10 seconds between requests)
-  const fetchStudentData = async (force = false) => {
-    if (!user?.codeNumber) {
-      setLoading(false);
-      return;
-    }
+  // Function to fetch student data
+  const fetchStudentData = async () => {
+    if (!user) return;
 
-    // Skip if we recently fetched (within 10 seconds) unless forced
-    const now = Date.now();
-    if (!force && now - lastFetchTime < 10000) {
-      return;
-    }
-
-    setLastFetchTime(now);
     setLoading(true);
     setError(null);
 
     try {
-      console.log("Fetching student data for:", user.codeNumber);
+      const res = await getStudentData(user?.codeNumber);
 
-      // Use the server action to fetch data
-      const { student: studentData, batches: batchesData } =
-        await getStudentData(user.codeNumber);
-
-      if (studentData) {
-        setStudent(studentData);
-        setBatches(batchesData || []);
-      } else {
-        console.error("Student data not found");
-        setError("Student data not found");
-        setBatches([]);
+      if (!res) {
+        throw new Error("Failed to fetch student data");
       }
-    } catch (error) {
-      console.error("Error fetching student data:", error);
-      setError("Failed to load student data. Please try again.");
+
+      // Make sure we copy restriction fields from the auth user to the student data
+      if (res.student) {
+        setStudent({
+          ...res.student,
+          mailingPinNo: res.student.mailingPinNo || "", // Provide a default value if undefined
+          resiPinNo: res.student.resiPinNo || "", // Provide a default value if undefined
+        });
+        await fetchAccessControl(res.student.id!);
+      }
+
+      setBatches(res.batches || []);
+    } catch (err) {
+      console.error("Error fetching student data:", err);
+      setError("Failed to load student data");
     } finally {
       setLoading(false);
     }
   };
 
-  // Manual refetch function - forces a new fetch regardless of time
-  const refetch = async () => {
-    await fetchStudentData(true);
+  const fetchAccessControl = async (studentId: number) => {
+    try {
+      const response = await fetch(
+        `/api/access-control?studentId=${studentId}`,
+        {
+          method: "GET",
+        }
+      );
+
+      const data = await response.json();
+
+      setAccessControl(data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  // Initial fetch when component mounts or user changes
+  // Fetch student data when the user changes
   useEffect(() => {
-    fetchStudentData();
+    if (user) {
+      fetchStudentData();
+    } else {
+      setStudent(null);
+      setBatches([]);
+    }
   }, [user?.codeNumber]);
 
-  // Memoize the context value to prevent unnecessary re-renders
+  // Create the context value object
   const value = useMemo(
     () => ({
       student,
       batches,
       loading,
+      accessControl,
       error,
-      refetch,
+      refetch: fetchStudentData,
     }),
     [student, batches, loading, error]
   );
 
+  // Return the provider with the value
   return (
     <StudentContext.Provider value={value}>{children}</StudentContext.Provider>
   );
-}
-
-export function useStudent() {
-  const context = useContext(StudentContext);
-  if (!context) {
-    throw new Error("useStudent must be used within a StudentProvider");
-  }
-  return context;
-}
+};

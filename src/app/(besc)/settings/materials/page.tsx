@@ -21,7 +21,7 @@ import MaterialItemForm from "./MaterialItemForm";
 import SelectCourseAndSemester from "./SelectCourseAndSemester";
 
 export default function MaterialsSettingsPage() {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [classes, setClasses] = useState<AcademicClass[]>([]);
   const [subjects, setSubjects] = useState<BatchSubject[]>([]);
@@ -46,12 +46,26 @@ export default function MaterialsSettingsPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+
+        // Set up headers with auth token
+        const headers: HeadersInit = {};
+        if (accessToken) {
+          headers["Authorization"] = `Bearer ${accessToken}`;
+          console.log("Setting Authorization header for API requests");
+        } else {
+          console.log("No token available for API requests");
+        }
+
         const [coursesResponse, classesResponse] = await Promise.all([
-          fetch("/api/courses"),
-          fetch("/api/classes"),
+          fetch("/api/courses", { headers }),
+          fetch("/api/classes", { headers }),
         ]);
 
         if (!coursesResponse.ok || !classesResponse.ok) {
+          console.log("API responses:", {
+            courses: coursesResponse.status,
+            classes: classesResponse.status,
+          });
           throw new Error("Failed to fetch data");
         }
 
@@ -88,14 +102,18 @@ export default function MaterialsSettingsPage() {
       }
     };
 
-    fetchData();
-  }, []);
+    if (accessToken) {
+      fetchData();
+    }
+  }, [accessToken]);
 
   // Separate effect for fetching subjects when course or semester changes
   useEffect(() => {
     const fetchSubjects = async () => {
-      if (!selectedCourse?.id || !selectedSemester?.id) {
-        console.log("Course or semester not selected, skipping subjects fetch");
+      if (!selectedCourse?.id || !selectedSemester?.id || !accessToken) {
+        console.log(
+          "Course, semester not selected or no token, skipping subjects fetch"
+        );
         return;
       }
 
@@ -107,11 +125,18 @@ export default function MaterialsSettingsPage() {
           selectedSemester.id
         );
 
+        const headers: HeadersInit = {};
+        if (accessToken) {
+          headers["Authorization"] = `Bearer ${accessToken}`;
+        }
+
         const response = await fetch(
-          `/api/subjects?courseId=${selectedCourse.id}&classId=${selectedSemester.id}`
+          `/api/subjects?courseId=${selectedCourse.id}&classId=${selectedSemester.id}`,
+          { headers }
         );
 
         if (!response.ok) {
+          console.log("Subjects API response status:", response.status);
           throw new Error("Failed to fetch subjects");
         }
 
@@ -145,7 +170,7 @@ export default function MaterialsSettingsPage() {
     };
 
     fetchSubjects();
-  }, [selectedCourse?.id, selectedSemester?.id]);
+  }, [selectedCourse?.id, selectedSemester?.id, accessToken]);
 
   // Debug effect to monitor subjects state
   useEffect(() => {
@@ -163,9 +188,22 @@ export default function MaterialsSettingsPage() {
   const refreshSubjectMaterials = async (subjectId: number) => {
     try {
       console.log(`Explicitly refreshing materials for subject ${subjectId}`);
+
+      const headers: HeadersInit = {};
+      if (accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+      }
+
       const response = await fetch(
-        `/api/course-materials?subjectId=${subjectId}`
+        `/api/course-materials?subjectId=${subjectId}`,
+        { headers }
       );
+
+      if (!response.ok) {
+        console.log("Materials API response status:", response.status);
+        throw new Error("Failed to fetch materials");
+      }
+
       const materials = await response.json();
 
       console.log(
@@ -249,12 +287,20 @@ export default function MaterialsSettingsPage() {
         }
       }
 
+      // Add authorization header
+      const headers: HeadersInit = {};
+      if (accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+      }
+
       const response = await fetch("/api/course-materials", {
         method: "POST",
+        headers,
         body: formData,
       });
 
       if (!response.ok) {
+        console.log("Save material API response status:", response.status);
         throw new Error("Failed to save material");
       }
 
@@ -282,11 +328,18 @@ export default function MaterialsSettingsPage() {
     try {
       console.log(`Deleting material with ID: ${materialId}`);
 
+      const headers: HeadersInit = {};
+      if (accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+      }
+
       const response = await fetch(`/api/course-materials?id=${materialId}`, {
         method: "DELETE",
+        headers,
       });
 
       if (!response.ok) {
+        console.log("Delete material API response status:", response.status);
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           `Failed to delete material: ${
@@ -313,7 +366,7 @@ export default function MaterialsSettingsPage() {
 
   // Add loading state UI
   if (isLoading) {
-  return (
+    return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
@@ -333,8 +386,8 @@ export default function MaterialsSettingsPage() {
           <div className="flex items-center gap-2">
             <FileText className="text-primary h-5 w-5" />
             <h1 className="text-xl font-medium">Course Materials</h1>
-              </div>
-            </div>
+          </div>
+        </div>
         <p className="text-sm text-muted-foreground">
           Manage course material links for students across all courses
         </p>
@@ -354,8 +407,8 @@ export default function MaterialsSettingsPage() {
           <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
             <div>
               <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
+                <Table>
+                  <TableHeader>
                     <TableRow className="border-b bg-muted/30 hover:bg-muted/30">
                       {[
                         "Sr. No",
@@ -372,9 +425,9 @@ export default function MaterialsSettingsPage() {
                           {header}
                         </TableHead>
                       ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {/* Group materials by subject */}
                     {subjects.length > 0 ? (
                       subjects.map((subject, index) => (
@@ -388,7 +441,7 @@ export default function MaterialsSettingsPage() {
                         />
                       ))
                     ) : (
-                    <TableRow>
+                      <TableRow>
                         <TableCell colSpan={6} className="text-center py-8">
                           <div className="flex flex-col items-center gap-2">
                             <FileText className="h-8 w-8 text-muted-foreground opacity-40" />
@@ -401,10 +454,10 @@ export default function MaterialsSettingsPage() {
                           </div>
                         </TableCell>
                       </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </div>
         </div>

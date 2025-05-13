@@ -1,18 +1,27 @@
 "use client";
-
-import { useStudent } from "@/context/StudentContext";
 import { useAuth } from "@/hooks/use-auth";
-import React, { useEffect } from "react";
+import { useStudent } from "@/context/StudentContext";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
 
-export default function SharedArea({
-  children,
-}: {
+interface SharedAreaProps {
   children: React.ReactNode;
-}) {
+}
+
+export default function SharedArea({ children }: SharedAreaProps) {
   const { user } = useAuth();
-  const { student } = useStudent();
+  const { student, accessControl, loading } = useStudent();
 
-  useEffect(() => {}, [user]);
+  if (!user) return null;
 
-  return (user && student && children)
+  if (loading || !student || !accessControl) {
+    return (
+      <LoadingIndicator
+        message="Loading your dashboard..."
+        subMessage="Please wait while we prepare your student portal"
+        fullScreen={true}
+      />
+    );
+  }
+
+  return <>{children}</>;
 }

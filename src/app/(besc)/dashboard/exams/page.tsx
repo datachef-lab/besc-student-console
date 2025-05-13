@@ -22,7 +22,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useStudent } from "@/context/StudentContext";
 import { format, parseISO } from "date-fns";
-
+import { useRouter } from "next/navigation";
 interface Exam {
   id: number;
   testid: number;
@@ -45,13 +45,20 @@ interface Exam {
 
 export default function ExamsContent() {
   const { accessToken } = useAuth();
-  const { student } = useStudent();
+  const { student, accessControl } = useStudent();
+  const router = useRouter();
   const [allExams, setAllExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSemester, setSelectedSemester] = useState<string>("all");
   const hasInitialFetchRef = React.useRef(false);
   const abortControllerRef = React.useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (!accessControl?.access_course) {
+      router.back();
+    }
+  }, [accessControl, router]);
 
   // Derived exam lists with improved categorization
   const today = new Date();

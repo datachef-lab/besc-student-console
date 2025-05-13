@@ -1,6 +1,18 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/providers/auth-provider";
+// This is imported but not directly used in the component
+// It sets up the database shutdown handlers in the Node.js environment
+import { setupDatabaseShutdownHandlers } from "@/lib/setup-db-handlers";
+
+// Initialize database shutdown handlers in Node.js environment
+// This is wrapped in a try-catch because it will error in
+// environments that don't support process listeners
+try {
+  setupDatabaseShutdownHandlers();
+} catch (error) {
+  console.warn("Could not set up database shutdown handlers:", error);
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

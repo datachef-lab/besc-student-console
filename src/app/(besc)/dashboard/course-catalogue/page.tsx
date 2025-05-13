@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useStudent } from "@/context/StudentContext";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -27,10 +28,17 @@ import {
 import { Button } from "@/components/ui/button";
 
 export default function CourseCataloguePage() {
-  const { batches, loading } = useStudent();
+  const { batches, loading, accessControl } = useStudent();
+  const router = useRouter();
   const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
   const [materialLinks, setMaterialLinks] = useState<DbCourseMaterial[]>([]);
   const [isLoadingMaterials, setIsLoadingMaterials] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!accessControl?.access_course) {
+      router.back();
+    }
+  }, [accessControl, router]);
 
   // Fetch materials for all subjects in a batch with a single API call
   const fetchBatchMaterials = async (
