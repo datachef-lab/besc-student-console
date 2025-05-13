@@ -89,38 +89,38 @@ export default function HomeContent() {
   const [isContentReady, setIsContentReady] = useState(false);
 
   // Stream determination logic
-  let stream;
-  if (batches && batches.length > 0) {
-    switch (batches[0].coursename.trim().toUpperCase()) {
-      case "BBA":
-        stream = "BBA";
-        break;
-      case "B.COM":
-        stream = "BCOM";
-        break;
-      case "B.A.":
-        stream = "BA";
-        break;
-      case "B.SC":
-        stream = "BSC";
-        break;
-      case "B.SC.":
-        stream = "BSC";
-        break;
-      case "B.ED":
-        stream = "BED";
-        break;
-      case "M.COM":
-        stream = "MCOM";
-        break;
-      case "M.A.":
-        stream = "MA";
-        break;
-      default:
-        stream = "BCOM";
-        break;
-    }
-  }
+  //   let stream;
+  //   if (batches && batches.length > 0) {
+  //     switch (batches[0].coursename.trim().toUpperCase()) {
+  //       case "BBA":
+  //         stream = "BBA";
+  //         break;
+  //       case "B.COM":
+  //         stream = "BCOM";
+  //         break;
+  //       case "B.A.":
+  //         stream = "BA";
+  //         break;
+  //       case "B.SC":
+  //         stream = "BSC";
+  //         break;
+  //       case "B.SC.":
+  //         stream = "BSC";
+  //         break;
+  //       case "B.ED":
+  //         stream = "BED";
+  //         break;
+  //       case "M.COM":
+  //         stream = "MCOM";
+  //         break;
+  //       case "M.A.":
+  //         stream = "MA";
+  //         break;
+  //       default:
+  //         stream = "BCOM";
+  //         break;
+  //     }
+  //   }
 
   // Prevent flickering by holding the loading state until content is ready
   useEffect(() => {
