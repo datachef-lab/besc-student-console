@@ -296,6 +296,7 @@ export default function HomeContent() {
       description:
         "The college website has been updated with the latest academic calendar and campus news. Visit for more details.",
       link: "https://www.thebges.edu.in/category/noticeboard/",
+      link: "https://www.thebges.edu.in/category/noticeboard/",
       external: true,
     },
   ];

@@ -135,32 +135,21 @@ export default function AccessControlPage() {
 
   // Fetch student statistics
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        if (!accessToken) return;
+    fetchStats();
+  }, [accessToken]);
 
-        const headers: HeadersInit = {
-          Authorization: `Bearer ${accessToken}`,
-        };
+  const fetchStats = async () => {
+    try {
+      if (!accessToken) return;
 
-        const response = await fetch("/api/student/stats", { headers });
+      const headers: HeadersInit = {
+        Authorization: `Bearer ${accessToken}`,
+      };
 
-        if (!response.ok) {
-          // If the stats endpoint doesn't exist yet, we'll use placeholder data
-          setStats({
-            totalStudents: 0,
-            activeStudents: 0,
-            suspendedStudents: 0,
-            alumniStudents: 0,
-            supplementaryStudents: 0,
-          });
-          return;
-        }
+      const response = await fetch("/api/student/stats", { headers });
 
-        const data = await response.json();
-        setStats(data);
-      } catch {
-        // Use placeholder data if the API fails
+      if (!response.ok) {
+        // If the stats endpoint doesn't exist yet, we'll use placeholder data
         setStats({
           totalStudents: 0,
           activeStudents: 0,
@@ -168,11 +157,22 @@ export default function AccessControlPage() {
           alumniStudents: 0,
           supplementaryStudents: 0,
         });
+        return;
       }
-    };
 
-    fetchStats();
-  }, [accessToken]);
+      const data = await response.json();
+      setStats(data);
+    } catch {
+      // Use placeholder data if the API fails
+      setStats({
+        totalStudents: 0,
+        activeStudents: 0,
+        suspendedStudents: 0,
+        alumniStudents: 0,
+        supplementaryStudents: 0,
+      });
+    }
+  };
 
   // Search and fetch students
   useEffect(() => {
@@ -270,15 +270,7 @@ export default function AccessControlPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      // Refresh stats after update
-      const headers: HeadersInit = {
-        Authorization: `Bearer ${accessToken}`,
-      };
-      const response = await fetch("/api/student/stats", { headers });
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      await fetchStats();
       setUpdateLoading(false);
     }
   };
