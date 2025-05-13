@@ -1,5 +1,5 @@
 import { query } from "@/db";
-import { IssuedBookDetails } from "@/types/academics/library";
+import { IssuedBookDetails, LibraryVisit } from "@/types/academics/library";
 
 export async function findIssuesByStudentId(studentId: number) {
     const sqlQuery = `
@@ -73,6 +73,31 @@ export async function findIssuesByStudentId(studentId: number) {
     `;
     const result = await query(sqlQuery) as IssuedBookDetails[];
     console.log("lib result", result);
+
+    return result;
+}
+
+export async function findLibraryVisits(studentId: number) {
+    const sqlQuery = `
+        SELECT
+            le.id,
+            le.libMasterId,
+            lm.libMasterName,
+            le.entrydt,
+            le.entrytime,
+            le.exittime
+        FROM
+            libentryexit le,
+            libmaster lm
+        WHERE
+            le.libMasterId = lm.id
+            AND usrid = ${studentId}
+            AND usrtype = 'Student'
+        ORDER BY le.entrytime DESC;
+    `;
+
+    const result = await query(sqlQuery) as LibraryVisit[];
+    console.log("lib-visits, result", result);
 
     return result;
 }

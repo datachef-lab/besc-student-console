@@ -47,3 +47,12 @@ export interface IssuedBookDetails {
     departmentId: number | null;
     department: string | null;
 }
+
+export interface LibraryVisit {
+    readonly id: number;
+    libMasterId: number;
+    libMasterName: string;
+    entrydt: string | Date | null;
+    entrytime: string | Date;
+    exittime: string | null;
+}

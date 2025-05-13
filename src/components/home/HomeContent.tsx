@@ -25,6 +25,9 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type NotificationType = "assignment" | "quiz" | "class" | "exam" | "feedback";
 type NotificationColor =
@@ -82,6 +85,7 @@ const colorMap = {
 type NotificationFilter = "all" | "unread" | "important";
 
 export default function HomeContent() {
+  const router = useRouter();
   const { student, loading, batches, error, refetch } = useStudent();
   const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -180,19 +184,10 @@ export default function HomeContent() {
   // Show loading UI until content is fully ready
   if (loading || !isContentReady) {
     return (
-      <div className="flex flex-col items-center justify-center h-[80vh] bg-white/95 rounded-xl p-8 shadow-sm">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-pulse w-24 h-24 rounded-full bg-purple-100 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
-          </div>
-          <p className="text-purple-800 font-medium animate-pulse">
-            Loading your dashboard...
-          </p>
-          <p className="text-gray-500 text-sm text-center max-w-md">
-            Please wait while we retrieve your latest information
-          </p>
-        </div>
-      </div>
+      <LoadingIndicator
+        message="Loading your dashboard..."
+        subMessage="Please wait while we retrieve your latest information"
+      />
     );
   }
 
@@ -280,7 +275,7 @@ export default function HomeContent() {
       title: "Prelim payment due",
       description:
         "Next semester fee payment is due by May 15. Please visit the fees section to complete your payment and avoid late fees.",
-      link: "/dashboard/fees",
+      link: "/dashboard/enrollment-fees",
     },
     {
       id: 2,
@@ -306,28 +301,34 @@ export default function HomeContent() {
     },
   ];
 
-  const enrolledCourses = [
-    {
-      id: 1,
-      title: "Object oriented programming",
-      icon: "/placeholders/oop-icon.svg",
-    },
-    {
-      id: 2,
-      title: "Fundamentals of database systems",
-      icon: "/placeholders/dbms-icon.svg",
-    },
-    {
-      id: 3,
-      title: "Computer Networks",
-      icon: "/placeholders/network-icon.svg",
-    },
-    {
-      id: 4,
-      title: "Web Development",
-      icon: "/placeholders/web-icon.svg",
-    },
-  ];
+  //   const enrolledCourses = [
+  //     {
+  //       id: 1,
+  //       title: "Object oriented programming",
+  //       icon: "/placeholders/oop-icon.svg",
+  //     },
+  //     {
+  //       id: 2,
+  //       title: "Fundamentals of database systems",
+  //       icon: "/placeholders/dbms-icon.svg",
+  //     },
+  //     {
+  //       id: 3,
+  //       title: "Computer Networks",
+  //       icon: "/placeholders/network-icon.svg",
+  //     },
+  //     {
+  //       id: 4,
+  //       title: "Web Development",
+  //       icon: "/placeholders/web-icon.svg",
+  //     },
+  //   ];
+
+  const enrolledCourses: {
+    id: number;
+    title: string;
+    icon: string;
+  }[] = [];
 
   const today = new Date();
   const dateString = today.toLocaleDateString("en-US", {
@@ -519,7 +520,7 @@ export default function HomeContent() {
                     if (notice.external) {
                       window.open(notice.link, "_blank", "noopener,noreferrer");
                     } else if (notice.link) {
-                      window.location.href = notice.link;
+                      router.push(notice.link);
                     }
                   }}
                 >
