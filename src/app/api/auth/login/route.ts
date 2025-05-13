@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateTokens, setAuthCookies, getUserByUid } from '@/lib/services/auth';
+import { generateTokens, setAuthCookies } from '@/lib/services/auth';
 import { findAccessControlByStudentId } from '@/lib/services/access-control';
+import { findStudentByUidAndWa } from '@/lib/services/student-service';
 
 // export async function POST(req: NextRequest) {
 //     try {
@@ -208,7 +209,9 @@ export async function POST(req: NextRequest) {
 
         // Normal login flow
         try {
-            const user = await getUserByUid(uid);
+            // const user = await getUserByUid(uid);
+            const user = await findStudentByUidAndWa(uid, password);
+            console.log("user in fetching:", user);
             console.log(`User found for UID ${uid}:`, user ? "Yes" : "No");
 
             if (!user) {
@@ -216,9 +219,9 @@ export async function POST(req: NextRequest) {
             }
 
             // Simple password check for development
-            if (password !== "123") {
-                return NextResponse.json({ error: 'Invalid UID or password' }, { status: 401 });
-            }
+            // if (password !== "123") {
+            //     return NextResponse.json({ error: 'Invalid UID or password' }, { status: 401 });
+            // }
 
             console.log("Login successful for user:", user.name);
             const tokens = generateTokens(user);

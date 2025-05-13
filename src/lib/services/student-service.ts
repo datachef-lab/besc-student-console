@@ -82,6 +82,40 @@ export async function findStudentByUid(uid: string): Promise<Student | null> {
     }
 }
 
+export async function findStudentByUidAndWa(uid: string, whatsappno: string): Promise<Student | null> {
+    try {
+        // Don't log the function itself
+        console.log("Looking up student with UID:", uid);
+
+        const rows = await query<RowDataPacket[]>(`
+            SELECT * 
+            FROM studentpersonaldetails 
+            WHERE codeNumber = '${uid}' AND whatsappno = '${whatsappno}'
+        `);
+
+        // console.log("Query results:", rows);
+
+        if (!rows || rows.length === 0) {
+            console.log(`No student found with UID: ${uid} and whatsappno: ${whatsappno}`);
+            return null;
+        }
+
+        const formattedStudent = await formatResponse(rows[0] as DbStudent);
+
+        await handleAccessControlStatus({
+            id: formattedStudent?.id,
+            alumni: formattedStudent?.alumni,
+            active: formattedStudent?.active,
+            leavingdate: formattedStudent?.leavingdate as string ?? undefined
+        });
+
+        return formattedStudent;
+    } catch (error) {
+        console.error("Error finding student by UID:", error);
+        return null;
+    }
+}
+
 export async function formatResponse(student: DbStudent | null) {
     if (!student) {
         return null;

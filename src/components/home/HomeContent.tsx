@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/sheet";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+
 
 type NotificationType = "assignment" | "quiz" | "class" | "exam" | "feedback";
 type NotificationColor =
@@ -346,13 +346,13 @@ export default function HomeContent() {
   }
 
   const dailyNotices = [
-    {
-      id: 1,
-      title: "Prelim payment due",
-      description:
-        "Next semester fee payment is due by May 15. Please visit the fees section to complete your payment and avoid late fees.",
-      link: "/dashboard/enrollment-fees",
-    },
+    // {
+    //   id: 1,
+    //   title: "Prelim payment due",
+    //   description:
+    //     "Next semester fee payment is due by May 15. Please visit the fees section to complete your payment and avoid late fees.",
+    //   link: "/dashboard/enrollment-fees",
+    // },
     {
       id: 2,
       title: "Exam schedule",

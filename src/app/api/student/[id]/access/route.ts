@@ -1,12 +1,15 @@
 import { updateAccessControl } from "@/lib/services/access-control";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 
 // PUT endpoint to update student access permissions
-export async function PUT(request: Request, context: { params: { id: string } }) {
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
         // Validate authorization (basic check)
-        const { id } = context.params;
+        const { id } = await params;
 
         const { status, access_course, access_library, access_exams } = await request.json();
 
