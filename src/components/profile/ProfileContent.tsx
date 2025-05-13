@@ -261,7 +261,7 @@ export default function ProfileContent() {
     <div className="p-6 bg-white">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-blue-700">Student Profile</h1>
-        {student.alumni && (
+        {student.leavingdate && (
           <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 py-1.5 px-3 text-white">
             <Image
               src="/illustrations/profile/badge.svg"
