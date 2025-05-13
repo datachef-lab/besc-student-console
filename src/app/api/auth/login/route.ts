@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTokens, setAuthCookies, getUserByUid } from '@/lib/services/auth';
+import { findAccessControlByStudentId } from '@/lib/services/access-control';
 
 // export async function POST(req: NextRequest) {
 //     try {
@@ -88,8 +89,6 @@ export async function POST(req: NextRequest) {
                 institutionalemail: 'admin@example.com',
                 email: 'admin@example.com',
                 isAdmin: true,
-                isSuspended: false,
-                restrictedFeatures: [],
                 // Add required fields with default values
                 mailingPinNo: '',
                 resiPinNo: '',
@@ -153,7 +152,7 @@ export async function POST(req: NextRequest) {
                 emercontactpersonmob: '',
                 emercontactpersonphr: '',
                 emercontactpersonpho: '',
-                leavingdate: new Date(),
+                leavingdate: new Date().toISOString(),
                 univregno: '',
                 univlstexmrollno: '',
                 communityid: 0,
@@ -225,6 +224,7 @@ export async function POST(req: NextRequest) {
             const tokens = generateTokens(user);
 
             const response = setAuthCookies(tokens);
+            const accessControl = await findAccessControlByStudentId(user.id as number);
             return NextResponse.json({
                 user: {
                     id: user.id,
@@ -232,9 +232,8 @@ export async function POST(req: NextRequest) {
                     uid: user.codeNumber,
                     email: user.institutionalemail,
                     isAdmin: user.isAdmin,
-                    isSuspended: user.isSuspended || false,
-                    restrictedFeatures: user.restrictedFeatures || []
                 },
+                accessControl,
                 accessToken: tokens.accessToken,
                 redirectTo: '/dashboard'
             }, response);

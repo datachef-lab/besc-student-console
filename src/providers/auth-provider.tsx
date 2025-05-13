@@ -10,6 +10,7 @@ import React, {
 import { useRouter, usePathname } from "next/navigation";
 import axios from "axios";
 import { Student } from "@/types/academics/student";
+import { StudentAccessControl } from "@/types/academics/access-control";
 
 const axiosInstance = axios.create({
   baseURL: "", // Use relative URLs
@@ -21,10 +22,14 @@ const axiosInstance = axios.create({
 
 export interface AuthContextType {
   user: Student | null;
-  login: (accessToken: string, userData: Student) => void;
+  login: (
+    accessToken: string,
+    userData: Student,
+  ) => void;
   logout: () => void;
   accessToken: string | null;
   displayFlag: boolean;
+
   isLoading: boolean;
 }
 
@@ -39,7 +44,9 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [displayFlag, setDisplayFlag] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  
   const [user, setUser] = useState<Student | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname(); // Get the current route
@@ -48,9 +55,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     pathname &&
     (pathname.startsWith("/dashboard") || pathname.startsWith("/settings"));
 
-  const login = (accessToken: string, userData: Student) => {
+  const login = (
+    accessToken: string,
+    userData: Student,
+
+  ) => {
     console.log("Login function called, setting access token");
     setAccessToken(accessToken);
+    
     setUser(userData);
   };
 
@@ -80,6 +92,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [router, pathname]);
 
+  
+
   const generateNewToken = useCallback(async (): Promise<string | null> => {
     if (!isProtectedRoute) return null; // ✅ Skip request if not on protected route
 
@@ -87,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await axiosInstance.get<{
         accessToken: string;
         user: Student;
+        accessControl: StudentAccessControl;
       }>("/api/auth/refresh", { withCredentials: true });
 
       console.log("Token refresh response received");
@@ -95,6 +110,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log("Setting refreshed access token");
         setAccessToken(response.data.accessToken);
         setUser(response.data.user);
+
         return response.data.accessToken;
       }
       return null;
@@ -106,6 +122,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [logout, isProtectedRoute]);
 
   useEffect(() => {
+    let triedRefresh = false;
     const checkSession = async () => {
       try {
         console.log("Checking existing session...");
@@ -117,10 +134,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log("Session check response received");
 
         if (response.data && response.data.accessToken) {
-          console.log("Setting access token from /api/auth/me");
           setAccessToken(response.data.accessToken);
-
-          // Ensure we have the codeNumber from the user data
           if (response.data.user) {
             setUser({
               ...response.data.user,
@@ -133,7 +147,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           "No existing session found, will try to refresh token,",
           error
         );
-        if (accessToken === null) {
+        if (!triedRefresh) {
+          triedRefresh = true;
           await generateNewToken();
         }
       } finally {
@@ -142,7 +157,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     checkSession();
-  }, [accessToken, generateNewToken, isProtectedRoute]);
+    // Only run on mount and route change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generateNewToken, isProtectedRoute]);
 
   useEffect(() => {
     if (!isProtectedRoute) return; // ✅ Skip request if not on protected route
@@ -189,6 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const contextValue: AuthContextType = {
     user,
     login,
+
     logout,
     accessToken,
     displayFlag,

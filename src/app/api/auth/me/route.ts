@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { SignJWT } from "jose";
 import { getUserByEmail, getUserByUid, verifyRefreshToken } from "@/lib/services/auth";
+import { findAccessControlByStudentId } from "@/lib/services/access-control";
 
 export async function GET() {
     try {
@@ -47,6 +48,10 @@ export async function GET() {
             isAdmin: user.isAdmin
         };
 
+        const accessControl = await findAccessControlByStudentId(user.id as number);
+
+        console.log("accessControl:", accessControl)
+
         const accessToken = await new SignJWT(newTokenPayload)
             .setProtectedHeader({ alg: "HS256" })
             .setIssuedAt()
@@ -62,6 +67,7 @@ export async function GET() {
                 codeNumber: user.codeNumber,
                 isAdmin: user.isAdmin
             },
+            accessControl
         });
     } catch (error) {
         console.error("Error in /api/auth/me:", error);

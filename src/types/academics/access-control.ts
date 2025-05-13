@@ -5,6 +5,7 @@ export interface DbStudentAccessControl {
     access_course: boolean;
     access_library: boolean;
     access_exams: boolean;
+    access_documents: boolean;
     created_at: Date;
     updated_at: Date | null;
 }

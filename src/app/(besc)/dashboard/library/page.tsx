@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Calendar,
   Clock,
@@ -15,8 +15,17 @@ import {
   Library,
 } from "lucide-react";
 import Image from "next/image";
+import { useStudent } from "@/context/StudentContext";
+import { useRouter } from "next/dist/client/components/navigation";
 
 export default function LibraryPage() {
+  const { accessControl } = useStudent();
+  const router = useRouter();
+  useEffect(() => {
+    if (!accessControl?.access_course) {
+      router.back();
+    }
+  }, [accessControl, router]);
   // Sample data
   const recentBooks = [
     {

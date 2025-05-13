@@ -4,11 +4,13 @@ import { Student } from "@/types/academics/student";
 import { useAuth } from "@/hooks/use-auth";
 import { BatchCustom } from "@/types/academics/batch";
 import { getStudentData } from "@/app/actions/student-actions";
+import { StudentAccessControl } from "@/types/academics/access-control";
 
 interface StudentContextType {
   student: Student | null;
   batches: BatchCustom[];
   loading: boolean;
+  accessControl: StudentAccessControl | null;
   error: string | null;
   refetch: () => Promise<void>;
 }
@@ -18,6 +20,7 @@ const StudentContext = createContext<StudentContextType>({
   student: null,
   batches: [],
   loading: true,
+  accessControl: null,
   error: null,
   refetch: async () => {},
 });
@@ -36,6 +39,8 @@ export const StudentProvider = ({
   const [batches, setBatches] = useState<BatchCustom[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [accessControl, setAccessControl] =
+    useState<StudentAccessControl | null>(null);
 
   // Function to fetch student data
   const fetchStudentData = async () => {
@@ -45,19 +50,21 @@ export const StudentProvider = ({
     setError(null);
 
     try {
-      const res = await getStudentData(user.uid);
+      const res = await getStudentData(user?.codeNumber);
 
       if (!res) {
         throw new Error("Failed to fetch student data");
       }
 
       // Make sure we copy restriction fields from the auth user to the student data
-      setStudent({
-        ...res.student,
-        isSuspended: user.isSuspended || res.student.isSuspended,
-        restrictedFeatures:
-          user.restrictedFeatures || res.student.restrictedFeatures || [],
-      });
+      if (res.student) {
+        setStudent({
+          ...res.student,
+          mailingPinNo: res.student.mailingPinNo || "", // Provide a default value if undefined
+          resiPinNo: res.student.resiPinNo || "", // Provide a default value if undefined
+        });
+        await fetchAccessControl(res.student.id!);
+      }
 
       setBatches(res.batches || []);
     } catch (err) {
@@ -65,6 +72,23 @@ export const StudentProvider = ({
       setError("Failed to load student data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAccessControl = async (studentId: number) => {
+    try {
+      const response = await fetch(
+        `/api/access-control?studentId=${studentId}`,
+        {
+          method: "GET",
+        }
+      );
+
+      const data = await response.json();
+
+      setAccessControl(data);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -76,7 +100,7 @@ export const StudentProvider = ({
       setStudent(null);
       setBatches([]);
     }
-  }, [user]);
+  }, [user?.codeNumber]);
 
   // Create the context value object
   const value = useMemo(
@@ -84,6 +108,7 @@ export const StudentProvider = ({
       student,
       batches,
       loading,
+      accessControl,
       error,
       refetch: fetchStudentData,
     }),

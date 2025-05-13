@@ -53,18 +53,15 @@ import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { StudentAccessControl } from "@/types/academics/access-control";
 
 // Extended type with guaranteed array for restrictedFeatures and isSuspended
-type StudentWithAccess = StudentAccessControl & {
-  restrictedFeatures: string[];
-  isSuspended?: boolean;
-  imgFile?: string;
-};
+type StudentWithAccess = StudentAccessControl;
 
 // Types for student stats
 type StudentStats = {
   totalStudents: number;
   activeStudents: number;
   suspendedStudents: number;
-  graduatedStudents: number;
+  alumniStudents: number;
+  supplementaryStudents: number;
 };
 
 // Function to get initials from name
@@ -79,48 +76,32 @@ function getInitials(name: string): string {
 
 // Add a function to compute the status string and badges
 function getStudentStatus(student: StudentWithAccess) {
-  if (student.isSuspended) {
+  if (student.status === "suspended") {
     return {
       status: "Suspended",
       color: "bg-red-100 text-red-700",
       badges: [],
     };
   }
-  const restricted = Array.isArray(student.restrictedFeatures)
-    ? student.restrictedFeatures
-    : typeof student.restrictedFeatures === "string"
-    ? (() => {
-        try {
-          return JSON.parse(student.restrictedFeatures);
-        } catch {
-          return [];
-        }
-      })()
-    : [];
+
   let status = "";
   let color = "";
   // Check for alumni by leavingdate first
-  if (student.leavingdate && student.leavingdate !== "") {
+  if (student.status === "alumni") {
     status = "Alumni";
     color = "bg-purple-100 text-purple-700";
-  } else if (!student.active && !student.alumni) {
+  } else if (student.status === "dropped_out") {
     status = "Dropped Out";
     color = "bg-gray-100 text-gray-700";
-  } else if (!student.active && student.alumni) {
-    status = "Alumni";
-    color = "bg-purple-100 text-purple-700";
-  } else if (student.active && !student.alumni) {
+  } else if (student.status === "active") {
     status = "Active";
     color = "bg-green-100 text-green-700";
-  } else if (student.active && student.alumni) {
+  } else if (student.status === "supplementary") {
     status = "Supplementary";
     color = "bg-amber-100 text-amber-700";
   }
-  const badges = [];
-  if (restricted.includes("library")) badges.push("Library access restricted");
-  if (restricted.includes("documents"))
-    badges.push("Course materials restricted");
-  return { status, color, badges };
+
+  return { status, color };
 }
 
 // Add a status color and label map for use in the Select
@@ -136,6 +117,7 @@ export default function AccessControlPage() {
   const { accessToken } = useAuth();
   const [students, setStudents] = useState<StudentWithAccess[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [updateLoading, setUpdateLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] =
@@ -147,47 +129,50 @@ export default function AccessControlPage() {
     totalStudents: 0,
     activeStudents: 0,
     suspendedStudents: 0,
-    graduatedStudents: 0,
+    alumniStudents: 0,
+    supplementaryStudents: 0,
   });
 
   // Fetch student statistics
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        if (!accessToken) return;
-
-        const headers: HeadersInit = {
-          Authorization: `Bearer ${accessToken}`,
-        };
-
-        const response = await fetch("/api/student/stats", { headers });
-
-        if (!response.ok) {
-          // If the stats endpoint doesn't exist yet, we'll use placeholder data
-          setStats({
-            totalStudents: 1254,
-            activeStudents: 1187,
-            suspendedStudents: 42,
-            graduatedStudents: 25,
-          });
-          return;
-        }
-
-        const data = await response.json();
-        setStats(data);
-      } catch {
-        // Use placeholder data if the API fails
-        setStats({
-          totalStudents: 1254,
-          activeStudents: 1187,
-          suspendedStudents: 42,
-          graduatedStudents: 25,
-        });
-      }
-    };
-
     fetchStats();
   }, [accessToken]);
+
+  const fetchStats = async () => {
+    try {
+      if (!accessToken) return;
+
+      const headers: HeadersInit = {
+        Authorization: `Bearer ${accessToken}`,
+      };
+
+      const response = await fetch("/api/student/stats", { headers });
+
+      if (!response.ok) {
+        // If the stats endpoint doesn't exist yet, we'll use placeholder data
+        setStats({
+          totalStudents: 0,
+          activeStudents: 0,
+          suspendedStudents: 0,
+          alumniStudents: 0,
+          supplementaryStudents: 0,
+        });
+        return;
+      }
+
+      const data = await response.json();
+      setStats(data);
+    } catch {
+      // Use placeholder data if the API fails
+      setStats({
+        totalStudents: 0,
+        activeStudents: 0,
+        suspendedStudents: 0,
+        alumniStudents: 0,
+        supplementaryStudents: 0,
+      });
+    }
+  };
 
   // Search and fetch students
   useEffect(() => {
@@ -227,18 +212,7 @@ export default function AccessControlPage() {
             const sWithUnknown = s as unknown;
             return {
               ...s,
-              restrictedFeatures: Array.isArray(
-                (sWithUnknown as { restrictedFeatures?: unknown })
-                  .restrictedFeatures
-              )
-                ? (sWithUnknown as { restrictedFeatures: string[] })
-                    .restrictedFeatures
-                : [],
-              isSuspended:
-                (sWithUnknown as { isSuspended?: boolean }).isSuspended ??
-                false,
-              imgFile:
-                (sWithUnknown as { imgFile?: string }).imgFile ?? undefined,
+              imgFile: (sWithUnknown as { imgFile?: string }).imgFile ?? null,
             };
           })
         );
@@ -263,6 +237,7 @@ export default function AccessControlPage() {
 
   // Update student access permissions
   const updateStudentAccess = async (studentData: StudentWithAccess) => {
+    setUpdateLoading(true);
     try {
       const headers: HeadersInit = {
         "Content-Type": "application/json",
@@ -282,7 +257,7 @@ export default function AccessControlPage() {
         throw new Error("Failed to update student access");
       }
 
-      // Update the students list with the updated student
+      // Optionally update local state/UI
       setStudents(
         students.map((student) =>
           student.id === studentData.id
@@ -294,31 +269,14 @@ export default function AccessControlPage() {
       setIsDialogOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      await fetchStats();
+      setUpdateLoading(false);
     }
   };
 
   const openStudentDialog = (student: StudentWithAccess) => {
-    // Ensure restrictedFeatures is always an array
-    let restrictedFeatures: string[] = [];
-    if (student.restrictedFeatures) {
-      if (typeof student.restrictedFeatures === "string") {
-        try {
-          restrictedFeatures = JSON.parse(student.restrictedFeatures);
-          if (!Array.isArray(restrictedFeatures)) {
-            restrictedFeatures = [];
-          }
-        } catch {
-          restrictedFeatures = [];
-        }
-      } else if (Array.isArray(student.restrictedFeatures)) {
-        restrictedFeatures = student.restrictedFeatures;
-      }
-    }
-    setSelectedStudent({
-      ...student,
-      restrictedFeatures,
-      leavingdate: student.leavingdate ? String(student.leavingdate) : null,
-    });
+    setSelectedStudent({ ...student });
     setIsDialogOpen(true);
   };
 
@@ -393,13 +351,13 @@ export default function AccessControlPage() {
       header: "Status",
       accessorKey: "status",
       cell: ({ row }) => {
-        const { status, color, badges } = getStudentStatus(row.original);
+        const { status, color } = getStudentStatus(row.original);
         return (
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-200 ${color}`}
           >
             {status}
-            {badges.map((badge: string, i: number) => (
+            {/* {badges.map((badge: string, i: number) => (
               <span
                 key={i}
                 className="ml-1 px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-800 text-[10px] font-semibold"
@@ -411,7 +369,7 @@ export default function AccessControlPage() {
                   ? "Materials"
                   : badge}
               </span>
-            ))}
+            ))} */}
           </span>
         );
       },
@@ -500,7 +458,7 @@ export default function AccessControlPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="Total Students"
           value={stats.totalStudents.toLocaleString()}
@@ -520,10 +478,16 @@ export default function AccessControlPage() {
           color="bg-red-50 border-red-100"
         />
         <StatCard
-          title="Graduated Students"
-          value={stats.graduatedStudents.toLocaleString()}
+          title="Alumni Students"
+          value={stats.alumniStudents.toLocaleString()}
           icon={<GraduationCap className="h-5 w-5 text-purple-600" />}
           color="bg-purple-50 border-purple-100"
+        />
+        <StatCard
+          title="Supplementary Students"
+          value={stats.supplementaryStudents.toLocaleString()}
+          icon={<GraduationCap className="h-5 w-5 text-amber-600" />}
+          color="bg-amber-50 border-amber-100"
         />
       </div>
 
@@ -598,7 +562,10 @@ export default function AccessControlPage() {
       </Card>
 
       {selectedStudent && (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog
+          open={isDialogOpen || updateLoading}
+          onOpenChange={setIsDialogOpen}
+        >
           <DialogContent className="sm:max-w-[450px]">
             <DialogHeader>
               <div className="flex items-center space-x-3 mb-2">
@@ -629,47 +596,34 @@ export default function AccessControlPage() {
                   </Label>
                 </div>
                 <Select
-                  value={(() => {
-                    if (!selectedStudent) return "active";
-                    if (selectedStudent.isSuspended) return "suspended";
-                    if (selectedStudent.leavingdate && selectedStudent.alumni)
-                      return "alumni";
-                    if (!selectedStudent.active && !selectedStudent.alumni)
-                      return "droppedout";
-                    if (!selectedStudent.active && selectedStudent.alumni)
-                      return "alumni";
-                    if (selectedStudent.active && !selectedStudent.alumni)
-                      return "active";
-                    if (selectedStudent.active && selectedStudent.alumni)
-                      return "supplementary";
-                    return "active";
-                  })()}
-                  onValueChange={(value) => {
+                  value={
+                    selectedStudent?.status as
+                      | "alumni"
+                      | "active"
+                      | "suspended"
+                      | "supplementary"
+                      | "dropped_out"
+                      | string
+                  }
+                  onValueChange={(
+                    value:
+                      | "alumni"
+                      | "active"
+                      | "suspended"
+                      | "dropped_out"
+                      | string
+                  ) => {
                     setSelectedStudent((prev) => {
                       if (!prev) return prev;
-                      const updates: Partial<StudentWithAccess> = {};
-                      if (value === "suspended") updates.isSuspended = true;
-                      else updates.isSuspended = false;
-                      if (value === "alumni") {
-                        updates.active = false;
-                        updates.alumni = true;
-                        updates.leavingdate = prev.leavingdate
-                          ? String(prev.leavingdate)
-                          : new Date().toISOString();
-                      } else if (value === "droppedout") {
-                        updates.active = false;
-                        updates.alumni = false;
-                        updates.leavingdate = undefined;
-                      } else if (value === "active") {
-                        updates.active = true;
-                        updates.alumni = false;
-                        updates.leavingdate = undefined;
-                      } else if (value === "supplementary") {
-                        updates.active = true;
-                        updates.alumni = true;
-                        updates.leavingdate = undefined;
-                      }
-                      return { ...prev, ...updates };
+                      return {
+                        ...prev,
+                        status: value as
+                          | "alumni"
+                          | "active"
+                          | "suspended"
+                          | "supplementary"
+                          | "dropped_out",
+                      };
                     });
                   }}
                 >
@@ -692,21 +646,25 @@ export default function AccessControlPage() {
                     id: "courseCatalogue",
                     label: "Course Catalogue",
                     description: "Browse and view courses",
+                    key: "access_course",
                   },
                   {
                     id: "library",
                     label: "Library",
                     description: "Access library resources",
+                    key: "access_library",
                   },
                   {
                     id: "exams",
                     label: "Exams",
                     description: "View and manage exams",
+                    key: "access_exams",
                   },
                   {
                     id: "documents",
                     label: "Documents",
                     description: "View and download documents",
+                    key: "access_documents",
                   },
                 ].map((feature) => (
                   <div
@@ -727,19 +685,16 @@ export default function AccessControlPage() {
                     <Switch
                       id={feature.id}
                       checked={
-                        !selectedStudent.restrictedFeatures.includes(feature.id)
+                        selectedStudent[
+                          feature.key as keyof StudentWithAccess
+                        ] as boolean
                       }
                       onCheckedChange={(checked) => {
-                        const restrictedFeatures =
-                          selectedStudent.restrictedFeatures;
-                        setSelectedStudent({
+                        const updatedStudent = {
                           ...selectedStudent,
-                          restrictedFeatures: checked
-                            ? restrictedFeatures.filter(
-                                (f: string) => f !== feature.id
-                              )
-                            : [...restrictedFeatures, feature.id],
-                        });
+                          [feature.key as keyof StudentWithAccess]: checked,
+                        };
+                        setSelectedStudent(updatedStudent);
                       }}
                     />
                   </div>
@@ -750,15 +705,17 @@ export default function AccessControlPage() {
               <Button
                 variant="outline"
                 size="sm"
+                disabled={updateLoading}
                 onClick={() => setIsDialogOpen(false)}
               >
                 Cancel
               </Button>
               <Button
                 size="sm"
+                disabled={updateLoading}
                 onClick={() => updateStudentAccess(selectedStudent)}
               >
-                Save Changes
+                {updateLoading ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </DialogContent>

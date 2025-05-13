@@ -25,9 +25,14 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 
+import { useStudent } from "@/context/StudentContext";
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { accessControl } = useStudent();
   console.log("pathname:", pathname);
+
+  React.useEffect(() => {}, [accessControl]);
 
   // Define navigation items
   const navMainItems = [
@@ -43,19 +48,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     //   icon: Frame,
     //   isActive: pathname === "/dashboard/attendance",
     // },
-    {
+    accessControl?.access_exams && {
       title: "Exams",
       url: "/dashboard/exams",
       icon: NotebookPen,
       isActive: pathname === "/dashboard/exams",
     },
-    {
+    accessControl?.access_course && {
       title: "Course Catalogue",
       url: "/dashboard/course-catalogue",
       icon: BookOpen,
       isActive: pathname === "/dashboard/course-catalogue",
     },
-    {
+    accessControl?.access_documents && {
       title: "Documents",
       url: "/dashboard/documents",
       icon: ScrollText,
@@ -67,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: IndianRupee,
       isActive: pathname === "/dashboard/enrollment-fees",
     },
-    {
+    accessControl?.access_library && {
       title: "Library",
       url: "/dashboard/library",
       icon: Library,
@@ -79,7 +84,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: Settings2,
       isActive: pathname === "/dashboard/profile",
     },
-  ];
+  ].filter((ele) => !!ele);
+
+
 
   return (
     <Sidebar variant="floating" collapsible="icon" {...props}>

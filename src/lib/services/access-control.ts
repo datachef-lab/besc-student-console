@@ -90,17 +90,17 @@ export async function findAll(
         institutionEmail: row.institutionalemail,
     }));
 
-    for (const st of students) {
-        const { alumni, active, leavingdate, id } = st;
-        if (!st.status) {
-            await handleAccessControlStatus({
-                id,
-                alumni,
-                active,
-                leavingdate: leavingdate as string ?? undefined
-            })
-        }
-    }
+    // for (const st of students) {
+    //     const { alumni, active, leavingdate, id } = st;
+    //     if (!st.status) {
+    //         await handleAccessControlStatus({
+    //             id,
+    //             alumni,
+    //             active,
+    //             leavingdate: leavingdate as string ?? undefined
+    //         })
+    //     }
+    // }
 
 
     const totalPages = Math.ceil(Number(totalStudents) / size);
@@ -152,5 +152,106 @@ export async function handleAccessControlStatus(student: Partial<Student>) {
     await query<RowDataPacket[]>(sqlQuery);
 
     console.log("done updating the access statuses");
+
+}
+
+export async function updateAccessControl(accessControl: Partial<StudentAccessControl>) {
+    const { status, access_course, access_library, access_exams } = accessControl;
+    console.log("in updated,status:", status)
+    const sqlQuery = `
+        UPDATE student_access_control
+        SET 
+            status = '${status}',
+            access_course = ${access_course},
+            access_library = ${access_library},
+            access_exams = ${access_exams},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${accessControl.id}
+    `;
+
+    await query<RowDataPacket[]>(sqlQuery);
+
+    console.log("done updating the access control:", accessControl);
+
+
+    const sqlQuery1 = `
+        SELECT
+            c.*,
+            st.name,
+            st.codeNumber,
+            st.univregno,
+            st.univlstexmrollno,
+            st.institutionalemail,
+            st.whatsappno,
+            st.cuformno,
+            st.imgFile,
+            st.leavingdate,
+            st.active,
+            st.alumni
+        FROM
+            studentpersonaldetails st,
+            student_access_control c
+        WHERE 
+            c.id = ${accessControl.id}
+    `;
+
+    const [result] = await query<RowDataPacket[]>(sqlQuery1) as StudentAccessControl[];
+
+    return result;
+
+}
+
+export async function findStats() {
+    const totalStudentsQuery = `
+    SELECT COUNT(id) AS totalStudents
+    FROM studentpersonaldetails;
+  `;
+    const activeStudentsQuery = `
+    SELECT COUNT(id) AS activeStudents
+    FROM student_access_control
+    WHERE status = 'active';
+  `;
+    const suspendedStudentsQuery = `
+    SELECT COUNT(id) AS suspendedStudents
+    FROM student_access_control
+    WHERE status = 'suspended';
+  `;
+    const alumniStudentsQuery = `
+    SELECT COUNT(id) AS alumniStudents
+    FROM student_access_control
+    WHERE status = 'alumni';
+  `;
+    const supplementaryStudentsQuery = `
+    SELECT COUNT(id) AS supplementaryStudents
+    FROM student_access_control
+    WHERE status = 'supplementary';
+  `;
+
+    const [{ totalStudents }] = await query<RowDataPacket[]>(totalStudentsQuery) as { totalStudents: number }[];
+    const [{ activeStudents }] = await query<RowDataPacket[]>(activeStudentsQuery) as { activeStudents: number }[];
+    const [{ suspendedStudents }] = await query<RowDataPacket[]>(suspendedStudentsQuery) as { suspendedStudents: number }[];
+    const [{ alumniStudents }] = await query<RowDataPacket[]>(alumniStudentsQuery) as { alumniStudents: number }[];
+    const [{ supplementaryStudents }] = await query<RowDataPacket[]>(supplementaryStudentsQuery) as { supplementaryStudents: number }[];
+
+    return {
+        totalStudents,
+        activeStudents,
+        suspendedStudents,
+        alumniStudents,
+        supplementaryStudents
+    };
+}
+
+
+export async function findAccessControlByStudentId(studentId: number) {
+    const sqlQuery = `
+        SELECT *
+        FROM student_access_control
+        WHERE student_id_fk = ${studentId};
+    `;
+
+    const [result] = await query<RowDataPacket[]>(sqlQuery) as StudentAccessControl[];
+
+    return result;
 
 }

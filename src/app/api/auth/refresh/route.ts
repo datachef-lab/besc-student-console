@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyRefreshToken, generateTokens, getUserByEmail, getUserByUid } from '@/lib/services/auth';
 import { Student } from '@/types/academics/student';
+import { findAccessControlByStudentId } from '@/lib/services/access-control';
 
 export async function GET() {
     try {
@@ -102,7 +103,7 @@ export async function GET() {
                 emercontactpersonmob: '',
                 emercontactpersonphr: '',
                 emercontactpersonpho: '',
-                leavingdate: new Date(),
+                leavingdate: new Date().toISOString(),
                 univregno: '',
                 univlstexmrollno: '',
                 communityid: 0,
@@ -166,8 +167,11 @@ export async function GET() {
             path: '/'
         });
 
+        const accessControl = await findAccessControlByStudentId(user.id as number);
+
         // Return new access token and consistent user data
         return NextResponse.json({
+            accessControl,
             accessToken: tokens.accessToken,
             user: {
                 id: user.id,
@@ -175,8 +179,6 @@ export async function GET() {
                 uid: user.codeNumber,
                 email: user.email || user.institutionalemail,
                 isAdmin: user.isAdmin,
-                isSuspended: user.isSuspended || false,
-                restrictedFeatures: user.restrictedFeatures || []
             }
         }, {
             headers: { 'Content-Type': 'application/json' }
