@@ -28,7 +28,6 @@ import {
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { useRouter } from "next/navigation";
 
-
 type NotificationType = "assignment" | "quiz" | "class" | "exam" | "feedback";
 type NotificationColor =
   | "blue"
@@ -406,6 +405,7 @@ export default function HomeContent() {
                   {student?.univregno}
                 </span>
               </div>
+
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 text-sm">CU Roll Number</span>
                 <span className="font-semibold text-gray-800 text-base">
@@ -429,6 +429,30 @@ export default function HomeContent() {
                   {batches[batches.length - 1].classname}
                 </span>
               </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-sm">Section</span>
+                <span className="font-semibold text-gray-800 text-base">
+                  {batches[batches.length - 1].sectionName || "N/A"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-sm">
+                  CU Registration Number
+                </span>
+                <span className="font-semibold text-gray-800 text-base">
+                  {student?.univregno}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-sm">CU Roll Number</span>
+                <span className="font-semibold text-gray-800 text-base">
+                  {student?.univlstexmrollno}
+                </span>
+              </div>
+
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 text-sm">Shift & Session</span>
                 <span className="font-semibold text-gray-800 text-base">

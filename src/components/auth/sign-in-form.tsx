@@ -45,7 +45,8 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
         return;
       }
 
-      const data: { user: Student; accessToken: string } = await response.json();
+      const data: { user: Student; accessToken: string } =
+        await response.json();
       console.log("in login, data:", data);
 
       login(data.accessToken, data.user);
