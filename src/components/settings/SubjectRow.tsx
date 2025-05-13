@@ -88,7 +88,7 @@ const SubjectRow: React.FC<SubjectRowProps> = ({
     if (subject?.subjectId && accessToken) {
       fetchMaterials();
     }
-  }, [subject, subject?.subjectId, subject?._refreshTimestamp, accessToken]);
+  }, [subject, subject?.subjectId, accessToken]);
 
   const handleDeleteClick = (materialId: number) => {
     if (deleteConfirm === materialId) {
@@ -190,7 +190,7 @@ const SubjectRow: React.FC<SubjectRowProps> = ({
                     className="h-5 w-5 bg-background border shadow-sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteClick(material.id);
+                      handleDeleteClick(material.id!);
                     }}
                   >
                     <Trash2 className="h-3 w-3" />
