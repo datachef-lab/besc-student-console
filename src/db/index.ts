@@ -59,13 +59,13 @@ export async function query<T extends RowDataPacket[]>(
 }
 
 // Graceful shutdown handler
-async function shutdownHandler() {
-    if (pool) {
-        console.log('🛑 Closing database pool...');
-        await pool.end();
-        console.log('✅ Database pool closed');
-    }
-}
+// async function shutdownHandler() {
+//     if (pool) {
+//         console.log('🛑 Closing database pool...');
+//         await pool.end();
+//         console.log('✅ Database pool closed');
+//     }
+// }
 
 // Register shutdown handlers - but no longer directly in this file
 // The process listeners will be set up in a separate file that's only

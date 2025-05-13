@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
 // Explicitly handle the dynamic route segment
 export async function GET(
     request: NextRequest,
-    { params }: { params: Record<string, string> }
+    { params }: { params: Promise<{ batchId: string }> }
 ) {
     try {
         // Verify access token
@@ -28,7 +28,7 @@ export async function GET(
         }
 
         // Safely access the batchId as a string
-        const batchIdRaw = String(params?.batchId || "");
+        const batchIdRaw = String((await params)?.batchId || "");
 
         // Log the raw value for debugging
         console.log("Raw batchId from URL:", batchIdRaw);

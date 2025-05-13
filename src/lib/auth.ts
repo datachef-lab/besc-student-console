@@ -30,7 +30,7 @@ export function verifyAccessToken(token: string): TokenPayload | null {
         try {
             const decoded = jwt.decode(token);
             console.log("Token payload:", decoded);
-        } catch (e) {
+        } catch {
             // Ignore decode errors
         }
 

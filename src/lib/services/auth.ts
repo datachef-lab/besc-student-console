@@ -215,7 +215,7 @@ export async function getUserByUid(uid: string): Promise<Student | null> {
             emercontactpersonmob: '',
             emercontactpersonphr: '',
             emercontactpersonpho: '',
-            leavingdate: new Date(),
+            leavingdate: new Date().toISOString(),
             univregno: '',
             univlstexmrollno: '',
             communityid: 0,
