@@ -16,8 +16,8 @@ import { motion } from "framer-motion";
 import { Calendar, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import axios from "axios";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useStudent } from "@/context/StudentContext";
 
-// Define interfaces inline to avoid module resolution issues
 interface Installment {
   id: number;
   amount: number;
@@ -41,6 +41,7 @@ export default function EnrollmentFeesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedFee, setSelectedFee] = useState<number | null>(null);
+  const { student } = useStudent();
 
   // Fetch fees data from API endpoint
   useEffect(() => {
@@ -48,9 +49,12 @@ export default function EnrollmentFeesPage() {
       try {
         setLoading(true);
         setError(null);
-        // Default student ID for testing
-        const studentId = "0102232367";
-        const response = await axios.get(`/api/fees?studentId=${studentId}`);
+
+        if (!student?.id) return;
+
+        const response = await axios.get(
+          `/api/fees?studentId=${student.codeNumber}`
+        );
 
         // Ensure all data is properly serializable
         const serializedData = JSON.parse(JSON.stringify(response.data));
@@ -65,7 +69,7 @@ export default function EnrollmentFeesPage() {
     };
 
     fetchFeesData();
-  }, []);
+  }, [student]);
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
