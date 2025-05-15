@@ -832,11 +832,11 @@ export default function FeesPage() {
                               </span>
                             </div>
 
-                            {/* Display installment number */}
+                            {/* Display instalment number */}
                             <div className="flex items-center gap-2 text-sm text-gray-700 mb-3">
                               <Receipt className="w-4 h-4 text-indigo-500" />
                               <span className="font-medium">
-                                Installment {firstInstalment.instalmentNumber}
+                                Instalment {firstInstalment.instalmentNumber}
                               </span>
                             </div>
 
