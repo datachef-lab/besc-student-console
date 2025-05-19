@@ -399,24 +399,9 @@ export default function HomeContent() {
             </CardHeader>
             <CardContent className="px-5 pb-3 pt-0 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-gray-500 text-sm">
-                  CU Registration Number
-                </span>
-                <span className="font-semibold text-gray-800 text-base">
-                  {student?.univregno}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 text-sm">CU Roll Number</span>
-                <span className="font-semibold text-gray-800 text-base">
-                  {student?.univlstexmrollno}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
                 <span className="text-gray-500 text-sm">Course</span>
                 <span className="font-semibold text-gray-800 text-base">
-                  {batches[0].coursename} ({stream})
+                  {batches[0].coursename} ({batches[0].stream})
                 </span>
               </div>
               <div className="flex items-center justify-between">
