@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  BookOpen,
   GraduationCap,
   FileText,
   Bell,
@@ -12,8 +11,9 @@ import {
   Star,
   Users,
   ClipboardList,
-  Code,
-  Database,
+  CheckCircle2,
+  XCircle,
+  Award,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,18 @@ const colorMap = {
 
 type NotificationFilter = "all" | "unread" | "important";
 
+// New interface for semester data
+interface SemesterSummaryItem {
+  id: number;
+  semester: number;
+  sgpa: number | null;
+  year1: number;
+  year2: number | null;
+  result: string;
+  remarks: string;
+  failedSubjects: any[];
+}
+
 export default function HomeContent() {
   const router = useRouter();
   const { student, loading, batches, error, refetch } = useStudent();
@@ -90,6 +102,9 @@ export default function HomeContent() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>("all");
   const [isContentReady, setIsContentReady] = useState(false);
+  const [semesterSummary, setSemesterSummary] = useState<SemesterSummaryItem[]>(
+    []
+  );
 
   // Stream determination logic
   //   let stream;
@@ -137,6 +152,50 @@ export default function HomeContent() {
       setIsContentReady(false);
     }
   }, [loading, student, batches]);
+
+  // Fetch semester summary data - this is a placeholder, you'll need to implement
+  // the actual API call in your StudentContext or a dedicated function
+  useEffect(() => {
+    // Mock data for demonstration - replace with actual API call
+    if (!loading && student) {
+      const mockSemesterData = [
+        {
+          id: 2249,
+          cgpa: null,
+          classification: null,
+          semester: 1,
+          sgpa: 7.8,
+          remarks: "Semester cleared",
+          uid: "0102232311",
+          year1: 2023,
+          year2: null,
+          credits: 21,
+          totalCredits: 21,
+          percentage: 68,
+          result: "PASSED",
+          failedSubjects: [],
+        },
+        {
+          id: 2250,
+          cgpa: null,
+          classification: null,
+          semester: 2,
+          sgpa: null,
+          remarks: "Semester not cleared",
+          uid: "0102232311",
+          year1: 2023,
+          year2: null,
+          credits: 21,
+          totalCredits: 21,
+          percentage: 0,
+          result: "FAILED",
+          failedSubjects: [{ id: 4, name: "MICROECONOMICS" }],
+        },
+      ];
+
+      setSemesterSummary(mockSemesterData);
+    }
+  }, [loading, student]);
 
   const dismissNotification = (id: number) => {
     setNotifications(
@@ -296,7 +355,6 @@ export default function HomeContent() {
       description:
         "The college website has been updated with the latest academic calendar and campus news. Visit for more details.",
       link: "https://www.thebges.edu.in/category/noticeboard/",
-      link: "https://www.thebges.edu.in/category/noticeboard/",
       external: true,
     },
   ];
@@ -336,6 +394,76 @@ export default function HomeContent() {
     month: "long",
     year: "numeric",
   });
+
+  // New component for Semester Summary
+  const SemesterSummaryTable = ({ data }: { data: SemesterSummaryItem[] }) => {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[400px]">
+          <thead>
+            <tr className="bg-gray-50 text-left">
+              <th className="px-3 py-2 text-sm font-medium text-gray-600">
+                Semester
+              </th>
+              <th className="px-3 py-2 text-sm font-medium text-gray-600">
+                Year
+              </th>
+              <th className="px-3 py-2 text-sm font-medium text-gray-600">
+                Status
+              </th>
+              <th className="px-3 py-2 text-sm font-medium text-gray-600">
+                SGPA
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((semester) => (
+              <tr
+                key={semester.id}
+                className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+              >
+                <td className="px-3 py-3 text-sm font-medium">
+                  {semester.semester}
+                </td>
+                <td className="px-3 py-3 text-sm text-gray-600">
+                  {semester.year1}
+                </td>
+                <td className="px-3 py-3 text-sm">
+                  <div className="flex items-center gap-1.5">
+                    {semester.result === "PASSED" ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        <span className="text-emerald-600 font-medium">
+                          Cleared
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 text-red-500" />
+                        <span className="text-red-600 font-medium">
+                          Not Cleared
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </td>
+                <td className="px-3 py-3 text-sm">
+                  {semester.result === "PASSED" && semester.sgpa !== null ? (
+                    <div className="flex items-center gap-1">
+                      <Award className="h-4 w-4 text-amber-500" />
+                      <span className="font-medium">{semester.sgpa}</span>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-8 min-h-screen">
@@ -401,7 +529,7 @@ export default function HomeContent() {
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 text-sm">Course</span>
                 <span className="font-semibold text-gray-800 text-base">
-                  {batches[0].coursename} ({batches[0].stream})
+                  {batches[0].coursename}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -455,8 +583,27 @@ export default function HomeContent() {
             </CardContent>
           </Card>
 
+          {/* Semester Summary - New Card */}
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
+            <CardHeader className="pb-2 pt-3 px-5">
+              <CardTitle className="text-base font-semibold text-black flex items-center">
+                <GraduationCap className="w-4 h-4 mr-2 text-[#925FE2]" />
+                Semester Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-5 pb-3 pt-0">
+              {semesterSummary.length > 0 ? (
+                <SemesterSummaryTable data={semesterSummary} />
+              ) : (
+                <div className="text-center py-4 text-gray-500 text-sm">
+                  No semester data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Enrolled Courses */}
-          <div>
+          {/* <div>
             <div className="flex justify-between items-center mb-3">
               <h2 className="text-lg font-semibold text-gray-800">
                 Enrolled Courses
@@ -503,7 +650,7 @@ export default function HomeContent() {
                 </Card>
               ))}
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Right Column - Daily Notice */}
