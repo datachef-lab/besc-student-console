@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   XCircle,
   Award,
+  AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,12 @@ import {
 } from "@/components/ui/sheet";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type NotificationType = "assignment" | "quiz" | "class" | "exam" | "feedback";
 type NotificationColor =
@@ -105,6 +112,8 @@ export default function HomeContent() {
   const [semesterSummary, setSemesterSummary] = useState<SemesterSummaryItem[]>(
     []
   );
+  const [selectedBacklogs, setSelectedBacklogs] = useState<any[] | null>(null);
+  const [backlogsDialogOpen, setBacklogsDialogOpen] = useState(false);
 
   // Stream determination logic
   //   let stream;
@@ -164,32 +173,136 @@ export default function HomeContent() {
           cgpa: null,
           classification: null,
           semester: 1,
-          sgpa: 7.8,
-          remarks: "Semester cleared",
-          uid: "0102232311",
-          year1: 2023,
-          year2: null,
-          credits: 21,
-          totalCredits: 21,
-          percentage: 68,
-          result: "PASSED",
-          failedSubjects: [],
-        },
-        {
-          id: 2250,
-          cgpa: null,
-          classification: null,
-          semester: 2,
           sgpa: null,
-          remarks: "Semester not cleared",
+          remarks: "Semester not cleared.",
           uid: "0102232311",
           year1: 2023,
           year2: null,
           credits: 21,
           totalCredits: 21,
           percentage: 0,
-          result: "FAILED",
-          failedSubjects: [{ id: 4, name: "MICROECONOMICS" }],
+          result: "PASSED",
+          failedSubjects: [
+            {
+              id: 4,
+              semester: 1,
+              category: null,
+              irpName: "MICROECONOMICS",
+              name: "MICROECONOMICS",
+              irpCode: "MICD",
+              marksheetCode: "MICD-IDC/MDC-1",
+              isOptional: false,
+              credit: 3,
+              theoryCredit: 2,
+              fullMarksTheory: 50,
+              practicalCredit: 1,
+              fullMarksPractical: null,
+              internalCredit: 0,
+              fullMarksInternal: null,
+              projectCredit: 0,
+              fullMarksProject: null,
+              vivalCredit: 0,
+              fullMarksViva: null,
+              fullMarks: 75,
+              createdAt: "2025-05-16T09:00:07.846Z",
+              updatedAt: "2025-05-16T09:00:07.846Z",
+              specialization: null,
+              stream: {
+                id: 1,
+                framework: "CCF",
+                degreeProgramme: "HONOURS",
+                duration: null,
+                numberOfSemesters: null,
+                createdAt: "2025-05-16T08:36:31.744Z",
+                updatedAt: "2025-05-16T08:36:31.744Z",
+                degree: {
+                  id: 1,
+                  name: "BCOM",
+                  level: "UNDER_GRADUATE",
+                  sequence: null,
+                  createdAt: "2025-05-16T08:36:31.736Z",
+                  updatedAt: "2025-05-16T08:36:31.736Z",
+                },
+              },
+              subjectType: {
+                id: 1,
+                irpName: "MAJOR",
+                irpShortName: null,
+                marksheetName: "DISCIPLINE SPECIFIC CORE COURSE",
+                marksheetShortName: null,
+                createdAt: "2025-05-16T08:36:31.750Z",
+                updatedAt: "2025-05-16T08:36:31.750Z",
+              },
+            },
+          ],
+        },
+        {
+          id: 2249,
+          cgpa: null,
+          classification: null,
+          semester: 1,
+          sgpa: null,
+          remarks: "Semester not cleared.",
+          uid: "0102232311",
+          year1: 2023,
+          year2: null,
+          credits: 21,
+          totalCredits: 21,
+          percentage: 0,
+          result: "PASSED",
+          failedSubjects: [
+            {
+              id: 4,
+              semester: 1,
+              category: null,
+              irpName: "MICROECONOMICS",
+              name: "MICROECONOMICS",
+              irpCode: "MICD",
+              marksheetCode: "MICD-IDC/MDC-1",
+              isOptional: false,
+              credit: 3,
+              theoryCredit: 2,
+              fullMarksTheory: 50,
+              practicalCredit: 1,
+              fullMarksPractical: null,
+              internalCredit: 0,
+              fullMarksInternal: null,
+              projectCredit: 0,
+              fullMarksProject: null,
+              vivalCredit: 0,
+              fullMarksViva: null,
+              fullMarks: 75,
+              createdAt: "2025-05-16T09:00:07.846Z",
+              updatedAt: "2025-05-16T09:00:07.846Z",
+              specialization: null,
+              stream: {
+                id: 1,
+                framework: "CCF",
+                degreeProgramme: "HONOURS",
+                duration: null,
+                numberOfSemesters: null,
+                createdAt: "2025-05-16T08:36:31.744Z",
+                updatedAt: "2025-05-16T08:36:31.744Z",
+                degree: {
+                  id: 1,
+                  name: "BCOM",
+                  level: "UNDER_GRADUATE",
+                  sequence: null,
+                  createdAt: "2025-05-16T08:36:31.736Z",
+                  updatedAt: "2025-05-16T08:36:31.736Z",
+                },
+              },
+              subjectType: {
+                id: 1,
+                irpName: "MAJOR",
+                irpShortName: null,
+                marksheetName: "DISCIPLINE SPECIFIC CORE COURSE",
+                marksheetShortName: null,
+                createdAt: "2025-05-16T08:36:31.750Z",
+                updatedAt: "2025-05-16T08:36:31.750Z",
+              },
+            },
+          ],
         },
       ];
 
@@ -397,6 +510,13 @@ export default function HomeContent() {
 
   // New component for Semester Summary
   const SemesterSummaryTable = ({ data }: { data: SemesterSummaryItem[] }) => {
+    const handleBacklogsClick = (failedSubjects: any[]) => {
+      if (failedSubjects && failedSubjects.length > 0) {
+        setSelectedBacklogs(failedSubjects);
+        setBacklogsDialogOpen(true);
+      }
+    };
+
     return (
       <div className="overflow-x-auto">
         <table className="w-full min-w-[400px]">
@@ -410,6 +530,9 @@ export default function HomeContent() {
               </th>
               <th className="px-3 py-2 text-sm font-medium text-gray-600">
                 Status
+              </th>
+              <th className="px-3 py-2 text-sm font-medium text-gray-600">
+                Backlogs
               </th>
               <th className="px-3 py-2 text-sm font-medium text-gray-600">
                 SGPA
@@ -434,18 +557,37 @@ export default function HomeContent() {
                       <>
                         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                         <span className="text-emerald-600 font-medium">
-                          Cleared
+                          PASSED
                         </span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-4 w-4 text-red-500" />
-                        <span className="text-red-600 font-medium">
-                          Not Cleared
-                        </span>
+                        <span className="text-red-600 font-medium">FAILED</span>
                       </>
                     )}
                   </div>
+                </td>
+                <td className="px-3 py-3 text-sm">
+                  {semester.failedSubjects &&
+                  semester.failedSubjects.length > 0 ? (
+                    <button
+                      onClick={() =>
+                        handleBacklogsClick(semester.failedSubjects)
+                      }
+                      className="flex items-center gap-1.5 bg-red-100 text-red-700 rounded-md px-2 py-1 text-xs font-medium hover:bg-red-200 transition-colors"
+                    >
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {semester.failedSubjects.length}{" "}
+                      {semester.failedSubjects.length === 1
+                        ? "subject"
+                        : "subjects"}
+                    </button>
+                  ) : (
+                    <span className="text-emerald-600 font-medium text-xs">
+                      None
+                    </span>
+                  )}
                 </td>
                 <td className="px-3 py-3 text-sm">
                   {semester.result === "PASSED" && semester.sgpa !== null ? (
@@ -907,6 +1049,59 @@ export default function HomeContent() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Backlogs Dialog */}
+      <Dialog open={backlogsDialogOpen} onOpenChange={setBacklogsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              Failed Subjects
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {selectedBacklogs && selectedBacklogs.length > 0 ? (
+              <div className="space-y-3">
+                {selectedBacklogs.map((subject, index) => (
+                  <div
+                    key={subject.id || index}
+                    className="flex items-start gap-3 p-3 bg-red-50 rounded-lg"
+                  >
+                    <div className="rounded-full bg-red-100 p-2 flex-shrink-0">
+                      <XCircle className="h-4 w-4 text-red-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        {subject.name}
+                      </h4>
+                      {subject.marksheetCode && (
+                        <p className="text-sm text-gray-600">
+                          Code:{" "}
+                          {subject.marksheetCode || subject.irpCode || "N/A"}
+                        </p>
+                      )}
+                      {subject.fullMarks && (
+                        <p className="text-sm text-gray-600">
+                          Full Marks: {subject.fullMarks}
+                        </p>
+                      )}
+                      {subject.credit && (
+                        <p className="text-sm text-gray-600">
+                          Credits: {subject.credit}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-gray-500">
+                No backlog details available
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
