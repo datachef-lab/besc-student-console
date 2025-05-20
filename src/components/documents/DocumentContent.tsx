@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useStudent } from "@/context/StudentContext";
 import { useRouter } from "next/navigation";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
 
 interface DocumentContentProps {
   scannedDocs?: ScanDoc[];
@@ -34,8 +35,6 @@ interface Document {
 
 export default function DocumentContent({ scannedDocs }: DocumentContentProps) {
   const { user, accessToken } = useAuth();
-  const { student, batches, accessControl } = useStudent();
-  const router = useRouter();
   const { student, batches, accessControl } = useStudent();
   const router = useRouter();
   const [selectedSemester, setSelectedSemester] = useState<string>("all");
@@ -57,12 +56,6 @@ export default function DocumentContent({ scannedDocs }: DocumentContentProps) {
   const loadingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const [loading, setLoading] = useState<boolean>(!hasInitialDataRef.current);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!accessControl?.access_course) {
-      router.back();
-    }
-  }, [accessControl, router]);
 
   useEffect(() => {
     if (!accessControl?.access_course) {

@@ -28,12 +28,15 @@ import {
 } from "@/components/ui/sheet";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { useRouter } from "next/navigation";
+import { getSemesterSummary } from "@/lib/services/semester-summary.service";
+import { MarksheetSummary } from "@/types/academics/marksheet-summary";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+  } from "@/components/ui/dialog";
+
 
 type NotificationType = "assignment" | "quiz" | "class" | "exam" | "feedback";
 type NotificationColor =
@@ -55,6 +58,82 @@ interface Notification {
   isRead?: boolean;
   isImportant?: boolean;
 }
+
+// Notification data with read/important status
+// const allNotifications: Notification[] = [
+//   {
+//     id: 1,
+//     title: "Assignment Submitted",
+//     course: "Data Structures",
+//     time: "2 hours ago",
+//     type: "assignment",
+//     color: "blue",
+//     isRead: false,
+//     isImportant: true,
+//   },
+//   {
+//     id: 2,
+//     title: "Quiz Completed",
+//     course: "Database Management",
+//     time: "Yesterday",
+//     type: "quiz",
+//     color: "emerald",
+//     isRead: true,
+//     isImportant: false,
+//   },
+//   {
+//     id: 3,
+//     title: "Class Attended",
+//     course: "Software Engineering",
+//     time: "Yesterday",
+//     type: "class",
+//     color: "amber",
+//     isRead: true,
+//     isImportant: false,
+//   },
+//   {
+//     id: 4,
+//     title: "Assignment Due",
+//     course: "Web Development",
+//     time: "Tomorrow",
+//     type: "assignment",
+//     color: "rose",
+//     isRead: false,
+//     isImportant: true,
+//   },
+//   {
+//     id: 5,
+//     title: "Exam Scheduled",
+//     course: "Computer Networks",
+//     time: "Next Week",
+//     type: "exam",
+//     color: "indigo",
+//     isRead: false,
+//     isImportant: true,
+//   },
+//   {
+//     id: 6,
+//     title: "Project Feedback",
+//     course: "Software Engineering",
+//     time: "3 days ago",
+//     type: "feedback",
+//     color: "violet",
+//     isRead: true,
+//     isImportant: false,
+//   },
+//   {
+//     id: 7,
+//     title: "Class Canceled",
+//     course: "Operating Systems",
+//     time: "Today",
+//     type: "class",
+//     color: "red",
+//     isRead: false,
+//     isImportant: true,
+//   },
+// ];
+
+const allNotifications: Notification[] = [];
 
 // Map Tailwind color classes for notifications
 const colorMap = {
@@ -109,11 +188,24 @@ export default function HomeContent() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>("all");
   const [isContentReady, setIsContentReady] = useState(false);
-  const [semesterSummary, setSemesterSummary] = useState<SemesterSummaryItem[]>(
+  const [semesterSummary, setSemesterSummary] = useState<MarksheetSummary[]>(
     []
   );
-  const [selectedBacklogs, setSelectedBacklogs] = useState<any[] | null>(null);
+  const [selectedBacklogs, setSelectedBacklogs] = useState<unknown[] | null>(null);
   const [backlogsDialogOpen, setBacklogsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (student && !semesterSummary) {
+      getSemesterSummary(student!.codeNumber).then((summary) => {
+        if (summary) {
+          console.log("summary:", summary);
+          setSemesterSummary(summary);
+        } else {
+          console.error("Failed to fetch semester summary");
+        }
+      });
+    }
+  }, [student]);
 
   // Stream determination logic
   //   let stream;
@@ -657,9 +749,9 @@ export default function HomeContent() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
-        {/* Left Column - Basic Info and Enrolled Courses */}
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1.1fr] auto-rows-fr gap-6">
+        {/* Left Column */}
+        <div>
           {/* Basic Info */}
           <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
             <CardHeader className="pb-2 pt-3 px-5">

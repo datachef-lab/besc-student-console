@@ -13,62 +13,159 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { Calendar, CheckCircle, Clock, AlertCircle } from "lucide-react";
-import axios from "axios";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Calendar,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Receipt,
+  CreditCard,
+  School,
+  Percent,
+  Award,
+  Hourglass,
+} from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Instalment } from "@/types/fees/instalment";
 import { useStudent } from "@/context/StudentContext";
 
-interface Installment {
+interface ExtendedComponentMetadata {
   id: number;
+  headName: string;
+  type: string;
   amount: number;
-  dueDate: string;
-  status: "paid" | "pending" | "overdue";
-  paidOn: string | null;
+  specialTypeName: string | null;
+  instalmentTypeName: string | null;
+  lateTypeCalculation: string | null;
+  concession: number | null;
+  dueDate?: string;
+  scholarshipAmount?: number;
+  scholarshipName?: string;
 }
 
-interface Fee {
-  id: number;
-  name: string;
-  totalAmount: number;
-  paidAmount: number;
-  dueDate: string;
-  status: "paid" | "pending" | "overdue" | "partially_paid";
-  installments: Installment[];
-}
+const getPaymentDueDateInfo = (dueDate: string | null | undefined) => {
+  if (!dueDate) return null;
+
+  try {
+    const today = new Date();
+    const dueDateObj = new Date(dueDate);
+    if (isNaN(dueDateObj.getTime())) return null;
+
+    const diffTime = dueDateObj.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return {
+        status: "overdue",
+        days: Math.abs(diffDays),
+        color: "text-red-600",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-200",
+      };
+    } else if (diffDays <= 3) {
+      return {
+        status: "critical",
+        days: diffDays,
+        color: "text-amber-600",
+        bgColor: "bg-amber-50",
+        borderColor: "border-amber-200",
+      };
+    } else if (diffDays <= 7) {
+      return {
+        status: "warning",
+        days: diffDays,
+        color: "text-yellow-600",
+        bgColor: "bg-yellow-50",
+        borderColor: "border-yellow-200",
+      };
+    } else {
+      return {
+        status: "normal",
+        days: diffDays,
+        color: "text-blue-600",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-200",
+      };
+    }
+  } catch (error) {
+    console.error("Error processing date", error);
+    return null;
+  }
+};
 
 export default function FeesPage() {
   const { student } = useStudent();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedFee, setSelectedFee] = useState<number | null>(null);
-  const { student } = useStudent();
+  const [selectedFeeType, setSelectedFeeType] = useState<string | null>(null);
+  const [groupedInstalments, setGroupedInstalments] = useState<
+    Record<string, Instalment[]>
+  >({});
+  const [feeSummaries, setFeeSummaries] = useState<
+    Record<string, { total: number; paid: number; status: string }>
+  >({});
 
-  // Fetch fees data from API endpoint
   useEffect(() => {
-    const fetchFeesData = async () => {
+    const fetchInstalments = async () => {
       try {
-        setLoading(true);
-        setError(null);
+        // In a real application, fetch from API
+        const response = await fetch(`/api/fees?studentId=${student?.id || 0}`);
+        const data = (await response.json()) as Instalment[];
 
-        if (!student?.id) return;
+        // Group instalments by their individual IDs to display each as a separate card
+        const grouped = data.reduce((acc, instalment) => {
+          // Use a unique key that combines receipt type and installment number
+          const key = `${instalment.metadata.receiptTypeName}_${instalment.instalmentNumber}`;
+          if (!acc[key]) {
+            acc[key] = [];
+          }
+          acc[key].push(instalment);
+          return acc;
+        }, {} as Record<string, Instalment[]>);
 
-        const response = await axios.get(
-          `/api/fees?studentId=${student.codeNumber}`
-        );
+        setGroupedInstalments(grouped);
 
-        // Ensure all data is properly serializable
-        const serializedData = JSON.parse(JSON.stringify(response.data));
-        setFeesData(serializedData);
+        // Calculate fee summaries for each installment
+        const summaries: Record<
+          string,
+          { total: number; paid: number; status: string }
+        > = {};
 
-        setLoading(false);
+        Object.entries(grouped).forEach(([key, instalments]) => {
+          // Since each group now has only one installment
+          const instalment = instalments[0];
+          const total = instalment.amount;
+          const paid = instalment.hasPaid ? instalment.amount : 0;
+
+          let status = "pending";
+          if (instalment.hasPaid) {
+            status = "paid";
+          } else if (instalment.cancelled) {
+            status = "cancelled";
+          } else {
+            // Check if instalment is overdue
+            const isOverdue =
+              instalment.metadata.lastDate &&
+              new Date(String(instalment.metadata.lastDate)) < new Date();
+
+            if (isOverdue) {
+              status = "overdue";
+            }
+          }
+
+          summaries[key] = { total, paid, status };
+        });
+
+        setFeeSummaries(summaries);
       } catch (error) {
-        console.error("Error fetching fees data:", error);
-        setError("Failed to load fees data. Please try again later.");
+        console.error("Error fetching instalments:", error);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchFeesData();
+    if (student?.id) {
+      fetchInstalments();
+    }
   }, [student]);
 
   const formatDate = (dateString: string | Date | null): string => {
@@ -222,22 +319,7 @@ export default function FeesPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 -mt-16 relative z-10">
         <div className="space-y-8">
-          {feesData.length === 0 ? (
-            <Card className="p-8 text-center bg-white border-none rounded-2xl shadow-lg">
-              <div className="flex flex-col items-center justify-center space-y-4">
-                <div className="p-4 bg-blue-50 rounded-full">
-                  <Calendar className="h-10 w-10 text-blue-500" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800">
-                  No Fees Found
-                </h3>
-                <p className="text-gray-600 max-w-md">
-                  There are currently no fees assigned to your account. Check
-                  back later or contact the administration office.
-                </p>
-              </div>
-            </Card>
-          ) : selectedFee !== null ? (
+          {selectedFeeType !== null ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -455,13 +537,8 @@ export default function FeesPage() {
                                                       {(() => {
                                                         const dueInfo =
                                                           getPaymentDueDateInfo(
-                                                            typeof instalment
-                                                              .metadata
-                                                              .lastDate ===
-                                                              "string"
-                                                              ? instalment
-                                                                  .metadata
-                                                                  .lastDate
+                                                            typeof instalment.metadata.lastDate === "string"
+                                                              ? instalment.metadata.lastDate
                                                               : instalment.metadata.lastDate?.toISOString()
                                                           );
                                                         if (dueInfo) {
@@ -767,11 +844,11 @@ export default function FeesPage() {
                               </span>
                             </div>
 
-                            {/* Display installment number */}
+                            {/* Display instalment number */}
                             <div className="flex items-center gap-2 text-sm text-gray-700 mb-3">
                               <Receipt className="w-4 h-4 text-indigo-500" />
                               <span className="font-medium">
-                                Installment {firstInstalment.instalmentNumber}
+                                Instalment {firstInstalment.instalmentNumber}
                               </span>
                             </div>
 

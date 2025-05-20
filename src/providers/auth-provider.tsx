@@ -22,7 +22,10 @@ const axiosInstance = axios.create({
 
 export interface AuthContextType {
   user: Student | null;
-  login: (accessToken: string, userData: Student) => void;
+  login: (
+    accessToken: string,
+    userData: Student,
+  ) => void;
   logout: () => void;
   accessToken: string | null;
   displayFlag: boolean;
@@ -41,7 +44,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [displayFlag, setDisplayFlag] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-
+  
   const [user, setUser] = useState<Student | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -52,10 +55,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     pathname &&
     (pathname.startsWith("/dashboard") || pathname.startsWith("/settings"));
 
-  const login = (accessToken: string, userData: Student) => {
+  const login = (
+    accessToken: string,
+    userData: Student,
+
+  ) => {
     console.log("Login function called, setting access token");
     setAccessToken(accessToken);
-
+    
     setUser(userData);
   };
 
@@ -84,6 +91,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     }
   }, [router, pathname]);
+
+  
 
   const generateNewToken = useCallback(async (): Promise<string | null> => {
     if (!isProtectedRoute) return null; // ✅ Skip request if not on protected route

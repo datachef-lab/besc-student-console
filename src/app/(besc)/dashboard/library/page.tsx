@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Calendar,
   Clock,
@@ -17,53 +17,114 @@ import {
   Share2,
   Calendar as CalendarIcon,
 } from "lucide-react";
-import Image from "next/image";
 import { useStudent } from "@/context/StudentContext";
 import { useRouter } from "next/dist/client/components/navigation";
+import { IssuedBookDetails, LibraryVisit } from "@/types/academics/library";
 
 export default function LibraryPage() {
-  const { accessControl } = useStudent();
+  const { accessControl, student } = useStudent();
   const router = useRouter();
+  const [issuedBooks, setIssuedBooks] = useState<IssuedBookDetails[]>([]);
+  const [visits, setVisits] = useState<LibraryVisit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"current" | "history" | "visits">(
+    "current"
+  );
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<IssuedBookDetails | null>(
+    null
+  );
+
   useEffect(() => {
     if (!accessControl?.access_course) {
       router.back();
     }
   }, [accessControl, router]);
-  // Sample data
-  const recentBooks = [
-    {
-      id: 1,
-      title: "The Midnight Library",
-      author: "Matt Haig",
-      borrowDate: "2025-03-28",
-      dueDate: "2025-04-18",
-      cover:
-        "https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1602190253l/52578297.jpg",
-      category: "Fiction",
-      rating: 4.5,
-    },
-    {
-      id: 2,
-      title: "Klara and the Sun",
-      author: "Kazuo Ishiguro",
-      borrowDate: "2025-03-30",
-      dueDate: "2025-04-20",
-      cover:
-        "https://m.media-amazon.com/images/I/61tqFlvlU3L._AC_UF1000,1000_QL80_.jpg",
-      category: "Science Fiction",
-      rating: 4.2,
-    },
-    {
-      id: 3,
-      title: "Project Hail Mary",
-      author: "Andy Weir",
-      borrowDate: "2025-04-02",
-      dueDate: "2025-04-23",
-      cover: "https://m.media-amazon.com/images/I/81gYjHx8YmL.jpg",
-      category: "Science Fiction",
-      rating: 4.7,
-    },
-  ];
+
+  useEffect(() => {
+    fetchLibraryData();
+    fetchLibraryVisits();
+  }, [student?.id]);
+
+  const fetchLibraryData = async () => {
+    if (!student?.id) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `/api/student/library?studentId=${student.id}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch library data");
+      }
+      const data = await response.json();
+      setIssuedBooks(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLibraryVisits = async () => {
+    if (!student?.id) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `/api/student/library/visit?studentId=${student.id}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch library data");
+      }
+      const data = await response.json();
+      setVisits(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate stats
+  const activeBooks = issuedBooks.filter((book) => !book.isReturn).length;
+
+  // Calculate days until a book is due and return appropriate status
+  const calculateDueDays = (dueDate: string) => {
+    const returnDate = new Date(dueDate);
+    const today = new Date();
+    const diffDays = Math.ceil(
+      (returnDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Return status object with days remaining and status level
+    return {
+      days: diffDays,
+      status:
+        diffDays <= 0
+          ? "overdue"
+          : diffDays <= 3
+          ? "critical"
+          : diffDays <= 7
+          ? "warning"
+          : "normal",
+    };
+  };
+
+  const dueSoonBooks = issuedBooks.filter((book) => {
+    if (book.isReturn) return false;
+    const dueStatus = calculateDueDays(book.returnDate);
+    return dueStatus.status === "warning" || dueStatus.status === "critical";
+  }).length;
+
+  const overdueBooks = issuedBooks.filter((book) => {
+    if (book.isReturn) return false;
+    const dueStatus = calculateDueDays(book.returnDate);
+    return dueStatus.status === "overdue";
+  }).length;
 
   const returnedBooks = issuedBooks.filter((book) => book.isReturn).length;
 

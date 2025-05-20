@@ -1,18 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { TableRow, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import {
-  Plus,
-  Pencil,
-  Trash2,
-  FileText,
-  Link as LinkIcon,
-  ExternalLink,
-  Loader2,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
   Plus,
   Pencil,
   Trash2,
@@ -31,13 +20,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useAuth } from "@/hooks/use-auth";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 type SubjectRowProps = {
   index: number;
@@ -45,10 +27,8 @@ type SubjectRowProps = {
   openAddModal: (subjectId: number) => void;
   openEditModal: (material: DbCourseMaterial) => void;
   onDeleteMaterial: (materialId: number) => void;
-  onDeleteMaterial: (materialId: number) => void;
 };
 
-const SubjectRow: React.FC<SubjectRowProps> = ({
 const SubjectRow: React.FC<SubjectRowProps> = ({
   index,
   subject,
@@ -56,55 +36,13 @@ const SubjectRow: React.FC<SubjectRowProps> = ({
   openEditModal,
   onDeleteMaterial,
 }) => {
-}) => {
   const [materials, setMaterials] = useState<DbCourseMaterial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const { accessToken } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
-  const { accessToken } = useAuth();
 
-  // Fetch materials for this subject
   // Fetch materials for this subject
   useEffect(() => {
-    const fetchMaterials = async () => {
-      try {
-        setIsLoading(true);
-
-        // Set up headers with auth token
-        const headers: HeadersInit = {};
-        if (accessToken) {
-          headers["Authorization"] = `Bearer ${accessToken}`;
-        } else {
-          console.log(
-            `No token available for fetching materials for subject ${subject.subjectId}`
-          );
-        }
-
-        const response = await fetch(
-          `/api/course-materials?subjectId=${subject.subjectId}`,
-          { headers }
-        );
-
-        if (!response.ok) {
-          console.log(
-            `Materials API response status for subject ${subject.subjectId}:`,
-            response.status
-          );
-          throw new Error(
-            `Failed to fetch materials for subject ${subject.subjectId}`
-          );
-        }
-
-        const data = await response.json();
-        setMaterials(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error(
-          `Error fetching materials for subject ${subject.subjectId}:`,
-          error
-        );
-        setMaterials([]);
     const fetchMaterials = async () => {
       try {
         setIsLoading(true);
@@ -150,18 +88,8 @@ const SubjectRow: React.FC<SubjectRowProps> = ({
     if (subject?.subjectId && accessToken) {
       fetchMaterials();
     }
-  }, [subject, subject?.subjectId, subject?._refreshTimestamp, accessToken]);
+  }, [subject, subject?.subjectId, accessToken]);
 
-  const handleDeleteClick = (materialId: number) => {
-    if (deleteConfirm === materialId) {
-      // User has confirmed deletion
-      onDeleteMaterial(materialId);
-      setDeleteConfirm(null);
-    } else {
-      // First click, ask for confirmation
-      setDeleteConfirm(materialId);
-      // Auto-reset after 3 seconds
-      setTimeout(() => setDeleteConfirm(null), 3000);
   const handleDeleteClick = (materialId: number) => {
     if (deleteConfirm === materialId) {
       // User has confirmed deletion
@@ -175,11 +103,6 @@ const SubjectRow: React.FC<SubjectRowProps> = ({
     }
   };
 
-  const materialTypeIcon = (type: string) => {
-    if (type === "link") return <LinkIcon className="h-4 w-4" />;
-    if (type === "file") return <FileText className="h-4 w-4" />;
-    return null;
-  };
   const materialTypeIcon = (type: string) => {
     if (type === "link") return <LinkIcon className="h-4 w-4" />;
     if (type === "file") return <FileText className="h-4 w-4" />;
@@ -267,7 +190,7 @@ const SubjectRow: React.FC<SubjectRowProps> = ({
                     className="h-5 w-5 bg-background border shadow-sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteClick(material.id);
+                      handleDeleteClick(material.id!);
                     }}
                   >
                     <Trash2 className="h-3 w-3" />
