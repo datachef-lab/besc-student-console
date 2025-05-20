@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/sheet";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { useRouter } from "next/navigation";
-
+import { getSemesterSummary } from "@/lib/services/semester-summary.service";
+import { MarksheetSummary } from "@/types/academics/marksheet-summary";
 
 type NotificationType = "assignment" | "quiz" | "class" | "exam" | "feedback";
 type NotificationColor =
@@ -167,6 +168,22 @@ export default function HomeContent() {
   const [notifications, setNotifications] = useState(allNotifications);
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>("all");
   const [isContentReady, setIsContentReady] = useState(false);
+  const [semesterSummary, setSemesterSummary] = useState<
+    MarksheetSummary[] | null
+  >(null);
+
+  useEffect(() => {
+    if (student && !semesterSummary) {
+      getSemesterSummary(student!.codeNumber).then((summary) => {
+        if (summary) {
+          console.log("summary:", summary);
+          setSemesterSummary(summary);
+        } else {
+          console.error("Failed to fetch semester summary");
+        }
+      });
+    }
+  }, [student]);
 
   // Stream determination logic
   //   let stream;
