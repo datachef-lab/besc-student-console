@@ -9,6 +9,7 @@ import {
   NotebookPen,
   ScrollText,
   Settings2,
+  ListChecks,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -42,12 +43,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: House,
       isActive: pathname === "/dashboard",
     },
-    // {
-    //   title: "Attendance",
-    //   url: "/dashboard/attendance",
-    //   icon: Frame,
-    //   isActive: pathname === "/dashboard/attendance",
-    // },
+    {
+      title: "Attendance",
+      url: "/dashboard/attendance",
+      icon: ListChecks,
+      isActive: pathname === "/dashboard/attendance",
+    },
     accessControl?.access_exams && {
       title: "Exams",
       url: "/dashboard/exams",
@@ -85,8 +86,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isActive: pathname === "/dashboard/profile",
     },
   ].filter((ele) => !!ele);
-
-
 
   return (
     <Sidebar variant="floating" collapsible="icon" {...props}>
