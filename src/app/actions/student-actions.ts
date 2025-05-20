@@ -1,6 +1,6 @@
 'use server';
 
-import { findStudentByUid } from "@/lib/services/student-service";
+import { findStudentByUid } from "@/lib/services/student.service";
 import { findBatchesByStudentUid } from "@/lib/services/batch-service";
 import { BatchCustom } from "@/types/academics/batch";
 import { Student } from "@/types/academics/student";

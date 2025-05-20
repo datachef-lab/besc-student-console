@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTokens, setAuthCookies } from '@/lib/services/auth';
 import { findAccessControlByStudentId } from '@/lib/services/access-control';
-import { findStudentByUidAndWa } from '@/lib/services/student-service';
+import { findStudentByUidAndWa } from '@/lib/services/student.service';
 
 // export async function POST(req: NextRequest) {
 //     try {

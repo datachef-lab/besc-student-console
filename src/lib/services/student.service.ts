@@ -66,7 +66,11 @@ export async function findStudentByUid(uid: string): Promise<Student | null> {
             return null;
         }
 
-        const formattedStudent = await formatResponse(rows[0] as DbStudent);
+        const tmp = { ...rows[0] } as DbStudent;
+        tmp.active = Boolean(tmp.active)
+        tmp.alumni = Boolean(tmp.alumni)
+
+        const formattedStudent = await formatResponse(tmp);
 
         await handleAccessControlStatus({
             id: formattedStudent?.id,

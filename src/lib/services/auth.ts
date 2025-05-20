@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
 import { Student } from '@/types/academics/student';
-import { findStudentByEmail, findStudentByUid } from './student-service';
+import { findStudentByEmail, findStudentByUid } from './student.service';
 
 // JWT Secret should be in environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';

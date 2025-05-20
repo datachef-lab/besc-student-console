@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findStudentsByBatchId } from "@/lib/services/student-service";
+import { findStudentsByBatchId } from "@/lib/services/student.service";
 import { verifyAccessToken } from "@/lib/auth";
 
 // Export config to enable segment export
