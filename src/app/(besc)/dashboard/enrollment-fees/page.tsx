@@ -28,6 +28,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Instalment } from "@/types/fees/instalment";
 import { useStudent } from "@/context/StudentContext";
+// import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ExtendedComponentMetadata {
   id: number;
@@ -277,17 +278,17 @@ export default function FeesPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="p-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+//   if (error) {
+//     return (
+//       <div className="p-6">
+//         <Alert variant="destructive">
+//           <AlertCircle className="h-4 w-4" />
+//           <AlertTitle>Error</AlertTitle>
+//           <AlertDescription>{error}</AlertDescription>
+//         </Alert>
+//       </div>
+//     );
+//   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-indigo-50/20 to-purple-50/20">
@@ -475,12 +476,12 @@ export default function FeesPage() {
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                      {instalments.map((instalment) => {
+                                      {instalments.map((instalment, index) => {
                                         const statusInfo =
                                           getStatusInfo(instalment);
                                         return (
                                           <TableRow
-                                            key={instalment.id}
+                                            key={`${instalment.id}-${index}`}
                                             className="hover:bg-blue-50/50 transition-colors"
                                           >
                                             <TableCell className="font-medium text-gray-700">
@@ -651,9 +652,9 @@ export default function FeesPage() {
                                         </TableHeader>
                                         <TableBody>
                                           {instalments[0].details.components.map(
-                                            (component) => (
+                                            (component, cIndex) => (
                                               <TableRow
-                                                key={component.id}
+                                                key={`${component.id}-${cIndex}`}
                                                 className="hover:bg-blue-50/50 transition-colors"
                                               >
                                                 <TableCell className="font-medium text-gray-800">
@@ -787,7 +788,7 @@ export default function FeesPage() {
 
                   return (
                     <motion.div
-                      key={feeType}
+                      key={`${feeType}`}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                     >

@@ -29,14 +29,16 @@ import {
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { useRouter } from "next/navigation";
 import { getSemesterSummary } from "@/lib/services/semester-summary.service";
-import { MarksheetSummary } from "@/types/academics/marksheet-summary";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-  } from "@/components/ui/dialog";
-
+  MarksheetSummary,
+  SubjectMetadataType,
+} from "@/types/academics/marksheet-summary";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type NotificationType = "assignment" | "quiz" | "class" | "exam" | "feedback";
 type NotificationColor =
@@ -58,82 +60,6 @@ interface Notification {
   isRead?: boolean;
   isImportant?: boolean;
 }
-
-// Notification data with read/important status
-// const allNotifications: Notification[] = [
-//   {
-//     id: 1,
-//     title: "Assignment Submitted",
-//     course: "Data Structures",
-//     time: "2 hours ago",
-//     type: "assignment",
-//     color: "blue",
-//     isRead: false,
-//     isImportant: true,
-//   },
-//   {
-//     id: 2,
-//     title: "Quiz Completed",
-//     course: "Database Management",
-//     time: "Yesterday",
-//     type: "quiz",
-//     color: "emerald",
-//     isRead: true,
-//     isImportant: false,
-//   },
-//   {
-//     id: 3,
-//     title: "Class Attended",
-//     course: "Software Engineering",
-//     time: "Yesterday",
-//     type: "class",
-//     color: "amber",
-//     isRead: true,
-//     isImportant: false,
-//   },
-//   {
-//     id: 4,
-//     title: "Assignment Due",
-//     course: "Web Development",
-//     time: "Tomorrow",
-//     type: "assignment",
-//     color: "rose",
-//     isRead: false,
-//     isImportant: true,
-//   },
-//   {
-//     id: 5,
-//     title: "Exam Scheduled",
-//     course: "Computer Networks",
-//     time: "Next Week",
-//     type: "exam",
-//     color: "indigo",
-//     isRead: false,
-//     isImportant: true,
-//   },
-//   {
-//     id: 6,
-//     title: "Project Feedback",
-//     course: "Software Engineering",
-//     time: "3 days ago",
-//     type: "feedback",
-//     color: "violet",
-//     isRead: true,
-//     isImportant: false,
-//   },
-//   {
-//     id: 7,
-//     title: "Class Canceled",
-//     course: "Operating Systems",
-//     time: "Today",
-//     type: "class",
-//     color: "red",
-//     isRead: false,
-//     isImportant: true,
-//   },
-// ];
-
-const allNotifications: Notification[] = [];
 
 // Map Tailwind color classes for notifications
 const colorMap = {
@@ -169,18 +95,6 @@ const colorMap = {
 
 type NotificationFilter = "all" | "unread" | "important";
 
-// New interface for semester data
-interface SemesterSummaryItem {
-  id: number;
-  semester: number;
-  sgpa: number | null;
-  year1: number;
-  year2: number | null;
-  result: string;
-  remarks: string;
-  failedSubjects: any[];
-}
-
 export default function HomeContent() {
   const router = useRouter();
   const { student, loading, batches, error, refetch } = useStudent();
@@ -188,10 +102,12 @@ export default function HomeContent() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>("all");
   const [isContentReady, setIsContentReady] = useState(false);
-  const [semesterSummary, setSemesterSummary] = useState<MarksheetSummary[]>(
-    []
-  );
-  const [selectedBacklogs, setSelectedBacklogs] = useState<unknown[] | null>(null);
+  const [semesterSummary, setSemesterSummary] = useState<
+    MarksheetSummary[] | null
+  >(null);
+  const [selectedBacklogs, setSelectedBacklogs] = useState<
+    SubjectMetadataType[] | null
+  >(null);
   const [backlogsDialogOpen, setBacklogsDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -253,154 +169,6 @@ export default function HomeContent() {
       setIsContentReady(false);
     }
   }, [loading, student, batches]);
-
-  // Fetch semester summary data - this is a placeholder, you'll need to implement
-  // the actual API call in your StudentContext or a dedicated function
-  useEffect(() => {
-    // Mock data for demonstration - replace with actual API call
-    if (!loading && student) {
-      const mockSemesterData = [
-        {
-          id: 2249,
-          cgpa: null,
-          classification: null,
-          semester: 1,
-          sgpa: null,
-          remarks: "Semester not cleared.",
-          uid: "0102232311",
-          year1: 2023,
-          year2: null,
-          credits: 21,
-          totalCredits: 21,
-          percentage: 0,
-          result: "PASSED",
-          failedSubjects: [
-            {
-              id: 4,
-              semester: 1,
-              category: null,
-              irpName: "MICROECONOMICS",
-              name: "MICROECONOMICS",
-              irpCode: "MICD",
-              marksheetCode: "MICD-IDC/MDC-1",
-              isOptional: false,
-              credit: 3,
-              theoryCredit: 2,
-              fullMarksTheory: 50,
-              practicalCredit: 1,
-              fullMarksPractical: null,
-              internalCredit: 0,
-              fullMarksInternal: null,
-              projectCredit: 0,
-              fullMarksProject: null,
-              vivalCredit: 0,
-              fullMarksViva: null,
-              fullMarks: 75,
-              createdAt: "2025-05-16T09:00:07.846Z",
-              updatedAt: "2025-05-16T09:00:07.846Z",
-              specialization: null,
-              stream: {
-                id: 1,
-                framework: "CCF",
-                degreeProgramme: "HONOURS",
-                duration: null,
-                numberOfSemesters: null,
-                createdAt: "2025-05-16T08:36:31.744Z",
-                updatedAt: "2025-05-16T08:36:31.744Z",
-                degree: {
-                  id: 1,
-                  name: "BCOM",
-                  level: "UNDER_GRADUATE",
-                  sequence: null,
-                  createdAt: "2025-05-16T08:36:31.736Z",
-                  updatedAt: "2025-05-16T08:36:31.736Z",
-                },
-              },
-              subjectType: {
-                id: 1,
-                irpName: "MAJOR",
-                irpShortName: null,
-                marksheetName: "DISCIPLINE SPECIFIC CORE COURSE",
-                marksheetShortName: null,
-                createdAt: "2025-05-16T08:36:31.750Z",
-                updatedAt: "2025-05-16T08:36:31.750Z",
-              },
-            },
-          ],
-        },
-        {
-          id: 2249,
-          cgpa: null,
-          classification: null,
-          semester: 1,
-          sgpa: null,
-          remarks: "Semester not cleared.",
-          uid: "0102232311",
-          year1: 2023,
-          year2: null,
-          credits: 21,
-          totalCredits: 21,
-          percentage: 0,
-          result: "PASSED",
-          failedSubjects: [
-            {
-              id: 4,
-              semester: 1,
-              category: null,
-              irpName: "MICROECONOMICS",
-              name: "MICROECONOMICS",
-              irpCode: "MICD",
-              marksheetCode: "MICD-IDC/MDC-1",
-              isOptional: false,
-              credit: 3,
-              theoryCredit: 2,
-              fullMarksTheory: 50,
-              practicalCredit: 1,
-              fullMarksPractical: null,
-              internalCredit: 0,
-              fullMarksInternal: null,
-              projectCredit: 0,
-              fullMarksProject: null,
-              vivalCredit: 0,
-              fullMarksViva: null,
-              fullMarks: 75,
-              createdAt: "2025-05-16T09:00:07.846Z",
-              updatedAt: "2025-05-16T09:00:07.846Z",
-              specialization: null,
-              stream: {
-                id: 1,
-                framework: "CCF",
-                degreeProgramme: "HONOURS",
-                duration: null,
-                numberOfSemesters: null,
-                createdAt: "2025-05-16T08:36:31.744Z",
-                updatedAt: "2025-05-16T08:36:31.744Z",
-                degree: {
-                  id: 1,
-                  name: "BCOM",
-                  level: "UNDER_GRADUATE",
-                  sequence: null,
-                  createdAt: "2025-05-16T08:36:31.736Z",
-                  updatedAt: "2025-05-16T08:36:31.736Z",
-                },
-              },
-              subjectType: {
-                id: 1,
-                irpName: "MAJOR",
-                irpShortName: null,
-                marksheetName: "DISCIPLINE SPECIFIC CORE COURSE",
-                marksheetShortName: null,
-                createdAt: "2025-05-16T08:36:31.750Z",
-                updatedAt: "2025-05-16T08:36:31.750Z",
-              },
-            },
-          ],
-        },
-      ];
-
-      setSemesterSummary(mockSemesterData);
-    }
-  }, [loading, student]);
 
   const dismissNotification = (id: number) => {
     setNotifications(
@@ -564,35 +332,6 @@ export default function HomeContent() {
     },
   ];
 
-  //   const enrolledCourses = [
-  //     {
-  //       id: 1,
-  //       title: "Object oriented programming",
-  //       icon: "/placeholders/oop-icon.svg",
-  //     },
-  //     {
-  //       id: 2,
-  //       title: "Fundamentals of database systems",
-  //       icon: "/placeholders/dbms-icon.svg",
-  //     },
-  //     {
-  //       id: 3,
-  //       title: "Computer Networks",
-  //       icon: "/placeholders/network-icon.svg",
-  //     },
-  //     {
-  //       id: 4,
-  //       title: "Web Development",
-  //       icon: "/placeholders/web-icon.svg",
-  //     },
-  //   ];
-
-  const enrolledCourses: {
-    id: number;
-    title: string;
-    icon: string;
-  }[] = [];
-
   const today = new Date();
   const dateString = today.toLocaleDateString("en-US", {
     day: "numeric",
@@ -601,8 +340,8 @@ export default function HomeContent() {
   });
 
   // New component for Semester Summary
-  const SemesterSummaryTable = ({ data }: { data: SemesterSummaryItem[] }) => {
-    const handleBacklogsClick = (failedSubjects: any[]) => {
+  const SemesterSummaryTable = ({ data }: { data: MarksheetSummary[] }) => {
+    const handleBacklogsClick = (failedSubjects: SubjectMetadataType[]) => {
       if (failedSubjects && failedSubjects.length > 0) {
         setSelectedBacklogs(failedSubjects);
         setBacklogsDialogOpen(true);
@@ -753,7 +492,7 @@ export default function HomeContent() {
         {/* Left Column */}
         <div>
           {/* Basic Info */}
-          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
+          <Card className="border-0 py-4 shadow-md rounded-2xl overflow-hidden bg-white">
             <CardHeader className="pb-2 pt-3 px-5">
               <CardTitle className="text-base font-semibold text-black">
                 Basic Info
@@ -818,7 +557,7 @@ export default function HomeContent() {
           </Card>
 
           {/* Semester Summary - New Card */}
-          <Card className="border-0 shadow-md rounded-2xl overflow-hidden bg-white">
+          <Card className="border-0 shadow-md rounded-2xl overflow-hidden my-5 bg-white">
             <CardHeader className="pb-2 pt-3 px-5">
               <CardTitle className="text-base font-semibold text-black flex items-center">
                 <GraduationCap className="w-4 h-4 mr-2 text-[#925FE2]" />
@@ -826,7 +565,7 @@ export default function HomeContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-5 pb-3 pt-0">
-              {semesterSummary.length > 0 ? (
+              {semesterSummary && semesterSummary.length > 0 ? (
                 <SemesterSummaryTable data={semesterSummary} />
               ) : (
                 <div className="text-center py-4 text-gray-500 text-sm">
@@ -835,56 +574,6 @@ export default function HomeContent() {
               )}
             </CardContent>
           </Card>
-
-          {/* Enrolled Courses */}
-          {/* <div>
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Enrolled Courses
-              </h2>
-              <Button
-                variant="link"
-                size="sm"
-                className="text-[#925FE2] hover:text-purple-800 text-sm font-medium"
-              >
-                See all
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {enrolledCourses.slice(0, 4).map((course) => (
-                <Card
-                  key={course.id}
-                  className="border-0 shadow-md rounded-2xl overflow-hidden bg-white hover:bg-[#F9F7FF] hover:shadow-lg transition-all group p-4"
-                >
-                  <CardContent className="flex flex-col items-start text-left relative min-h-[140px] p-0">
-                    <div className="w-10 h-10 mb-2 rounded-lg flex items-center justify-center bg-[#F3F0FF]">
-                      <div className="w-5 h-5 text-[#925FE2]">
-                        {course.id % 3 === 0 ? (
-                          <BookOpen className="w-5 h-5" />
-                        ) : course.id % 3 === 1 ? (
-                          <Code className="w-5 h-5" />
-                        ) : (
-                          <Database className="w-5 h-5" />
-                        )}
-                      </div>
-                    </div>
-                    <span className="text-xs font-medium text-gray-500">
-                      Course Code: CS{course.id + 100}
-                    </span>
-                    <h3 className="text-sm font-medium text-gray-800 mb-2 leading-tight mt-1">
-                      {course.title}
-                    </h3>
-                    <Button
-                      size="sm"
-                      className="w-auto mt-auto z-10 bg-[#925FE2] hover:bg-purple-700 text-white px-4 py-1.5 rounded-lg text-xs font-medium shadow-sm"
-                    >
-                      View
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div> */}
         </div>
 
         {/* Right Column - Daily Notice */}

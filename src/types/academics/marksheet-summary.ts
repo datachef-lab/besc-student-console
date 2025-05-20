@@ -15,7 +15,7 @@ export interface MarksheetSummary {
     failedSubjects: SubjectMetadataType[];
 }
 
-interface SubjectMetadataType {
+export interface SubjectMetadataType {
     readonly id: number;
     stream: {
         id?: number | undefined;
