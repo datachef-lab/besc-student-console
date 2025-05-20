@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { findAllClasses } from "@/lib/services/class-service";
+import { findAllClasses } from "@/lib/services/class.service";
 
 export async function GET() {
     try {

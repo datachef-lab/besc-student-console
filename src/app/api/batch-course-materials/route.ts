@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { findCourseMaterialsBySubjects } from "@/lib/services/course-material";
+import { findCourseMaterialsBySubjects } from "@/lib/services/course-material.service";
 
 export async function GET(request: Request) {
     try {

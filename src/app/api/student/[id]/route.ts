@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateAccessControl } from "@/lib/services/access-control";
+import { updateAccessControl } from "@/lib/services/access-control.service";
 
 // PUT endpoint to update student access permissions
 export async function PUT(

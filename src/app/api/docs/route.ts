@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
-import { scanDocs, getFile } from '@/lib/services/docs';
+import { scanDocs, getFile } from '@/lib/services/docs.service';
 import { verifyAccessToken } from '@/lib/services/auth';
 
 // Utility function to verify if a path is within allowed directories

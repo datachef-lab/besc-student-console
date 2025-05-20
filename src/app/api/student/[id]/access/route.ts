@@ -1,4 +1,4 @@
-import { updateAccessControl } from "@/lib/services/access-control";
+import { updateAccessControl } from "@/lib/services/access-control.service";
 import { NextRequest, NextResponse } from "next/server";
 
 

@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 import { SignJWT } from "jose";
 import { getUserByEmail, getUserByUid, verifyRefreshToken } from "@/lib/services/auth";
-import { findAccessControlByStudentId } from "@/lib/services/access-control";
+import { findAccessControlByStudentId } from "@/lib/services/access-control.service";
 
 export async function GET() {
     try {

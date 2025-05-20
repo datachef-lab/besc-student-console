@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTokens, setAuthCookies } from '@/lib/services/auth';
-import { findAccessControlByStudentId } from '@/lib/services/access-control';
-import { findStudentByUidAndWa } from '@/lib/services/student.service';
+import { findAccessControlByStudentId } from '@/lib/services/access-control.service';
+import { findStudentByUidAndContact } from '@/lib/services/student.service';
 
 // export async function POST(req: NextRequest) {
 //     try {
@@ -210,7 +210,7 @@ export async function POST(req: NextRequest) {
         // Normal login flow
         try {
             // const user = await getUserByUid(uid);
-            const user = await findStudentByUidAndWa(uid, password);
+            const user = await findStudentByUidAndContact(uid, password);
             console.log("user in fetching:", user);
             console.log(`User found for UID ${uid}:`, user ? "Yes" : "No");
 

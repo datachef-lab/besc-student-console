@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findAllCourse } from "@/lib/services/course-service";
+import { findAllCourse } from "@/lib/services/course.service";
 import { verifyAccessToken } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {

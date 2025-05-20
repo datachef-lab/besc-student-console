@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 // import { findStudentsBySearch } from "@/lib/services/student-service";
 import { verifyAccessToken } from "@/lib/auth";
-import { findAll } from "@/lib/services/access-control";
+import { findAll } from "@/lib/services/access-control.service";
 
 export async function GET(request: NextRequest) {
     try {

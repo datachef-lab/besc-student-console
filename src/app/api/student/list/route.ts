@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findAll } from "@/lib/services/access-control";
+import { findAll } from "@/lib/services/access-control.service";
 import { verifyAccessToken } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { findStats } from "@/lib/services/access-control";
+import { findStats } from "@/lib/services/access-control.service";
 
 export async function GET() {
     try {

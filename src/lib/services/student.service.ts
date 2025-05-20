@@ -1,8 +1,8 @@
 import { DbStudent, Student } from "@/types/academics/student";
 import { RowDataPacket } from "mysql2";
-import { findNationalityById } from "./nationality";
+import { findNationalityById } from "./nationality.service";
 import { query } from "@/db";
-import { handleAccessControlStatus } from "./access-control";
+import { handleAccessControlStatus } from "./access-control.service";
 
 export async function findAllStudents(page: number = 1, size: number = 10): Promise<DbStudent[]> {
     const rows = await query<RowDataPacket[]>(`
@@ -86,7 +86,7 @@ export async function findStudentByUid(uid: string): Promise<Student | null> {
     }
 }
 
-export async function findStudentByUidAndWa(uid: string, whatsappno: string): Promise<Student | null> {
+export async function findStudentByUidAndContact(uid: string, contactNo: string): Promise<Student | null> {
     try {
         // Don't log the function itself
         console.log("Looking up student with UID:", uid);
@@ -94,13 +94,13 @@ export async function findStudentByUidAndWa(uid: string, whatsappno: string): Pr
         const rows = await query<RowDataPacket[]>(`
             SELECT * 
             FROM studentpersonaldetails 
-            WHERE codeNumber = '${uid}' AND whatsappno = '${whatsappno}'
+            WHERE codeNumber = '${uid}' AND contactNo = '${contactNo}'
         `);
 
         // console.log("Query results:", rows);
 
         if (!rows || rows.length === 0) {
-            console.log(`No student found with UID: ${uid} and whatsappno: ${whatsappno}`);
+            console.log(`No student found with UID: ${uid} and contactNo: ${contactNo}`);
             return null;
         }
 

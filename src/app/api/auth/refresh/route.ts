@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyRefreshToken, generateTokens, getUserByEmail, getUserByUid } from '@/lib/services/auth';
 import { Student } from '@/types/academics/student';
-import { findAccessControlByStudentId } from '@/lib/services/access-control';
+import { findAccessControlByStudentId } from '@/lib/services/access-control.service';
 
 export async function GET() {
     try {

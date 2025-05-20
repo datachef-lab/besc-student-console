@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findBatchesMetadataByCourseId } from "@/lib/services/batch-service";
+import { findBatchesMetadataByCourseId } from "@/lib/services/batch.service";
 import { verifyAccessToken } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { findAccessControlByStudentId } from "@/lib/services/access-control";
+import { findAccessControlByStudentId } from "@/lib/services/access-control.service";
 
 export async function GET(request: Request) {
     try {
