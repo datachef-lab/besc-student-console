@@ -20,7 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { useStudent } from "@/context/StudentContext";
+import { useStudent } from "@/providers/student-provider";
 import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
 interface Exam {

@@ -15,12 +15,11 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { StudentProvider } from "@/context/StudentContext";
+import { StudentProvider } from "@/providers/student-provider";
 
 import { House } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
 
 export default function DashboardLayout({
   children,

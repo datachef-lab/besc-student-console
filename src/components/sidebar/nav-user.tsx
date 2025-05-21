@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
-import { useStudent } from "@/context/StudentContext";
+import { useStudent } from "@/providers/student-provider";
 
 export function NavUser() {
   const { user, logout } = useAuth();

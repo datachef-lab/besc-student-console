@@ -14,7 +14,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import Image from "next/image";
-import { useStudent } from "@/context/StudentContext";
+import { useStudent } from "@/providers/student-provider";
 
 export default function ProfileContent() {
   const { student, batches } = useStudent();

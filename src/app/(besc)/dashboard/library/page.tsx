@@ -17,7 +17,7 @@ import {
   Share2,
   Calendar as CalendarIcon,
 } from "lucide-react";
-import { useStudent } from "@/context/StudentContext";
+import { useStudent } from "@/providers/student-provider";
 import { useRouter } from "next/dist/client/components/navigation";
 import { IssuedBookDetails, LibraryVisit } from "@/types/academics/library";
 

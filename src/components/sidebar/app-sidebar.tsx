@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 
-import { useStudent } from "@/context/StudentContext";
+import { useStudent } from "@/providers/student-provider";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();

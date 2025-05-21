@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Instalment } from "@/types/fees/instalment";
-import { useStudent } from "@/context/StudentContext";
+import { useStudent } from "@/providers/student-provider";
 // import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ExtendedComponentMetadata {
@@ -278,17 +278,17 @@ export default function FeesPage() {
     );
   }
 
-//   if (error) {
-//     return (
-//       <div className="p-6">
-//         <Alert variant="destructive">
-//           <AlertCircle className="h-4 w-4" />
-//           <AlertTitle>Error</AlertTitle>
-//           <AlertDescription>{error}</AlertDescription>
-//         </Alert>
-//       </div>
-//     );
-//   }
+  //   if (error) {
+  //     return (
+  //       <div className="p-6">
+  //         <Alert variant="destructive">
+  //           <AlertCircle className="h-4 w-4" />
+  //           <AlertTitle>Error</AlertTitle>
+  //           <AlertDescription>{error}</AlertDescription>
+  //         </Alert>
+  //       </div>
+  //     );
+  //   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-indigo-50/20 to-purple-50/20">
@@ -538,8 +538,13 @@ export default function FeesPage() {
                                                       {(() => {
                                                         const dueInfo =
                                                           getPaymentDueDateInfo(
-                                                            typeof instalment.metadata.lastDate === "string"
-                                                              ? instalment.metadata.lastDate
+                                                            typeof instalment
+                                                              .metadata
+                                                              .lastDate ===
+                                                              "string"
+                                                              ? instalment
+                                                                  .metadata
+                                                                  .lastDate
                                                               : instalment.metadata.lastDate?.toISOString()
                                                           );
                                                         if (dueInfo) {

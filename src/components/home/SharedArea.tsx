@@ -1,6 +1,6 @@
 "use client";
 import { useAuth } from "@/hooks/use-auth";
-import { useStudent } from "@/context/StudentContext";
+import { useStudent } from "@/providers/student-provider";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 
 interface SharedAreaProps {

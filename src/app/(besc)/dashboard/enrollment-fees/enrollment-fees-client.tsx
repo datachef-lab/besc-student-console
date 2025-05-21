@@ -18,7 +18,7 @@ import { Installment, Fee, EnrollmentFeesClientProps } from "./types";
 export default function EnrollmentFeesClient({
   initialFeesData,
 }: EnrollmentFeesClientProps) {
-  const [feesData, setFeesData] = useState<Fee[]>(initialFeesData);
+  const [feesData] = useState<Fee[]>(initialFeesData);
   const [selectedFee, setSelectedFee] = useState<number | null>(null);
 
   const formatDate = (dateString: string): string => {

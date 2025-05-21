@@ -7,9 +7,8 @@ import BasicInfo from "./BasicInfo";
 import SemesterSummary from "./SemesterSummary";
 import ErrorCard from "./ErrorCard";
 import StudentMissingCard from "./StudentMissingCard";
-import BatchesMissingCard from "./BatchesMissingCard";
 import DailyNotices from "./DailyNotices";
-import { useStudent } from "@/context/StudentContext";
+import { useStudent } from "@/providers/student-provider";
 
 export default function HomeContent() {
   const { student, loading, batches, error, refetch } = useStudent();
@@ -17,7 +16,7 @@ export default function HomeContent() {
 
   // Prevent flickering by holding the loading state until content is ready
   useEffect(() => {
-    if (!loading && student && batches && batches.length > 0) {
+    if (!loading && student && batches) {
       // Small delay to ensure smooth transition
       const timer = setTimeout(() => {
         setIsContentReady(true);
@@ -49,9 +48,9 @@ export default function HomeContent() {
   }
 
   // Error handling for missing batches
-  if (!batches || batches.length === 0) {
-    return <BatchesMissingCard refetch={refetch} />;
-  }
+//   if (!batches || batches.length === 0) {
+//     return <BatchesMissingCard refetch={refetch} />;
+//   }
 
   return (
     <div className="space-y-8 min-h-screen">

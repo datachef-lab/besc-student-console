@@ -21,7 +21,7 @@ export default function BasicInfo({
         <div className="flex items-center justify-between">
           <span className="text-gray-500 text-sm">Course</span>
           <span className="font-semibold text-gray-800 text-base">
-            {batches[0].coursename}
+            {batches[0]?.coursename}
           </span>
         </div>
         <div className="flex items-center justify-between">
@@ -30,14 +30,14 @@ export default function BasicInfo({
             <span className="text-red-500">{student.active ? "*" : ""}</span>
           </span>
           <span className="font-semibold text-gray-800 text-base">
-            {batches[batches.length - 1].classname}
+            {batches[batches.length - 1]?.classname}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
           <span className="text-gray-500 text-sm">Section</span>
           <span className="font-semibold text-gray-800 text-base">
-            {batches[batches.length - 1].sectionName || "N/A"}
+            {batches[batches.length - 1]?.sectionName || "N/A"}
           </span>
         </div>
 
@@ -58,8 +58,8 @@ export default function BasicInfo({
         <div className="flex items-center justify-between">
           <span className="text-gray-500 text-sm">Shift & Session</span>
           <span className="font-semibold text-gray-800 text-base">
-            {batches[batches.length - 1].shiftName || "N/A"} |{" "}
-            {batches[batches.length - 1].sessionName || "N/A"}
+            {batches[batches.length - 1]?.shiftName || "N/A"} |{" "}
+            {batches[batches.length - 1]?.sessionName || "N/A"}
           </span>
         </div>
       </CardContent>
