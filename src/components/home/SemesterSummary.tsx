@@ -30,7 +30,7 @@ export default function SemesterSummary({ student }: { student: Student }) {
         }
       });
     }
-  }, []);
+  }, [student]);
 
   const handleBacklogsClick = (failedSubjects: SubjectMetadataType[]) => {
     if (failedSubjects && failedSubjects.length > 0) {
