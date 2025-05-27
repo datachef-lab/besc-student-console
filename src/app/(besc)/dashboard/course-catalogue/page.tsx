@@ -3,29 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { useStudent } from "@/providers/student-provider";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { DbCourseMaterial } from "@/types/academics/course-material";
-import {
-  Download,
-  ExternalLink,
-  Book,
-  BookOpen,
-  GraduationCap,
-  School,
-  X,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { GraduationCap, School } from "lucide-react";
+import BatchGrid from "@/components/course-catalogue/BatchGrid";
+import BatchDetails from "@/components/course-catalogue/BatchDetails";
 
 export default function CourseCataloguePage() {
   const { batches, loading, accessControl } = useStudent();
@@ -169,226 +152,14 @@ export default function CourseCataloguePage() {
           <div className="space-y-6">
             <AnimatePresence mode="wait">
               {selectedBatch !== null ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full"
-                  key="selected-batch"
-                >
-                  <Card
-                    className="w-full bg-white/80 backdrop-blur-sm border-indigo-100 shadow-lg hover:shadow-xl transition-all relative"
-                    onClick={() => setSelectedBatch(null)}
-                  >
-                    <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 rounded-t-lg"></div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedBatch(null);
-                      }}
-                      className="absolute right-4 top-4 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
-                      aria-label="Close details"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <CardTitle className="text-2xl font-bold text-gray-800 flex items-center">
-                            <BookOpen className="w-8 h-8 mr-3 text-indigo-600" />
-                            {batches[selectedBatch].coursename}
-                          </CardTitle>
-                          <p className="text-lg text-gray-600 ml-11">
-                            {batches[selectedBatch].classname} (
-                            {batches[selectedBatch].sectionName})
-                          </p>
-                        </div>
-                        <Badge className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-1 text-sm">
-                          {batches[selectedBatch].sessionName}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="mb-4 relative">
-                        {/* Loading indicator */}
-                        {isLoadingMaterials && (
-                          <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10 rounded-xl">
-                            <div className="flex flex-col items-center">
-                              <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-300 border-t-indigo-600 mb-2"></div>
-                              <p className="text-sm text-indigo-600">
-                                Loading course materials...
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
-                          <Book className="w-5 h-5 mr-2 text-indigo-600" />
-                          Subjects & Papers
-                        </h3>
-                        {batches[selectedBatch].papers &&
-                        batches[selectedBatch].papers.length > 0 ? (
-                          <div
-                            className="rounded-xl border border-indigo-100 overflow-hidden bg-white"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Table>
-                              <TableHeader>
-                                <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-indigo-100">
-                                  <TableHead className="w-[25%] text-indigo-900 font-semibold">
-                                    Subject
-                                  </TableHead>
-                                  <TableHead className="w-[25%] text-indigo-900 font-semibold">
-                                    Paper
-                                  </TableHead>
-                                  <TableHead className="w-[20%] text-indigo-900 font-semibold">
-                                    Type
-                                  </TableHead>
-                                  <TableHead className="w-[30%] text-indigo-900 font-semibold">
-                                    Materials
-                                  </TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {batches[selectedBatch].papers.map(
-                                  (paper, index) => (
-                                    <TableRow
-                                      key={index}
-                                      className="hover:bg-gray-50/50"
-                                    >
-                                      <TableCell className="font-medium text-gray-900">
-                                        {paper.subjectname}
-                                      </TableCell>
-                                      <TableCell className="text-gray-700">
-                                        {paper.paperName}
-                                      </TableCell>
-                                      <TableCell>
-                                        <Badge
-                                          variant="outline"
-                                          className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs"
-                                        >
-                                          {paper.subjecttypename}
-                                        </Badge>
-                                      </TableCell>
-                                      <TableCell>
-                                        {paper.subjectId &&
-                                          materialLinks
-                                            .filter(
-                                              (m) =>
-                                                m.subject_id_fk ===
-                                                paper.subjectId
-                                            )
-                                            .map((material, idx) => (
-                                              <motion.div
-                                                key={idx}
-                                                initial={{ opacity: 0, x: -10 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{
-                                                  delay: idx * 0.1,
-                                                }}
-                                                className="flex items-center gap-2 mb-1"
-                                              >
-                                                {material.type === "file" ? (
-                                                  <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 px-3 text-blue-700 hover:text-blue-800 hover:bg-blue-50 transition-colors"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      window.open(
-                                                        `/api/download?filePath=${encodeURIComponent(
-                                                          material.file_path ||
-                                                            ""
-                                                        )}`,
-                                                        "_blank"
-                                                      );
-                                                    }}
-                                                  >
-                                                    <Download className="h-3.5 w-3.5 mr-1.5" />
-                                                    {material.title}
-                                                  </Button>
-                                                ) : (
-                                                  <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 px-3 text-purple-700 hover:text-purple-800 hover:bg-purple-50 transition-colors"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      window.open(
-                                                        material.url,
-                                                        "_blank"
-                                                      );
-                                                    }}
-                                                  >
-                                                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                                                    {material.title}
-                                                  </Button>
-                                                )}
-                                              </motion.div>
-                                            ))}
-                                      </TableCell>
-                                    </TableRow>
-                                  )
-                                )}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        ) : (
-                          <div className="text-center py-8 bg-gray-50/50 rounded-xl border border-dashed border-gray-300">
-                            <Book className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-                            <p className="text-gray-600">
-                              No papers available for this batch
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 text-center mt-6">
-                        Press ESC or click anywhere to close
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                <BatchDetails
+                  batch={batches[selectedBatch]}
+                  materialLinks={materialLinks}
+                  isLoadingMaterials={isLoadingMaterials}
+                  onClose={() => setSelectedBatch(null)}
+                />
               ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  key="batch-grid"
-                >
-                  {batches.map((batch, index) => (
-                    <motion.div
-                      key={index}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Card
-                        className="cursor-pointer bg-white hover:bg-white/95 shadow-md hover:shadow-xl transition-all overflow-hidden group rounded-xl"
-                        onClick={() => handleCardClick(index)}
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600">
-                              <BookOpen className="w-6 h-6" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-lg text-gray-900 mb-1 line-clamp-1">
-                                {batch.coursename}
-                              </h3>
-                              <p className="text-sm text-gray-500 mb-3 line-clamp-1">
-                                {batch.classname} ({batch.sectionName})
-                              </p>
-                              <Badge className="bg-blue-100 hover:bg-blue-200 text-blue-700 border-0 transition-colors">
-                                {batch.sessionName}
-                              </Badge>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </motion.div>
+                <BatchGrid batches={batches} onCardClick={handleCardClick} />
               )}
             </AnimatePresence>
           </div>
