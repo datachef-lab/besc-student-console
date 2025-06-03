@@ -1,5 +1,9 @@
 
 import { pgTable, foreignKey, serial, integer, varchar, timestamp, unique, boolean, date, numeric, text, pgEnum } from "drizzle-orm/pg-core"
+import { createInsertSchema } from "drizzle-zod";
+import z from "zod";
+
+
 
 export const boardResultType = pgEnum("board_result_type", ['FAIL', 'PASS'])
 
@@ -107,6 +111,8 @@ export const admissions = pgTable("admissions", {
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
     remarks: text("remarks"),
 });
+export const createAdmissionSchema = createInsertSchema(admissions);
+export type Admission = z.infer<typeof createAdmissionSchema>;
 
 export const applicationForms = pgTable("application_forms", {
     id: serial().primaryKey().notNull(),
