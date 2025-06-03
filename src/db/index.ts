@@ -1,9 +1,12 @@
 import dotenv from 'dotenv';
 import { drizzle } from 'drizzle-orm/mysql2';
 import { createPool, type Pool, type PoolConnection, type RowDataPacket } from 'mysql2/promise';
+import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js';
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });
+
+const dbPostgres = drizzlePostgres(process.env.DATABASE_URL!);
 
 // Connection configuration
 const dbConfig = {
@@ -72,4 +75,4 @@ export async function query<T extends RowDataPacket[]>(
 // loaded in a Node.js environment (not in Edge functions/middleware)
 
 export { pool, db };
-export default db;
+export default dbPostgres;
