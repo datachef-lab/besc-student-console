@@ -15,7 +15,7 @@ import InstituteDetailsModal from "./InstituteDetailsModal";
 
 interface AcademicInfoStepProps {
   formData: FormData;
-  handleInputChange: (field: keyof FormData, value: any) => void;
+  handleInputChange: (field: keyof FormData, value: unknown) => void;
   stepHeading?: string;
   stepNotes: React.ReactNode;
 }
