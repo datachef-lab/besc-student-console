@@ -1,8 +1,10 @@
 import { FormData } from "../../types";
+import { ReactNode } from 'react';
 
 interface PaymentStepProps {
   formData: FormData;
   handleInputChange: (field: keyof FormData, value: any) => void;
+  stepNotes?: ReactNode;
 }
 
 export default function PaymentStep({ formData, handleInputChange }: PaymentStepProps) {

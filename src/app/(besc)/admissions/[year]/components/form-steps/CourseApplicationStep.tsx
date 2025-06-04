@@ -1,90 +1,108 @@
+import { useState, useEffect } from "react";
 import { FormData } from "../../types";
+import { AdmissionCourseApplication, Course } from "@/db/schema";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ReactNode } from 'react';
 
 interface CourseApplicationStepProps {
   formData: FormData;
   handleInputChange: (field: keyof FormData, value: any) => void;
+  availableCourses?: Course[]; // Make availableCourses optional to prevent the error if not provided initially
+  stepNotes?: ReactNode; // Add stepNotes prop
 }
 
-export default function CourseApplicationStep({ formData, handleInputChange }: CourseApplicationStepProps) {
+// Remove CourseSelection interface as we will use Course from schema + local state for selection
+// interface CourseSelection {
+//   id: number;
+//   name: string;
+//   selected: boolean;
+// }
+
+interface CourseWithSelection extends Course {
+  selected: boolean;
+}
+
+export default function CourseApplicationStep({ formData, handleInputChange, availableCourses }: CourseApplicationStepProps) {
+  // Initialize courses state with an empty array
+  const [courses, setCourses] = useState<CourseWithSelection[]>([]);
+
+  useEffect(() => {
+    // Populate courses state from availableCourses prop when it becomes available
+    if (availableCourses && availableCourses.length > 0) {
+      setCourses(availableCourses.map(course => ({
+        ...course,
+        selected: false,
+      })));
+    }
+  }, [availableCourses]); // Dependency array includes availableCourses
+
+  const handleCourseSelect = (courseId: number, isSelected: boolean) => {
+    setCourses(prevCourses => prevCourses.map(course =>
+      course.id === courseId ? { ...course, selected: isSelected } : course
+    ));
+    // Optionally update formData with selected courses if needed for form submission
+    // handleInputChange("selectedCourses", courses.filter(c => c.selected).map(c => c.id));
+  };
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">Course Application</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Program *
-          </label>
-          <select
-            value={formData.program}
-            onChange={(e) => handleInputChange("program", e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          >
-            <option value="">Select Program...</option>
-            <option value="computer-science">Computer Science</option>
-            <option value="business">Business Administration</option>
-            <option value="engineering">Engineering</option>
-            <option value="psychology">Psychology</option>
-            <option value="education">Education</option>
-            <option value="nursing">Nursing</option>
-            <option value="arts">Liberal Arts</option>
-          </select>
+    <div className="space-y-8">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold mb-2">Step 3 of 5 - Course Selection</h2>
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-4 text-left text-sm">
+          <p className="font-semibold mb-2">Please Note:</p>
+          <ol className="list-decimal list-inside space-y-1">
+            <li>Course / Session selected here can not be Removed once Saved.</li>
+            <li>Multiple course/sessions can be added later on using the same login details sent via SMS/Email in your registered mobile no or email ID.</li>
+          </ol>
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Preferred Start Date *
-          </label>
-          <select
-            value={formData.startDate}
-            onChange={(e) =>
-              handleInputChange("startDate", e.target.value)
-            }
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          >
-            <option value="">Select...</option>
-            <option value="fall-2025">Fall 2025</option>
-            <option value="spring-2026">Spring 2026</option>
-            <option value="summer-2026">Summer 2026</option>
-            <option value="fall-2026">Fall 2026</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Study Mode *
-          </label>
-          <select
-            value={formData.studyMode}
-            onChange={(e) =>
-              handleInputChange("studyMode", e.target.value)
-            }
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          >
-            <option value="">Select...</option>
-            <option value="full-time">Full-time</option>
-            <option value="part-time">Part-time</option>
-            <option value="online">Online</option>
-            <option value="hybrid">Hybrid</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Preferred Campus *
-          </label>
-          <select
-            value={formData.campus}
-            onChange={(e) => handleInputChange("campus", e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          >
-            <option value="">Select Campus...</option>
-            <option value="main">Main Campus</option>
-            <option value="downtown">Downtown Campus</option>
-            <option value="north">North Campus</option>
-            <option value="online">Online Only</option>
-          </select>
-        </div>
+      </div>
+
+      {/* Add heading for Course Selection table */}
+      <h3 className="text-lg font-semibold mb-2">18. Course Selection</h3>
+
+      <div className="overflow-x-auto rounded-md border">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sl</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Select</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {/* Render courses only if they are loaded */}
+            {courses.map((course, index) => (
+              <tr key={course.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
+                {/* Assuming Course schema has a 'name' property */}
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{course.name}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {/* Ensure course.id is a number before calling handleCourseSelect */}
+                  {typeof course.id === 'number' && (
+                    <Checkbox
+                      checked={course.selected}
+                      onCheckedChange={(isChecked: boolean) => handleCourseSelect(course.id as number, isChecked)}
+                    />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex items-center justify-end space-x-2 mt-4">
+        <Label className="text-sm font-medium">Total Application Fees to be paid:</Label>
+        <span className="text-sm">₹</span>
+        <Input type="text" value="" className="w-24 text-right" readOnly />{/* Placeholder for fee */} 
+        <span className="text-sm">.00</span>
+      </div>
+
+      <div className="flex justify-end mt-6">
+        <Button>Submit</Button>
       </div>
     </div>
   );

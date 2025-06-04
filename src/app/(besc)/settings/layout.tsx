@@ -10,6 +10,7 @@ import {
   FileText,
   LogOut,
   ShieldAlert,
+  School,
 } from "lucide-react";
 import {
   Breadcrumb,
@@ -35,6 +36,7 @@ export default function SettingsLayout({
   // Only keep links to pages that exist
   const settingLinks = [
     { name: "General", href: "/settings", icon: Settings },
+    { name: "Admissions", href: "/settings/admissions", icon: School },
     { name: "Materials", href: "/settings/materials", icon: FileText },
     {
       name: "Access Control",
