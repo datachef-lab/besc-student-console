@@ -10,6 +10,94 @@ import {
   AdditionalInfoStep,
   PaymentStep,
 } from "./components";
+import Image from "next/image";
+
+// Notes for each step
+const stepNotes: Record<number, React.ReactNode> = {
+  1: (
+    <div>
+      <div><b>Please Note :</b></div>
+      <ol className="list-decimal ml-5 mt-1 space-y-1 text-sm">
+        <li>All the fields in the above Form are mandatory.</li>
+        <li>Please cross check all the fields especially <b>Category, Gender & Mobile Number</b> before submitting the Form, as these fields are not editable afterwards.</li>
+        <li>As per UGC directives in alignment with NEP 2020, all applicants seeking admission are required to create an Academic Bank of Credits (ABC) account. You will be required to submit this ABC ID at the time of registration to University of Calcutta. <a href="https://www.abc.gov.in/" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Click here to create your ABC ID.</a></li>
+        <li>For Indian citizens applying for admission, it is mandatory to possess an Aadhar Card. Kindly ensure that you have your Aadhar and related ready to prevent any delays in the admission process.</li>
+        <li><span className="text-red-600 font-bold">Red dot</span> indicates mandatory field.</li>
+      </ol>
+    </div>
+  ),
+  2: (
+    <div>
+      <b>Please Note :</b>
+      <ol className="list-decimal ml-5 mt-1 space-y-1 text-sm">
+        <li>
+          Candidates with "Pass Certificate Awarded" as their Class XII Board
+          result are only eligible to apply.
+        </li>
+        <li>
+          Fail / Compartmental students are not allowed to apply as per Calcutta
+          University Norms.
+        </li>
+        <li>
+          Fill-up your marks as per your class XII Board marksheet in the marks
+          Entry option.
+        </li>
+        <li>
+          In case your Board has not issued the Original Marksheet yet, you can
+          proceed with your application by entering the marks as given in your
+          Digital Marksheet.
+        </li>
+        <li>
+          It is mandatory for students to provide the Original copy of the Class
+          XII Board Marksheet at the time of document verification or when asked
+          by the College, if selected.
+        </li>
+        <li>
+          Applicants whose board is not listed in the drop-down, need to get an
+          Equivalency Certificate from Equivalency Department of Calcutta
+          University, College street campus.
+        </li>
+        <li>
+          Once Board / Marks & Institute details are filled up, please click on
+          Submit button to save and continue for course selection.
+        </li>
+        <li>
+          <span className="text-red-600 font-bold">Red dot</span> indicates
+          mandatory field.
+        </li>
+      </ol>
+    </div>
+  ),
+  3: (
+    <div>
+      <b>Course Application Note:</b> Select your desired program and specialization carefully. Once submitted, changes may not be allowed.
+    </div>
+  ),
+  4: (
+    <div>
+      <b>Please Note :</b>
+      <ol className="list-decimal ml-5 mt-1 space-y-1 text-sm">
+        <li>
+          Sr. No. 19 cannot be same as Mobile Number and Whatsapp Number given in
+          Step 1.
+        </li>
+        <li>
+          In case of Physically challanged being 'Yes', relevant documents will
+          be required at the time of admission, if Selected.
+        </li>
+        <li>
+          <span className="text-red-600 font-bold">Red dot</span> indicates
+          mandatory field.
+        </li>
+      </ol>
+    </div>
+  ),
+  5: (
+    <div>
+      <b>Payment Note:</b> Review your payment details before proceeding. Application fees are non-refundable.
+    </div>
+  ),
+};
 
 export default function StudentSignupForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -92,6 +180,7 @@ export default function StudentSignupForm() {
           <GeneralInfoStep
             formData={formData}
             handleInputChange={handleInputChange}
+            stepNotes={stepNotes[currentStep]}
           />
         );
       case 2:
@@ -99,6 +188,7 @@ export default function StudentSignupForm() {
           <AcademicInfoStep
             formData={formData}
             handleInputChange={handleInputChange}
+            stepNotes={stepNotes[currentStep]}
           />
         );
       case 3:
@@ -106,6 +196,7 @@ export default function StudentSignupForm() {
           <CourseApplicationStep
             formData={formData}
             handleInputChange={handleInputChange}
+            stepNotes={stepNotes[currentStep]}
           />
         );
       case 4:
@@ -113,6 +204,7 @@ export default function StudentSignupForm() {
           <AdditionalInfoStep
             formData={formData}
             handleInputChange={handleInputChange}
+            stepNotes={stepNotes[currentStep]}
           />
         );
       case 5:
@@ -120,6 +212,7 @@ export default function StudentSignupForm() {
           <PaymentStep
             formData={formData}
             handleInputChange={handleInputChange}
+            stepNotes={stepNotes[currentStep]}
           />
         );
       default:
@@ -128,20 +221,42 @@ export default function StudentSignupForm() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <ProgressTimeline currentStep={currentStep} steps={steps} />
+    <div className="min-h-screen bg-gray-50">
+      <div className="h-screen flex">
+        {/* Progress Timeline */}
+        <div className="w-[280px] flex-shrink-0 h-full">
+          <div className="h-full bg-gradient-to-b from-purple-700 to-purple-600 p-6 rounded-xl shadow-lg">
+            <ProgressTimeline currentStep={currentStep} steps={steps} />
+          </div>
+        </div>
 
-      {/* Form Content */}
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        {renderStepContent()}
+        {/* Form Content */}
+        <div className="flex-1 p-4 overflow-y-auto">
+          <div className="max-w-4xl mx-auto bg-white p-3 rounded-xl shadow-sm">
+            {renderStepContent()}
 
-        <NavigationButtons
-          currentStep={currentStep}
-          totalSteps={steps.length}
-          onPrevious={handlePrevious}
-          onNext={handleNext}
-          onSubmit={handleSubmit}
-        />
+            <NavigationButtons
+              currentStep={currentStep}
+              totalSteps={steps.length}
+              onPrevious={handlePrevious}
+              onNext={handleNext}
+              onSubmit={handleSubmit}
+            />
+          </div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="w-[280px] flex-shrink-0 h-full">
+          <div
+            className="h-full bg-white p-0 shadow-sm overflow-hidden relative rounded-xl"
+            style={{
+              backgroundImage: "url('/illustrations/admission-form.png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          ></div>
+        </div>
       </div>
     </div>
   );
