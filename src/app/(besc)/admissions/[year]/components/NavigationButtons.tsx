@@ -16,32 +16,32 @@ export default function NavigationButtons({
   totalSteps,
 }: NavigationButtonsProps) {
   return (
-    <div className="flex justify-between mt-8 pt-6 border-t">
+    <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
       <button
         onClick={onPrevious}
         disabled={currentStep === 1}
-        className={`flex items-center px-4 py-2 rounded-md ${
+        className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
           currentStep === 1
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-gray-500 text-white hover:bg-gray-600"
+            ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300"
         }`}
       >
-        <ChevronLeft className="w-4 h-4 mr-1" />
+        <ChevronLeft className="w-4 h-4 mr-1.5" />
         Previous
       </button>
 
       {currentStep < totalSteps ? (
         <button
           onClick={onNext}
-          className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          className="flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition-all duration-200 shadow-sm hover:shadow"
         >
           Next
-          <ChevronRight className="w-4 h-4 ml-1" />
+          <ChevronRight className="w-4 h-4 ml-1.5" />
         </button>
       ) : (
         <button
           onClick={onSubmit}
-          className="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-medium"
+          className="px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 active:bg-green-800 transition-all duration-200 shadow-sm hover:shadow"
         >
           Submit Application
         </button>

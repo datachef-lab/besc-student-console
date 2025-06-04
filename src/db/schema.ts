@@ -354,6 +354,8 @@ export const address = pgTable("address", {
         name: "address_state_id_fk_states_id_fk"
     }),
 ]);
+export const createAddressSchema = createInsertSchema(address);
+export type Address = z.infer<typeof createAddressSchema>;
 
 export const cities = pgTable("cities", {
     id: serial().primaryKey().notNull(),
@@ -372,7 +374,8 @@ export const cities = pgTable("cities", {
     unique("cities_name_unique").on(table.name),
     unique("cities_code_unique").on(table.code),
 ]);
-
+export const createCitiesSchema = createInsertSchema(cities);
+export type City = z.infer<typeof createCitiesSchema>;
 // export const batches = pgTable("batches", {
 //     id: serial().primaryKey().notNull(),
 //     courseIdFk: integer("course_id_fk").notNull(),
@@ -495,6 +498,8 @@ export const boardUniversities = pgTable("board_universities", {
     unique("board_universities_name_unique").on(table.name),
     unique("board_universities_sequence_unique").on(table.sequence),
 ]);
+export const createBoardUniversitiesSchema = createInsertSchema(boardUniversities);
+export type BoardUniversity = z.infer<typeof createBoardUniversitiesSchema>;
 
 // export const admissions = pgTable("admissions", {
 //     id: serial().primaryKey().notNull(),
@@ -540,6 +545,8 @@ export const annualIncomes = pgTable("annual_incomes", {
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });
+export const createAnnualIncomesSchema = createInsertSchema(annualIncomes);
+export type AnnualIncome = z.infer<typeof createAnnualIncomesSchema>;
 
 export const bloodGroup = pgTable("blood_group", {
     id: serial().primaryKey().notNull(),
@@ -549,6 +556,8 @@ export const bloodGroup = pgTable("blood_group", {
 }, (table) => [
     unique("blood_group_type_unique").on(table.type),
 ]);
+export const createBloodGroupSchema = createInsertSchema(bloodGroup);
+export type BloodGroup = z.infer<typeof createBloodGroupSchema>;
 
 export const categories = pgTable("categories", {
     id: serial().primaryKey().notNull(),
@@ -561,6 +570,9 @@ export const categories = pgTable("categories", {
     unique("categories_name_unique").on(table.name),
     unique("categories_code_unique").on(table.code),
 ]);
+export const createCategoriesSchema = createInsertSchema(categories);
+export type Category = z.infer<typeof createCategoriesSchema>;
+
 
 // export const disabilityCodes = pgTable("disability_codes", {
 //     id: serial().primaryKey().notNull(),
@@ -580,6 +592,9 @@ export const countries = pgTable("countries", {
 }, (table) => [
     unique("countries_name_unique").on(table.name),
 ]);
+export const createCountriesSchema = createInsertSchema(countries);
+export type Country = z.infer<typeof createCountriesSchema>;
+
 
 // export const classes = pgTable("classes", {
 //     id: serial().primaryKey().notNull(),
@@ -599,6 +614,8 @@ export const courses = pgTable("courses", {
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });
+export const createCoursesSchema = createInsertSchema(courses);
+export type Course = z.infer<typeof createCoursesSchema>;
 
 // export const documents = pgTable("documents", {
 //     id: serial().primaryKey().notNull(),
@@ -657,6 +674,8 @@ export const languageMedium = pgTable("language_medium", {
 }, (table) => [
     unique("language_medium_name_unique").on(table.name),
 ]);
+export const createLanguageMediumSchema = createInsertSchema(languageMedium);
+export type LanguageMedium = z.infer<typeof createLanguageMediumSchema>;
 
 // export const emergencyContacts = pgTable("emergency_contacts", {
 //     id: serial().primaryKey().notNull(),
@@ -771,6 +790,8 @@ export const nationality = pgTable("nationality", {
 }, (table) => [
     unique("nationality_sequence_unique").on(table.sequence),
 ]);
+export const createNationalitySchema = createInsertSchema(nationality);
+export type Nationality = z.infer<typeof createNationalitySchema>;
 
 // export const papers = pgTable("papers", {
 //     id: serial().primaryKey().notNull(),
@@ -828,7 +849,8 @@ export const occupations = pgTable("occupations", {
 }, (table) => [
     unique("occupations_name_unique").on(table.name),
 ]);
-
+export const createOccupationsSchema = createInsertSchema(occupations);
+export type Occupation = z.infer<typeof createOccupationsSchema>;
 // export const qualifications = pgTable("qualifications", {
 //     id: serial().primaryKey().notNull(),
 //     name: varchar({ length: 255 }).notNull(),
@@ -917,6 +939,8 @@ export const religion = pgTable("religion", {
     unique("religion_name_unique").on(table.name),
     unique("religion_sequence_unique").on(table.sequence),
 ]);
+export const createReligionSchema = createInsertSchema(religion);
+export type Religion = z.infer<typeof createReligionSchema>;
 
 // export const pickupPoint = pgTable("pickup_point", {
 //     id: serial().primaryKey().notNull(),
@@ -941,7 +965,8 @@ export const streams = pgTable("streams", {
         name: "streams_degree_id_fk_degree_id_fk"
     }),
 ]);
-
+export const createStreamsSchema = createInsertSchema(streams);
+export type Stream = z.infer<typeof createStreamsSchema>;
 // export const shifts = pgTable("shifts", {
 //     id: serial().primaryKey().notNull(),
 //     name: varchar({ length: 500 }).notNull(),
@@ -964,7 +989,8 @@ export const states = pgTable("states", {
     }),
     unique("states_name_unique").on(table.name),
 ]);
-
+export const createStatesSchema = createInsertSchema(states);
+export type State = z.infer<typeof createStatesSchema>;
 // export const studentPapers = pgTable("student_papers", {
 //     id: serial().primaryKey().notNull(),
 //     studentIdFk: integer("student_id_fk").notNull(),
@@ -1181,6 +1207,8 @@ export const institutions = pgTable("institutions", {
     unique("institutions_name_unique").on(table.name),
     unique("institutions_sequence_unique").on(table.sequence),
 ]);
+export const createInstitutionsSchema = createInsertSchema(institutions);
+export type Institution = z.infer<typeof createInstitutionsSchema>;
 
 // export const boardResultStatus = pgTable("board_result_status", {
 //     id: serial().primaryKey().notNull(),
@@ -1249,7 +1277,8 @@ export const degree = pgTable("degree", {
     unique("degree_name_unique").on(table.name),
     unique("degree_sequence_unique").on(table.sequence),
 ]);
-
+export const createDegreeSchema = createInsertSchema(degree);
+export type Degree = z.infer<typeof createDegreeSchema>;
 // export const users = pgTable("users", {
 //     id: serial().primaryKey().notNull(),
 //     name: varchar({ length: 255 }).notNull(),
