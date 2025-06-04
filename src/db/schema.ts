@@ -227,7 +227,7 @@ export const studentAcademicSubjects = pgTable("student_academic_subjects", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
-export const createStudentAcademicSubjectsSchema = createInsertSchema(studentAcademicSubjects); 
+export const createStudentAcademicSubjectsSchema = createInsertSchema(studentAcademicSubjects);
 export type StudentAcademicSubjects = z.infer<typeof createStudentAcademicSubjectsSchema>;
 
 export const academicSubjects = pgTable("academic_subjects", {
@@ -266,6 +266,9 @@ export type AdmissionCourseApplication = z.infer<typeof createAdmissionCourseApp
 
 export const admissionAdditionalInfo = pgTable("admission_additional_info", {
     id: serial("id").primaryKey(),
+    applicationFormId: integer("application_form_id_fk")
+        .references(() => applicationForms.id)
+        .notNull(),
     alternateMobileNumber: varchar("alternate_mobile_number", { length: 255 }),
     bloodGroupId: integer("blood_group_id_fk")
         .references(() => bloodGroup.id)

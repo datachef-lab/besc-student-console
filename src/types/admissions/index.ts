@@ -7,7 +7,7 @@ export interface AdmissionAcademicInfoDto extends AdmissionAcademicInfo {
 export interface ApplicationFormDto extends ApplicationForm {
     generalInfo: AdmissionGeneralInfo | null;
     academicInfo: AdmissionAcademicInfoDto | null;
-    courseApplication: AdmissionCourseApplication | null;
+    courseApplication: AdmissionCourseApplication[] | null;
     additonalInfo: AdmissionAdditionalInfo | null;
     paymentInfo: Payment | null;
 }
