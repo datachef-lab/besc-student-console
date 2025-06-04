@@ -1,5 +1,5 @@
 "use client";
-
+import styles from "@/app/(besc)/settings/settings.module.css"
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -85,12 +85,12 @@ export default function SettingsLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-[100vh] w-[100vw] overflow-x-hidden bg-purple-50/50 overflow-hidden">
       {/* Settings Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 border-r bg-card px-4 py-6">
+      <aside className="hidden lg:flex flex-col w-64 border-r bg-white/90 px-4 py-6 shadow-sm shrink-0">
         <div className="flex items-center gap-2 px-2 mb-8">
-          <Settings size={20} className="text-primary" />
-          <h2 className="text-xl font-semibold">BESC Student Console</h2>
+          <Settings size={20} className="text-purple-600" />
+          <h2 className="text-xl font-semibold text-purple-700">BESC Student Console</h2>
         </div>
 
         <nav className="space-y-1 flex-1">
@@ -100,8 +100,10 @@ export default function SettingsLayout({
               href={link.href}
               className={cn(
                 buttonVariants({ variant: "ghost" }),
-                "w-full justify-start gap-2 px-2 py-1.5",
-                pathname === link.href && "bg-accent text-accent-foreground"
+                "w-full justify-start gap-2 px-2 py-1.5 transition-colors",
+                pathname === link.href 
+                  ? "bg-purple-100 text-purple-700 hover:bg-purple-200" 
+                  : "hover:bg-purple-50 hover:text-purple-700"
               )}
             >
               <link.icon size={18} />
@@ -116,7 +118,7 @@ export default function SettingsLayout({
             onClick={handleLogout}
             className={cn(
               buttonVariants({ variant: "ghost" }),
-              "w-full justify-start gap-2 px-2 py-1.5 text-red-500 hover:text-red-600 hover:bg-red-100/20"
+              "w-full justify-start gap-2 px-2 py-1.5 text-red-500 hover:text-red-600 hover:bg-red-100/20 transition-colors"
             )}
           >
             <LogOut size={18} />
@@ -126,18 +128,18 @@ export default function SettingsLayout({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6">
+      <div id={styles["settings-content"]} className="flex flex-col w-[10px] h-screen overflow-hidden bg-white/90 flex-grow ">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6 bg-white/95 shadow-sm w-full">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <Link href="/dashboard" className="flex items-center">
+                <Link href="/dashboard" className="flex items-center text-purple-600 hover:text-purple-700">
                   <House size={16} />
                 </Link>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <Link href="/settings" className="flex items-center">
+                <Link href="/settings" className="flex items-center text-purple-600 hover:text-purple-700">
                   <Settings size={16} />
                   <span className="ml-1">Settings</span>
                 </Link>
@@ -146,7 +148,7 @@ export default function SettingsLayout({
                 <>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbPage className="flex items-center gap-1">
+                    <BreadcrumbPage className="flex items-center gap-1 text-purple-700">
                       <currentPage.icon size={16} />
                       <span className="ml-1">{currentPage.name}</span>
                     </BreadcrumbPage>
@@ -159,7 +161,7 @@ export default function SettingsLayout({
           {/* Add logout to header for smaller screens */}
           <button
             onClick={handleLogout}
-            className="ml-auto flex items-center gap-1 text-red-500 hover:text-red-600"
+            className="ml-auto flex items-center gap-1 text-red-500 hover:text-red-600 transition-colors"
           >
             <LogOut size={16} />
             <span className="hidden sm:inline">Logout</span>
@@ -167,16 +169,16 @@ export default function SettingsLayout({
         </header>
 
         {/* Mobile navigation bar */}
-        <div className="lg:hidden flex overflow-x-auto p-2 border-b">
+        <div className="lg:hidden flex p-2 border-b shrink-0 bg-white/95 shadow-sm no-scrollbar w-full">
           {settingLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
               className={cn(
-                "flex items-center gap-1 px-3 py-1.5 whitespace-nowrap rounded-md text-sm font-medium",
+                "flex items-center gap-1 px-3 py-1.5 whitespace-nowrap rounded-md text-sm font-medium transition-colors",
                 pathname === link.href
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground"
+                  ? "bg-purple-100 text-purple-700"
+                  : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"
               )}
             >
               <link.icon size={14} />
@@ -185,7 +187,9 @@ export default function SettingsLayout({
           ))}
         </div>
 
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <main className="flex-1 w-full h-full p-6 overflow-auto">
+          {children}
+        </main>
       </div>
     </div>
   );
