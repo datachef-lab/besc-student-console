@@ -11,6 +11,7 @@ import {
   LogOut,
   ShieldAlert,
   School,
+  LayoutList,
 } from "lucide-react";
 import {
   Breadcrumb,
@@ -43,6 +44,7 @@ export default function SettingsLayout({
       href: "/settings/access-control",
       icon: ShieldAlert,
     },
+    {name: "Masters", href: "/settings/masters", icon: LayoutList },
   ];
 
   // Get the current active link
