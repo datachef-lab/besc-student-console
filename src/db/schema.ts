@@ -125,7 +125,8 @@ export const applicationForms = pgTable("application_forms", {
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
     remarks: text("remarks"),
 });
-
+export const createApplicationFormSchema = createInsertSchema(applicationForms);
+export type ApplicationForm = z.infer<typeof createApplicationFormSchema>;
 
 export const payments = pgTable("payments", {
     id: serial("id").primaryKey(),
@@ -147,6 +148,8 @@ export const payments = pgTable("payments", {
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
     remarks: text("remarks"),
 });
+export const createPaymentSchema = createInsertSchema(payments);
+export type Payment = z.infer<typeof createPaymentSchema>;
 
 export const admissionGeneralInfo = pgTable("admission_general_info", {
     id: serial("id").primaryKey(),
@@ -172,6 +175,8 @@ export const admissionGeneralInfo = pgTable("admission_general_info", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
+export const createAdmissionGeneralInfoSchema = createInsertSchema(admissionGeneralInfo);
+export type AdmissionGeneralInfo = z.infer<typeof createAdmissionGeneralInfoSchema>;
 
 export const admissionAcademicInfo = pgTable("admission_academic_info", {
     id: serial("id").primaryKey(),
@@ -205,6 +210,8 @@ export const admissionAcademicInfo = pgTable("admission_academic_info", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
+export const createAdmissionAcademicInfoSchema = createInsertSchema(admissionAcademicInfo);
+export type AdmissionAcademicInfo = z.infer<typeof createAdmissionAcademicInfoSchema>;
 
 export const studentAcademicSubjects = pgTable("student_academic_subjects", {
     id: serial("id").primaryKey(),
@@ -220,6 +227,8 @@ export const studentAcademicSubjects = pgTable("student_academic_subjects", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
+export const createStudentAcademicSubjectsSchema = createInsertSchema(studentAcademicSubjects);
+export type StudentAcademicSubjects = z.infer<typeof createStudentAcademicSubjectsSchema>;
 
 export const academicSubjects = pgTable("academic_subjects", {
     id: serial("id").primaryKey(),
@@ -228,6 +237,8 @@ export const academicSubjects = pgTable("academic_subjects", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
+export const createAcademicSubjects = createInsertSchema(academicSubjects);
+export type AcademicSubjects = z.infer<typeof createAcademicSubjects>;
 
 export const colleges = pgTable("colleges", {
     id: serial("id").primaryKey(),
@@ -236,6 +247,8 @@ export const colleges = pgTable("colleges", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
+export const createCollegesSchema = createInsertSchema(colleges);
+export type Colleges = z.infer<typeof createCollegesSchema>;
 
 export const admissionCourseApplication = pgTable("admission_course_applications", {
     id: serial("id").primaryKey(),
@@ -248,9 +261,14 @@ export const admissionCourseApplication = pgTable("admission_course_applications
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
+export const createAdmissionCourseApplicationSchema = createInsertSchema(admissionCourseApplication);
+export type AdmissionCourseApplication = z.infer<typeof createAdmissionCourseApplicationSchema>;
 
 export const admissionAdditionalInfo = pgTable("admission_additional_info", {
     id: serial("id").primaryKey(),
+    applicationFormId: integer("application_form_id_fk")
+        .references(() => applicationForms.id)
+        .notNull(),
     alternateMobileNumber: varchar("alternate_mobile_number", { length: 255 }),
     bloodGroupId: integer("blood_group_id_fk")
         .references(() => bloodGroup.id)
@@ -283,6 +301,8 @@ export const admissionAdditionalInfo = pgTable("admission_additional_info", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
+export const createAdmissionAdditionalInfoSchema = createInsertSchema(admissionAdditionalInfo);
+export type AdmissionAdditionalInfo = z.infer<typeof createAdmissionAdditionalInfoSchema>;
 
 
 
