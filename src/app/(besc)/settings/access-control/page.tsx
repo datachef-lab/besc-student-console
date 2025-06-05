@@ -455,7 +455,7 @@ export default function AccessControlPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full overflow-hidden">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Access Control</h2>

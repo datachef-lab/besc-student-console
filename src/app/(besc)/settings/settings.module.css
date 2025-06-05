@@ -1,0 +1,9 @@
+#settings-content {
+    /* width: calc(100vw - 300px) !important; */
+    /* border: 2px solid red; */
+    /* overflow: hidden !important; */
+  }
+
+  html {
+    overflow: hidden;
+  }
