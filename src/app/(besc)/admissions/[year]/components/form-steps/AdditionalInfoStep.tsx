@@ -58,18 +58,33 @@ export default function AdditionalInfoStep({
     const fetchData = async () => {
       try {
         const [annualIncomesRes, bloodGroupsRes, categoriesRes, religionsRes, sportsCategoriesRes] = await Promise.all([
-          fetch('/api/annual-incomes'), // Assuming API endpoints
+          fetch('/api/annual-incomes'),
           fetch('/api/blood-groups'),
           fetch('/api/categories'),
           fetch('/api/religions'),
-          fetch('/api/sports-categories'), // Assuming API endpoint for sports categories
+          fetch('/api/sports-categories'),
         ]);
 
-        if (annualIncomesRes.ok) setAnnualIncomes(await annualIncomesRes.json());
-        if (bloodGroupsRes.ok) setBloodGroups(await bloodGroupsRes.json());
-        if (categoriesRes.ok) setCategories(await categoriesRes.json());
-        if (religionsRes.ok) setReligions(await religionsRes.json());
-        if (sportsCategoriesRes.ok) setSportsCategories(await sportsCategoriesRes.json());
+        if (annualIncomesRes.ok) {
+          const data = await annualIncomesRes.json();
+          setAnnualIncomes(data.success ? data.data : []);
+        }
+        if (bloodGroupsRes.ok) {
+          const data = await bloodGroupsRes.json();
+          setBloodGroups(data.success ? data.data : []);
+        }
+        if (categoriesRes.ok) {
+          const data = await categoriesRes.json();
+          setCategories(data.success ? data.data : []);
+        }
+        if (religionsRes.ok) {
+          const data = await religionsRes.json();
+          setReligions(data.success ? data.data : []);
+        }
+        if (sportsCategoriesRes.ok) {
+          const data = await sportsCategoriesRes.json();
+          setSportsCategories(data.success ? data.data : []);
+        }
         
       } catch (error) {
         console.error('Error fetching additional info data:', error);
@@ -77,7 +92,7 @@ export default function AdditionalInfoStep({
     };
 
     void fetchData();
-  }, []); // Empty dependency array to fetch data once on mount
+  }, []);
 
   // Handle changes in additionalInfo state
   const handleAdditionalInfoChange = (field: keyof AdmissionAdditionalInfoDto, value: any) => {

@@ -305,3 +305,7 @@
     box-shadow: none !important;
   }
 }
+
+html {
+  overflow: hidden;
+}

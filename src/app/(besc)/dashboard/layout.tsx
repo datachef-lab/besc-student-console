@@ -32,7 +32,7 @@ export default function DashboardLayout({
     <StudentProvider>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="p-3">
+        <SidebarInset className="p-3 h-screen overflow-y-scroll">
           <header className="flex h-14 shrink-0 items-center justify-between transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 rounded-lg border border-border bg-card shadow-sm px-4">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="h-8 w-8 hover:bg-gray-100 dark:hover:bg-gray-800" />
@@ -70,7 +70,7 @@ export default function DashboardLayout({
               {/* Right side elements can be added here */}
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4">
+          <div className="flex flex-1 flex-col gap-4 p-4 ">
             <div className="min-h-[calc(100vh-4.5rem)] flex-1 rounded-xl md:min-h-min">
               <SharedArea>{children}</SharedArea>
             </div>

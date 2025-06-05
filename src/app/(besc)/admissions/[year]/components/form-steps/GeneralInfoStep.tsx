@@ -160,8 +160,12 @@ export default function GeneralInfoStep({
         if (!response.ok) {
           throw new Error('Failed to fetch categories');
         }
-        const data = await response.json();
-        setCategories(data);
+        const result = await response.json();
+        if (result.success && result.data) {
+          setCategories(result.data);
+        } else {
+          throw new Error(result.message || 'Failed to fetch categories');
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
       }

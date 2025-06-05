@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 interface SingleParentModalProps {
@@ -16,7 +16,7 @@ const SingleParentModal: React.FC<SingleParentModalProps> = ({ isOpen, onClose, 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Important Information Regarding Single Parent Status</DialogTitle>
