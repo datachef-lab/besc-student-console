@@ -32,10 +32,6 @@ export const admissionGeneralInfoRelations = relations(admissionGeneralInfo, ({ 
         fields: [admissionGeneralInfo.religionId],
         references: [religion.id]
     }),
-    degree: one(degree, {
-        fields: [admissionGeneralInfo.degreeId],
-        references: [degree.id]
-    }),
 }));
 
 export const admissionAcademicInfoRelations = relations(admissionAcademicInfo, ({ one }) => ({
