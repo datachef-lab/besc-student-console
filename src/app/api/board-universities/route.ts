@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/db';
+import dbPostgres, { db } from '@/db';
 import { boardUniversities, degree, address } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -16,7 +16,7 @@ const boardUniversitySchema = z.object({
 
 export async function GET() {
   try {
-    const allBoardUniversities = await db.select().from(boardUniversities);
+    const allBoardUniversities = await dbPostgres.select().from(boardUniversities);
     return NextResponse.json({ success: true, data: allBoardUniversities });
   } catch (error: any) {
     console.error('Error fetching board universities:', error);
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validatedData = boardUniversitySchema.parse(body);
 
-    const [newBoardUniversity] = await db
+    const [newBoardUniversity] = await dbPostgres
       .insert(boardUniversities)
       .values({ 
         name: validatedData.name,
@@ -60,7 +60,7 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const validatedData = boardUniversitySchema.parse(body);
 
-    const [updatedBoardUniversity] = await db
+    const [updatedBoardUniversity] = await dbPostgres
       .update(boardUniversities)
       .set({
         name: validatedData.name,
@@ -69,7 +69,6 @@ export async function PUT(req: Request) {
         code: validatedData.code,
         addressId: validatedData.addressId,
         sequence: validatedData.sequence,
-        updatedAt: new Date(),
       })
       .where(eq(boardUniversities.id, parseInt(id)))
       .returning();
@@ -94,7 +93,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: false, message: 'ID is required' }, { status: 400 });
     }
 
-    const [deletedBoardUniversity] = await db
+    const [deletedBoardUniversity] = await dbPostgres
       .delete(boardUniversities)
       .where(eq(boardUniversities.id, parseInt(id)))
       .returning();
