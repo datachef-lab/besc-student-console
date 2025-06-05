@@ -17,7 +17,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             title={toast.title}
             description={toast.description}
             variant={toast.variant}
-            onClose={() => removeToast(toast.id)}
+            onClose={() => typeof toast.id === 'number' && removeToast(toast.id)}
           />
         ))}
       </div>
