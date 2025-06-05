@@ -69,13 +69,14 @@ export const columns: ColumnDef<Nationality>[] = [
       const nationality = row.original;
       return (
         <div className="flex items-center gap-2">
-          <AddNationalityDialog 
-            initialData={{ id: nationality.id, name: nationality.name }}
-            trigger={
-              <Button variant="ghost" size="icon">
-                <Pencil className="h-4 w-4" />
-              </Button>
-            }
+          <AddNationalityDialog
+            onSuccess={() => {}}
+            initialData={{ id: Number(nationality.id), name: nationality.name }}
+            // trigger={
+            //   <Button variant="ghost" size="icon">
+            //     <Pencil className="h-4 w-4" />
+            //   </Button>
+            // }
           />
           <DeleteNationalityDialog nationalityId={nationality.id} />
         </div>

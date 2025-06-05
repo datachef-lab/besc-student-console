@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/db";
+import dbPostgres, { db } from "@/db";
 import { boardUniversities } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -33,7 +33,7 @@ export async function addBoardUniversity(formData: FormData): Promise<AddBoardUn
   }
 
   try {
-    await db.insert(boardUniversities).values(validation.data);
+    await dbPostgres.insert(boardUniversities).values(validation.data);
     revalidatePath("/settings/masters/board-universities");
     return { success: true, message: "Board University added successfully." };
   } catch (error) {
@@ -44,7 +44,7 @@ export async function addBoardUniversity(formData: FormData): Promise<AddBoardUn
 
 export async function deleteBoardUniversity(id: number): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
-    await db.delete(boardUniversities).where(eq(boardUniversities.id, id));
+    await dbPostgres.delete(boardUniversities).where(eq(boardUniversities.id, id));
     revalidatePath("/settings/masters/board-universities");
     return { success: true, message: "Board University deleted successfully." };
   } catch (error) {

@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/db";
+import dbPostgres, { db } from "@/db";
 import { bloodGroup } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -14,7 +14,7 @@ export async function addBloodGroup(formData: FormData): Promise<AddBloodGroupRe
   }
 
   try {
-    await db.insert(bloodGroup).values({ type });
+    await dbPostgres.insert(bloodGroup).values({ type });
     console.log("Added blood group:", type);
     revalidatePath("/settings/masters/blood-group");
     return { success: true, message: "Blood group added successfully." };
@@ -27,7 +27,7 @@ export async function addBloodGroup(formData: FormData): Promise<AddBloodGroupRe
 
 export async function deleteBloodGroup(id: number): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
-    await db.delete(bloodGroup).where(eq(bloodGroup.id, id));
+    await dbPostgres.delete(bloodGroup).where(eq(bloodGroup.id, id));
     console.log("Deleted blood group with ID:", id);
     revalidatePath("/settings/masters/blood-group");
     return { success: true, message: "Blood group deleted successfully." };
