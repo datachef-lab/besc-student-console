@@ -1,5 +1,5 @@
 import { Course } from "@/db/schema";
-import { POST as handleCreateCourse } from '../app/api/courses/route'; // Import the POST handler
+
 import { NextResponse } from "next/server";
 
 const API_BASE = `${process.env.NEXT_PUBLIC_APP_BASE_URL}/api/courses`;
