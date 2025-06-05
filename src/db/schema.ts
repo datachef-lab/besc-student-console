@@ -57,18 +57,11 @@ export const admissionSteps = pgEnum("admission_steps", [
 ]);
 
 export const collegeDepartment = pgEnum("college_department", [
-    "IT",
-    "LIBRARY",
-    "ADMINISTRATION",
-    "HUMAN_RESOURCES",
-    "MARKETING",
-    "RESEARCH",
-    "COMMUNICATION",
-    "FINANCE",
-    "LEGAL",
-    "OPERATIONS",
-    "SALES",
-    "CUSTOMER_SERVICE",
+    "The Bhawanipur Design Academy",
+    "The Bhawanipur Education Society College",
+    "The Bhawanipur Gujarati Education Society",
+    "The Bhawanipur Gujarati Education Society School-ICSE",
+    "The Bhawanipur Gujarati Education Society School-ISC",
 ]);
 
 export const paymentStatus = pgEnum("payment_status", [
@@ -96,10 +89,17 @@ export const subjectResultStatusType = pgEnum("board_result_status_type", [
     "FAIL",
 ]);
 
+export const sportsLevelType = pgEnum("sports_level", [
+    "NATIONAL",
+    "STATE",
+    "DISTRICT",
+    "OTHERS",
+]);
+
 export const streamType = pgEnum("stream_type", [
     'SCIENCE',
     'COMMERCE',
-    "ARTS",
+    "HUMANITIES",
 ]);
 
 export const admissions = pgTable("admissions", {
@@ -166,17 +166,19 @@ export const admissionGeneralInfo = pgTable("admission_general_info", {
     categoryId: integer("category_id_fk").references(() => categories.id),
     religionId: integer("religion_id_fk").references(() => religion.id),
     gender: genderType().default("MALE"),
-    degreeId: integer("degree_id_fk").references(() => degree.id),
+    degreeLevel: degreeLevelType().default("UNDER_GRADUATE").notNull(),
     password: varchar("password", { length: 255 }).notNull(),
     whatsappNumber: varchar("whatsapp_number", { length: 15 }),
     mobileNumber: varchar("mobile_number", { length: 15 }).notNull(),
     email: varchar("email", { length: 255 }).notNull(),
+    residenceOfKolkata: boolean("residence_of_kolkata").notNull(),
 
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
 export const createAdmissionGeneralInfoSchema = createInsertSchema(admissionGeneralInfo);
 export type AdmissionGeneralInfo = z.infer<typeof createAdmissionGeneralInfoSchema>;
+
 
 export const admissionAcademicInfo = pgTable("admission_academic_info", {
     id: serial("id").primaryKey(),
@@ -187,8 +189,10 @@ export const admissionAcademicInfo = pgTable("admission_academic_info", {
         .references(() => boardUniversities.id)
         .notNull(),
     boardResultStatus: boardResultStatusType("board_result_status").notNull(),
-    uid: varchar("uid", { length: 255 }),
-    indexNumber: varchar("index_number", { length: 255 }),
+    rollNumber: varchar("roll_number", { length: 255 }),
+    schoolNumber: varchar("school_number", { length: 255 }),
+    centerNumber: varchar("center_number", { length: 255 }),
+    admitCardId: varchar("admit_card_id", { length: 255 }),
     instituteId: integer("institute_id_fk")
         .references(() => institutions.id)
         .notNull(),
@@ -305,9 +309,31 @@ export const createAdmissionAdditionalInfoSchema = createInsertSchema(admissionA
 export type AdmissionAdditionalInfo = z.infer<typeof createAdmissionAdditionalInfoSchema>;
 
 
+export const sportsInfo = pgTable("sports_info", {
+    id: serial().primaryKey(),
+    additionalInfoId: integer("additional_info_id_fk")
+        .references(() => admissionAdditionalInfo.id)
+        .notNull(),
+    sportsCategoryId: integer("sports_category_id_fk")
+        .references(() => sportsCategories.id)
+        .notNull(),
+    level: sportsLevelType().notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+});
+export const createSportsInfoSchema = createInsertSchema(sportsInfo);
+export type SportsInfo = z.infer<typeof createSportsInfoSchema>;
 
 
-
+export const sportsCategories = pgTable("sports_categories", {
+    id: serial().primaryKey(),
+    name: varchar({length: 255}).notNull(),
+    
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+});
+export const createSportsCategorySchema = createInsertSchema(sportsCategories);
+export type sportsCategory = z.infer<typeof createSportsCategorySchema>;
 
 
 

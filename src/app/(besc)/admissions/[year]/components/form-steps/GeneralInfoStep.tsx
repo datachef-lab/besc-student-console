@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { FormData } from "../../types";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import {
   Input
 } from "@/components/ui/input";
@@ -14,13 +13,14 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { AdmissionGeneralInfo, Nationality } from "@/db/schema";
+import { AdmissionGeneralInfo, ApplicationForm, Category, Nationality, genderType } from "@/db/schema";
 
 interface GeneralInfoStepProps {
-  formData: FormData;
-  handleInputChange: (field: keyof FormData, value: any) => void;
+  applicationForm: ApplicationForm,
   stepHeading?: string;
   stepNotes: React.ReactNode;
+  generalInfo: AdmissionGeneralInfo;
+  setGeneralInfo: Dispatch<SetStateAction<AdmissionGeneralInfo>>;
 }
 
 const STATES = [
@@ -45,7 +45,8 @@ const CATEGORIES = [
   "OBC-B",
 ];
 
-const GENDERS = ["Male", "Female", "Other"];
+const GENDERS = ["MALE", "FEMALE", "TRANSGENDER"] as const;
+type Gender = typeof GENDERS[number];
 
 const DEGREES = ["Under Graduate", "Post Graduate"];
 
@@ -99,34 +100,44 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear - i);
 //   ),
 // };
 
-export default function GeneralInfoStep({ formData, handleInputChange, stepHeading, stepNotes }: GeneralInfoStepProps) {
+export default function GeneralInfoStep({ 
+  applicationForm, 
+  stepHeading, 
+  stepNotes,
+  generalInfo,
+  setGeneralInfo,
+}: GeneralInfoStepProps) {
   const [nationalities, setNationalities] = useState<Nationality[]>([]);
-  const [generalInfo, setGeneralInfo] = useState<AdmissionGeneralInfo>({
-    applicationFormId: 0,
-    dateOfBirth: new Date().toISOString().split('T')[0],
-    email: "",
-    firstName: "",
-    middleName: null,
-    lastName: "",
-    mobileNumber: "",
-    password: "",
-    categoryId: null,
-    degreeId: null,
-    gender: "FEMALE",
-    isGujarati: false,
-    nationalityId: null,
-    otherNationality: null,
-    religionId: null,
-    whatsappNumber: null,    
-  });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  // const [generalInfo, setGeneralInfo] = useState<AdmissionGeneralInfo>({
+  //   applicationFormId: applicationForm?.id ?? 0,
+  //   dateOfBirth: new Date().toISOString().split('T')[0],
+  //   email: "",
+  //   firstName: "",
+  //   middleName: null,
+  //   lastName: "",
+  //   mobileNumber: "",
+  //   password: "",
+  //   categoryId: null,
+  //   degreeLevel: "UNDER_GRADUATE",
+  //   residenceOfKolkata: true,
+  //   gender: "FEMALE",
+  //   isGujarati: false,
+  //   nationalityId: null,
+  //   otherNationality: null,
+  //   religionId: null,
+  //   whatsappNumber: null,    
+  // });
 
   // Fetch nationalities on component mount
   useEffect(() => {
-    // TODO: Replace with actual API call to fetch nationalities
     const fetchNationalities = async () => {
       try {
-        // This is a placeholder - replace with actual API call
         const response = await fetch('/api/nationalities');
+        if (!response.ok) {
+          throw new Error('Failed to fetch nationalities');
+        }
         const data = await response.json();
         setNationalities(data);
       } catch (error) {
@@ -134,66 +145,30 @@ export default function GeneralInfoStep({ formData, handleInputChange, stepHeadi
       }
     };
 
-    fetchNationalities();
+    void fetchNationalities();
   }, []);
 
-  // Sync formData with generalInfo
+  // Fetch categories on component mount
   useEffect(() => {
-    setGeneralInfo(prev => ({
-      ...prev,
-      firstName: formData.firstName || "",
-      middleName: formData.middleName || null,
-      lastName: formData.lastName || "",
-      email: formData.email || "",
-      mobileNumber: formData.phone || "",
-      whatsappNumber: formData.whatsappNumber || null,
-      dateOfBirth: formData.dateOfBirth || new Date().toISOString().split('T')[0],
-      isGujarati: formData.isGujarati || false,
-      password: formData.password || "",
-      // Map other fields as needed
-    }));
-  }, [formData]);
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories');
+        }
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
 
-  // Handle changes in generalInfo and sync back to formData
+    void fetchCategories();
+  }, []);
+
+  // Handle changes in generalInfo
   const handleGeneralInfoChange = (field: keyof AdmissionGeneralInfo, value: any) => {
-    // For lastName, ensure we always store a string in the UI
-    if (field === 'lastName') {
-      const stringValue = value || "";
-      setGeneralInfo(prev => ({ ...prev, [field]: stringValue }));
-      handleInputChange('lastName', stringValue);
-      return;
-    }
-
     setGeneralInfo(prev => ({ ...prev, [field]: value }));
-    
-    // Map the changes back to formData
-    switch (field) {
-      case 'firstName':
-        handleInputChange('firstName', value || "");
-        break;
-      case 'middleName':
-        handleInputChange('middleName', value);
-        break;
-      case 'email':
-        handleInputChange('email', value || "");
-        break;
-      case 'mobileNumber':
-        handleInputChange('phone', value || "");
-        break;
-      case 'whatsappNumber':
-        handleInputChange('whatsappNumber', value);
-        break;
-      case 'dateOfBirth':
-        handleInputChange('dateOfBirth', value || new Date().toISOString().split('T')[0]);
-        break;
-      case 'isGujarati':
-        handleInputChange('isGujarati', value);
-        break;
-      case 'password':
-        handleInputChange('password', value || "");
-        break;
-      // Add other field mappings as needed
-    }
   };
 
   // Validation state
@@ -219,15 +194,11 @@ export default function GeneralInfoStep({ formData, handleInputChange, stepHeadi
   // Handle nationality change
   const handleNationalityChange = (value: string) => {
     if (value === "other") {
-      // If "Other" is selected, set nationalityId to null and show other nationality input
       handleGeneralInfoChange("nationalityId", null);
-      handleInputChange("nationality", "Other");
     } else {
-      // Find the selected nationality from the array
       const selectedNationality = nationalities.find(n => n.id?.toString() === value);
       if (selectedNationality?.id) {
         handleGeneralInfoChange("nationalityId", selectedNationality.id);
-        handleInputChange("nationality", selectedNationality.name);
       }
     }
   };
@@ -355,8 +326,8 @@ export default function GeneralInfoStep({ formData, handleInputChange, stepHeadi
           <div className="flex-1">
             <Label className="flex items-center mb-1">4(b). Other Nationality</Label>
             <Input 
-              value={formData.otherNationality || ""} 
-              onChange={e => handleInputChange("otherNationality", e.target.value)} 
+              value={generalInfo.otherNationality || ""} 
+              onChange={e => handleGeneralInfoChange("otherNationality", e.target.value)} 
               placeholder="Other Nationality" 
               disabled={generalInfo.nationalityId !== null}
             />
@@ -366,11 +337,17 @@ export default function GeneralInfoStep({ formData, handleInputChange, stepHeadi
         <div>
           <Label className="flex items-center mb-1">5. Select Category <RedDot /></Label>
           <Select 
-            value={formData.category || ""} 
-            onValueChange={val => handleInputChange("category", val)}
+            value={generalInfo.categoryId?.toString() || ""} 
+            onValueChange={val => handleGeneralInfoChange("categoryId", parseInt(val))}
           >
             <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>{CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+            <SelectContent>
+              {categories.map(cat => (
+                cat.id && (
+                  <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                )
+              ))}
+            </SelectContent>
           </Select>
         </div>
         {/* 6. Is either of your parents Gujarati? */}
@@ -391,11 +368,15 @@ export default function GeneralInfoStep({ formData, handleInputChange, stepHeadi
         <div>
           <Label className="flex items-center mb-1">7. Select Your Gender <RedDot /></Label>
           <Select 
-            value={generalInfo.gender || ""} 
-            onValueChange={val => handleGeneralInfoChange("gender", val)}
+            value={generalInfo.gender || "FEMALE"} 
+            onValueChange={(val: Gender) => handleGeneralInfoChange("gender", val)}
           >
             <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>{GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+            <SelectContent>
+              {GENDERS.map(g => (
+                <SelectItem key={g} value={g}>{g}</SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
         {/* 8(a) and 8(b) Mobile/WhatsApp on same line */}
@@ -464,8 +445,10 @@ export default function GeneralInfoStep({ formData, handleInputChange, stepHeadi
         <div>
           <Label className="flex items-center mb-1">9. Are you a resident of Kolkata? <RedDot /></Label>
           <Select 
-            value={formData.isKolkataResident ? "Yes" : "No"} 
-            onValueChange={val => handleInputChange("isKolkataResident", val === "Yes")}
+            value={generalInfo.residenceOfKolkata ? "Yes" : "No"} 
+            onValueChange={val => {
+              handleGeneralInfoChange("residenceOfKolkata", val === "Yes");
+            }}
           >
             <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
             <SelectContent>
@@ -499,8 +482,8 @@ export default function GeneralInfoStep({ formData, handleInputChange, stepHeadi
             <Label className="flex items-center mb-1">12. Confirm Password <RedDot /></Label>
             <Input 
               type="password" 
-              value={formData.confirmPassword || ""} 
-              onChange={e => handleInputChange("confirmPassword", e.target.value)} 
+              value={confirmPassword} 
+              onChange={e => setConfirmPassword(e.target.value)} 
               placeholder="Confirm Password (Max 10 Characters)" 
               maxLength={10} 
               required 
@@ -516,11 +499,14 @@ export default function GeneralInfoStep({ formData, handleInputChange, stepHeadi
           <div>
             <Label className="flex items-center mb-1">13. Select Degree <RedDot /></Label>
             <Select 
-              value={formData.degree || "Under Graduate"} 
-              onValueChange={val => handleInputChange("degree", val)}
+              value={generalInfo.degreeLevel} 
+              onValueChange={val => handleGeneralInfoChange("degreeLevel", val)}
             >
               <SelectTrigger><SelectValue placeholder="Select Degree" /></SelectTrigger>
-              <SelectContent>{DEGREES.map(degree => <SelectItem key={degree} value={degree}>{degree}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                <SelectItem value="UNDER_GRADUATE">Under Graduate</SelectItem>
+                <SelectItem value="POST_GRADUATE">Post Graduate</SelectItem>
+              </SelectContent>
             </Select>
           </div>
         </div>

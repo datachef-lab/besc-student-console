@@ -9,58 +9,47 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
-
-interface InstituteDetails {
-  rollNo: string;
-  schoolNo: string;
-  centerNo: string;
-  admitCardId: string;
-  institute: string;
-  otherInstitute: string;
-  medium: string;
-  yearOfPassing: string;
-  stream: string;
-  calcuttaUniversityRegistered: string;
-  calcuttaUniversityRegistrationNo: string;
-  previouslyRegisteredCourse: string;
-  otherCourse: string;
-  previousCollege: string;
-  otherCollege: string;
-}
+import { useParams } from "next/navigation";
+import { AdmissionAcademicInfo, BoardUniversity, Colleges, Institution, LanguageMedium } from "@/db/schema"; // Import necessary types
 
 interface InstituteDetailsModalProps {
-  onSave: (details: InstituteDetails) => void;
+  onChange: (field: keyof AdmissionAcademicInfo, value: any) => void;
   onClose: () => void;
-  initialData?: InstituteDetails;
+  academicInfo: AdmissionAcademicInfo;
+  institutions: Institution[]; // Add institutions prop
+  languageMediums: LanguageMedium[]; // Add languageMediums prop
+  colleges: Colleges[]; // Add colleges prop
+  // If previously registered courses need dynamic options, add a similar prop
+  // previouslyRegisteredCourses: Course[];
 }
 
-export default function InstituteDetailsModal({ onSave, onClose, initialData }: InstituteDetailsModalProps) {
-  const [details, setDetails] = useState<InstituteDetails>(initialData || {
-    rollNo: '',
-    schoolNo: '',
-    centerNo: '',
-    admitCardId: '',
-    institute: '',
-    otherInstitute: '',
-    medium: '',
-    yearOfPassing: '',
-    stream: '',
-    calcuttaUniversityRegistered: '',
-    calcuttaUniversityRegistrationNo: '',
-    previouslyRegisteredCourse: '',
-    otherCourse: '',
-    previousCollege: '',
-    otherCollege: '',
-  });
+export default function InstituteDetailsModal({
+  onChange,
+  onClose,
+  academicInfo,
+  institutions, // Destructure new props
+  languageMediums,
+  colleges,
+}: InstituteDetailsModalProps) {
+  const params = useParams();
+  const admissionYear = parseInt(params.year as string);
 
-  const handleInputChange = (field: keyof InstituteDetails, value: any) => {
-    setDetails({ ...details, [field]: value });
-  };
+  // Generate year options (current year and 3 years back)
+  const yearOptions = Array.from({ length: 4 }, (_, i) => admissionYear - i);
 
   const handleSave = () => {
-    onSave(details);
     onClose();
   };
+
+  // Find the 'Other Institute' ID from the institutions list
+  const otherInstitute = institutions.find(inst => inst.name === 'Other Institute');
+  const otherInstituteId = otherInstitute?.id;
+
+  // Find the 'Other college' ID from the colleges list
+  const otherCollege = colleges.find(coll => coll.name === 'Other college');
+  const otherCollegeId = otherCollege?.id;
+
+  // Note: Assuming 'Other Course' handling will be similar if courses are made dynamic
 
   return (
     <div className="space-y-6 p-4">
@@ -78,67 +67,77 @@ export default function InstituteDetailsModal({ onSave, onClose, initialData }: 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label className="flex items-center mb-1">a(i) Roll No <span className="text-red-600">*</span></Label>
-            <Input value={details.rollNo} onChange={(e) => handleInputChange('rollNo', e.target.value)} className="w-full" />
+            <Input value={academicInfo.rollNumber || ''} onChange={(e) => onChange('rollNumber', e.target.value)} className="w-full" />
           </div>
           <div>
             <Label className="flex items-center mb-1">a(ii) School No <span className="text-red-600">*</span></Label>
-            <Input value={details.schoolNo} onChange={(e) => handleInputChange('schoolNo', e.target.value)} className="w-full" />
+            <Input value={academicInfo.schoolNumber || ''} onChange={(e) => onChange('schoolNumber', e.target.value)} className="w-full" />
           </div>
           <div>
             <Label className="flex items-center mb-1">a(iii) Center No <span className="text-red-600">*</span></Label>
-            <Input value={details.centerNo} onChange={(e) => handleInputChange('centerNo', e.target.value)} className="w-full" />
+            <Input value={academicInfo.centerNumber || ''} onChange={(e) => onChange('centerNumber', e.target.value)} className="w-full" />
           </div>
         </div>
         <div>
           <Label className="flex items-center mb-1">a(iv) Admit Card ID. <span className="text-red-600">*</span></Label>
-          <Input value={details.admitCardId} onChange={(e) => handleInputChange('admitCardId', e.target.value)} className="w-full" />
+          <Input value={academicInfo.admitCardId || ''} onChange={(e) => onChange('admitCardId', e.target.value)} className="w-full" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label className="flex items-center mb-1">b(i). Select Institute <span className="text-red-600">*</span></Label>
-            <Select value={details.institute} onValueChange={(val) => handleInputChange('institute', val)}>
+            <Select value={academicInfo.instituteId?.toString() || ''} onValueChange={(val) => onChange('instituteId', parseInt(val))}>
               <SelectTrigger className="w-full"><SelectValue placeholder="Select Institute" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="BAGHBAZAR MULTIPURPOSE GIRLS SCHOOL">BAGHBAZAR MULTIPURPOSE GIRLS SCHOOL</SelectItem>
-                <SelectItem value="Other Institute">Other Institute</SelectItem>
-                {/* Add more institutes as needed or fetch dynamically */}
+                 {institutions.map((inst) => (
+                  inst.id && (
+                   <SelectItem key={inst.id} value={inst.id.toString()}>
+                     {inst.name}
+                   </SelectItem>
+                  )
+                ))}
               </SelectContent>
             </Select>
           </div>
-          {details.institute === 'Other Institute' && (
+          {academicInfo.instituteId === otherInstituteId && (
             <div>
               <Label className="flex items-center mb-1">b(ii). Other Institute</Label>
-              <Input value={details.otherInstitute} onChange={(e) => handleInputChange('otherInstitute', e.target.value)} className="w-full" />
+              <Input value={academicInfo.otherInstitute || ''} onChange={(e) => onChange('otherInstitute', e.target.value)} className="w-full" />
             </div>
           )}
         </div>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label className="flex items-center mb-1">Select Medium <span className="text-red-600">*</span></Label>
-            <Select value={details.medium} onValueChange={(val) => handleInputChange('medium', val)}>
+            <Select value={academicInfo.languageMediumId?.toString() || ''} onValueChange={(val) => onChange('languageMediumId', parseInt(val))}>
               <SelectTrigger className="w-full"><SelectValue placeholder="Select Medium" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="English">English</SelectItem>
-                <SelectItem value="Bengali">Bengali</SelectItem>
-                <SelectItem value="Hindi">Hindi</SelectItem>
+                 {languageMediums.map((medium) => (
+                  medium.id && (
+                   <SelectItem key={medium.id} value={medium.id.toString()}>
+                     {medium.name}
+                   </SelectItem>
+                  )
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label className="flex items-center mb-1">Select Year Of Passing <span className="text-red-600">*</span></Label>
-            <Select value={details.yearOfPassing} onValueChange={(val) => handleInputChange('yearOfPassing', val)}>
+            <Select value={academicInfo.yearOfPassing?.toString() || ''} onValueChange={(val) => onChange('yearOfPassing', parseInt(val))}>
               <SelectTrigger className="w-full"><SelectValue placeholder="Select Year Of Passing" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="2023">2023</SelectItem>
-                <SelectItem value="2024">2024</SelectItem>
-                {/* Add more years as needed or fetch dynamically */}
+                {yearOptions.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
          </div>
         <div>
           <Label className="flex items-center mb-1">e. Coming from which Stream <span className="text-red-600">*</span></Label>
-          <Select value={details.stream} onValueChange={(val) => handleInputChange('stream', val)}>
+          <Select value={academicInfo.streamType || ''} onValueChange={(val) => onChange('streamType', val as "COMMERCE" | "SCIENCE" | "HUMANITIES")}>
             <SelectTrigger className="w-full"><SelectValue placeholder="Select Stream" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="SCIENCE">SCIENCE</SelectItem>
@@ -150,7 +149,11 @@ export default function InstituteDetailsModal({ onSave, onClose, initialData }: 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
           <div>
             <Label className="flex items-center mb-1">f. Have you ever been registered for any undergraduate courses under Calcutta University? <span className="text-red-600">*</span></Label>
-            <Select value={details.calcuttaUniversityRegistered} onValueChange={(val) => handleInputChange('calcuttaUniversityRegistered', val)}>
+            <Select
+              value={academicInfo.isRegisteredForUGInCU === true ? 'Yes' : academicInfo.isRegisteredForUGInCU === false ? 'No' : ''}
+              onValueChange={(val) => onChange('isRegisteredForUGInCU', val === 'Yes')}
+              disabled={academicInfo.yearOfPassing === admissionYear}
+            >
               <SelectTrigger className="w-full"><SelectValue placeholder="Select" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Yes">Yes</SelectItem>
@@ -158,50 +161,68 @@ export default function InstituteDetailsModal({ onSave, onClose, initialData }: 
               </SelectContent>
             </Select>
           </div>
-          {details.calcuttaUniversityRegistered === 'Yes' && (
+          {academicInfo.isRegisteredForUGInCU === true && (
             <div>
               <Label className="flex items-center mb-1">g. Calcutta University Registration No</Label>
-              <Input value={details.calcuttaUniversityRegistrationNo} onChange={(e) => handleInputChange('calcuttaUniversityRegistrationNo', e.target.value)} className="w-full" />
+              <Input
+                value={academicInfo.cuRegistrationNumber || ''}
+                onChange={(e) => onChange('cuRegistrationNumber', e.target.value)}
+                className="w-full"
+                disabled={academicInfo.yearOfPassing === admissionYear}
+              />
             </div>
           )}
         </div>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
           <div>
             <Label className="flex items-center mb-1">h(i). Previously Registered Course</Label>
-            <Select value={details.previouslyRegisteredCourse} onValueChange={(val) => handleInputChange('previouslyRegisteredCourse', val)}>
+             {/* Assuming previously registered courses need dynamic options */}
+             {/* Update this Select to use a courses prop if necessary */}
+            <Select value={academicInfo.previouslyRegisteredCourseId?.toString() || (academicInfo.otherPreviouslyRegisteredCourse !== null && academicInfo.previouslyRegisteredCourseId === null ? 'OTHER' : '')} onValueChange={(val) => {
+              if (val === 'OTHER') {
+                onChange('previouslyRegisteredCourseId', null);
+                onChange('otherPreviouslyRegisteredCourse', ''); // Clear other field when selecting other
+              } else {
+                onChange('previouslyRegisteredCourseId', parseInt(val));
+                onChange('otherPreviouslyRegisteredCourse', null); // Clear other field when selecting a specific course
+              }
+            }}>
               <SelectTrigger className="w-full"><SelectValue placeholder="Select Previous Registered Course" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="Course 1">Course 1</SelectItem>
-                <SelectItem value="Course 2">Course 2</SelectItem>
-                <SelectItem value="Other Course">Other Course</SelectItem>
-                {/* Add more courses as needed or fetch dynamically */}
+                <SelectItem value="Course 1_ID">Course 1</SelectItem>
+                <SelectItem value="Course 2_ID">Course 2</SelectItem>
+                {/* Add more courses as needed or fetch dynamically in parent and pass as prop */}
+                <SelectItem value="OTHER">Other Course</SelectItem>
               </SelectContent>
             </Select>
           </div>
-           {details.previouslyRegisteredCourse === 'Other Course' && (
+           {academicInfo.previouslyRegisteredCourseId === null && (
             <div>
               <Label className="flex items-center mb-1">h(ii). Other Course</Label>
-              <Input value={details.otherCourse} onChange={(e) => handleInputChange('otherCourse', e.target.value)} className="w-full" />
+              <Input value={academicInfo.otherPreviouslyRegisteredCourse || ''} onChange={(e) => onChange('otherPreviouslyRegisteredCourse', e.target.value)} className="w-full" />
             </div>
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
           <div>
             <Label className="flex items-center mb-1">i(i). Previous College</Label>
-            <Select value={details.previousCollege} onValueChange={(val) => handleInputChange('previousCollege', val)}>
+            <Select value={academicInfo.previousCollegeId?.toString() || ''} onValueChange={(val) => onChange('previousCollegeId', parseInt(val))}>
               <SelectTrigger className="w-full"><SelectValue placeholder="Select Previous College" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="College A">College A</SelectItem>
-                <SelectItem value="College B">College B</SelectItem>
-                 <SelectItem value="Other college">Other college</SelectItem>
-                {/* Add more colleges as needed or fetch dynamically */}
+                 {colleges.map((college) => (
+                  college.id && (
+                   <SelectItem key={college.id} value={college.id.toString()}>
+                     {college.name}
+                   </SelectItem>
+                  )
+                ))}
               </SelectContent>
             </Select>
           </div>
-          {details.previousCollege === 'Other college' && (
+          {academicInfo.previousCollegeId === otherCollegeId && (
             <div>
               <Label className="flex items-center mb-1">i(ii). Other college</Label>
-              <Input value={details.otherCollege} onChange={(e) => handleInputChange('otherCollege', e.target.value)} className="w-full" />
+              <Input value={academicInfo.otherCollege || ''} onChange={(e) => onChange('otherCollege', e.target.value)} className="w-full" />
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FormData } from "../../types";
-import { AdmissionCourseApplication, Course } from "@/db/schema";
+import { AdmissionCourseApplication, ApplicationForm, Course } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ReactNode } from 'react';
 
 interface CourseApplicationStepProps {
-  formData: FormData;
-  handleInputChange: (field: keyof FormData, value: any) => void;
+  applicationForm: ApplicationForm,
   availableCourses?: Course[]; // Make availableCourses optional to prevent the error if not provided initially
   stepNotes?: ReactNode; // Add stepNotes prop
 }
@@ -23,11 +22,12 @@ interface CourseApplicationStepProps {
 
 interface CourseWithSelection extends Course {
   selected: boolean;
+  
 }
 
-export default function CourseApplicationStep({ formData, handleInputChange, availableCourses }: CourseApplicationStepProps) {
-  // Initialize courses state with an empty array
-  const [courses, setCourses] = useState<CourseWithSelection[]>([]);
+export default function CourseApplicationStep({ applicationForm, availableCourses }: CourseApplicationStepProps) {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [courseApplication, setCourseApplication] = useState<AdmissionCourseApplication[]>([]);
 
   useEffect(() => {
     // Populate courses state from availableCourses prop when it becomes available
@@ -40,11 +40,15 @@ export default function CourseApplicationStep({ formData, handleInputChange, ava
   }, [availableCourses]); // Dependency array includes availableCourses
 
   const handleCourseSelect = (courseId: number, isSelected: boolean) => {
-    setCourses(prevCourses => prevCourses.map(course =>
-      course.id === courseId ? { ...course, selected: isSelected } : course
-    ));
-    // Optionally update formData with selected courses if needed for form submission
-    // handleInputChange("selectedCourses", courses.filter(c => c.selected).map(c => c.id));
+    if (isSelected) {
+      setCourseApplication((prev) => [...prev, {
+        courseId,
+        applicationFormId: applicationForm.id!,
+      }])
+    }
+    else {
+      setCourseApplication(courseApplication.filter(crs => crs.courseId != courseId));
+    }
   };
 
   return (
@@ -83,7 +87,7 @@ export default function CourseApplicationStep({ formData, handleInputChange, ava
                   {/* Ensure course.id is a number before calling handleCourseSelect */}
                   {typeof course.id === 'number' && (
                     <Checkbox
-                      checked={course.selected}
+                      checked={courseApplication.some(crs => crs.courseId === course.id)}
                       onCheckedChange={(isChecked: boolean) => handleCourseSelect(course.id as number, isChecked)}
                     />
                   )}

@@ -8,7 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { StudentAcademicSubjects } from "@/db/schema";
+import { useState, useEffect } from "react";
 
 interface SubjectMark {
   subject: string;
@@ -17,33 +18,67 @@ interface SubjectMark {
   resultStatus: string;
 }
 
+// Define a type for Academic Subject for fetching (can be moved to a shared types file)
+interface AcademicSubject { id: number; name: string; }
+
 interface SubjectMarksModalProps {
-  onSave: (subjects: SubjectMark[]) => void;
+  onSave: (subjects: StudentAcademicSubjects[]) => void;
   onClose: () => void;
+  academicSubjects: AcademicSubject[]; // Added academicSubjects prop
+  initialSubjects: StudentAcademicSubjects[]; // Added initialSubjects prop
 }
 
-export default function SubjectMarksModal({ onSave, onClose }: SubjectMarksModalProps) {
-  const [subjects, setSubjects] = useState<SubjectMark[]>([
-    { subject: '', totalMarks: '', marksObtained: '', resultStatus: '' },
-  ]);
+export default function SubjectMarksModal({ onSave, onClose, academicSubjects, initialSubjects }: SubjectMarksModalProps) {
+  // Initialize state with initialSubjects prop
+  const [subjects, setSubjects] = useState<StudentAcademicSubjects[]>(initialSubjects);
+
+  useEffect(() => {
+    // If initialSubjects change (e.g., when editing a saved form), update the modal's state
+    setSubjects(initialSubjects);
+  }, [initialSubjects]);
 
   const handleAddRow = () => {
-    setSubjects([...subjects, { subject: '', totalMarks: '', marksObtained: '', resultStatus: '' }]);
+    setSubjects([...subjects, {
+      academicSubjectId: 0, // Default or placeholder - needs actual ID
+      fullMarks: '',
+      totalMarks: '',
+      resultStatus: "PASS", // Default status
+      admissionAcademicInfoId: 0, // Placeholder - should be set in parent
+      // Add other required fields from StudentAcademicSubjects with default values if necessary
+    }]);
   };
 
   const handleRemoveRow = (index: number) => {
     setSubjects(subjects.filter((_, i) => i !== index));
   };
 
-  const handleInputChange = (index: number, field: keyof SubjectMark, value: any) => {
+  // Update handleInputChange to work with StudentAcademicSubjects type
+  const handleInputChange = (index: number, field: keyof StudentAcademicSubjects, value: any) => {
     const newSubjects = [...subjects];
-    (newSubjects[index][field] as any) = value;
+    // Basic type checking and conversion for numeric values
+    if (field === 'fullMarks' || field === 'totalMarks') {
+       (newSubjects[index][field] as any) = value.toString(); // Store as string as per schema
+    } else if (field === 'academicSubjectId') {
+       (newSubjects[index][field] as any) = parseInt(value); // Store as number
+    } else if (field === 'resultStatus') {
+       (newSubjects[index][field] as any) = value as "PASS" | "FAIL" | "FAIL IN THEORY" | "FAIL IN PRACTICAL"; // Type assertion
+    } else {
+       (newSubjects[index][field] as any) = value;
+    }
     setSubjects(newSubjects);
   };
 
   const handleSave = () => {
+    // Ensure academicSubjectId is set before saving, maybe add validation
+    // Ensure admissionAcademicInfoId is set in the parent component before saving the overall form
     onSave(subjects);
     onClose();
+  };
+
+  // Helper to find subject name by ID
+  const getSubjectName = (id: number) => {
+    const subject = academicSubjects.find(sub => sub.id === id);
+    return subject ? subject.name : 'Unknown Subject';
   };
 
   return (
@@ -81,44 +116,45 @@ export default function SubjectMarksModal({ onSave, onClose }: SubjectMarksModal
                   <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                     <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1} of {subjects.length}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                       <Select value={subject.subject} onValueChange={val => handleInputChange(index, "subject", val)}>
+                       <Select 
+                         value={subject.academicSubjectId ? subject.academicSubjectId.toString() : ''} // Use academicSubjectId
+                         onValueChange={val => handleInputChange(index, "academicSubjectId", val)}
+                       >
                         <SelectTrigger className="h-8"><SelectValue placeholder="Select Subject" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="English Core">English Core</SelectItem>
-                          <SelectItem value="Applied Mathematics">Applied Mathematics</SelectItem>
-                          <SelectItem value="Chemistry">Chemistry</SelectItem>
-                          <SelectItem value="Mathematics">Mathematics</SelectItem>
-                          <SelectItem value="Biology">Biology</SelectItem>
-                          <SelectItem value="Physics">Physics</SelectItem>
-                          <SelectItem value="Computer Science">Computer Science</SelectItem>
-                           {/* Add more subjects as needed or fetch dynamically */}
+                           {academicSubjects.map(sub => (
+                            <SelectItem key={sub.id} value={sub.id.toString()}>{sub.name}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                        <Input
                         type="number"
-                        value={subject.totalMarks}
-                        onChange={(e) => handleInputChange(index, 'totalMarks', parseInt(e.target.value) || '')}
+                        value={subject.fullMarks} // Use fullMarks
+                        onChange={(e) => handleInputChange(index, 'fullMarks', e.target.value)}
                         className="w-full h-8"
                       />
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                        <Input
                         type="number"
-                        value={subject.marksObtained}
-                        onChange={(e) => handleInputChange(index, 'marksObtained', parseInt(e.target.value) || '')}
+                        value={subject.totalMarks} // Use totalMarks (from schema)
+                        onChange={(e) => handleInputChange(index, 'totalMarks', e.target.value)}
                         className="w-full h-8"
                       />
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                       <Select value={subject.resultStatus} onValueChange={val => handleInputChange(index, "resultStatus", val)}>
+                       <Select 
+                         value={subject.resultStatus} // Use resultStatus
+                         onValueChange={val => handleInputChange(index, "resultStatus", val)}
+                       >
                         <SelectTrigger className="h-8"><SelectValue placeholder="Select Status" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Pass">Pass</SelectItem>
-                          <SelectItem value="Fail">Fail</SelectItem>
-                          <SelectItem value="Fail in Theory">Fail in Theory</SelectItem>
-                          <SelectItem value="Fail in Practical">Fail in Practical</SelectItem>
+                          <SelectItem value="PASS">Pass</SelectItem>
+                          <SelectItem value="FAIL">Fail</SelectItem>
+                          <SelectItem value="FAIL IN THEORY">Fail in Theory</SelectItem>
+                          <SelectItem value="FAIL IN PRACTICAL">Fail in Practical</SelectItem>
                         </SelectContent>
                       </Select>
                     </td>

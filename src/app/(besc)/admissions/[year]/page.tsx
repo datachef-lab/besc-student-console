@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormData, Step } from "./types";
 import {
   ProgressTimeline,
@@ -11,6 +11,8 @@ import {
   PaymentStep,
 } from "./components";
 import Image from "next/image";
+import { Admission, AdmissionGeneralInfo, ApplicationForm } from "@/db/schema";
+import { useParams, useRouter } from "next/navigation";
 
 // Notes for each step
 const stepNotes: Record<number, React.ReactNode> = {
@@ -100,45 +102,35 @@ const stepNotes: Record<number, React.ReactNode> = {
 };
 
 export default function StudentSignupForm() {
+  const { year } = useParams<{year: string}>();
+  const router = useRouter();
+
+  
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>({
-    // General Information
-    firstName: "",
-    lastName: "",
+  const [admission, setAdmisson] = useState<Admission | null>(null);
+  const [applicationForm, setApplicationForm] = useState<ApplicationForm>({
+    admissionId: 0,
+    admissionStep: "GENERAL_INFORMATION",
+    formStatus: "DRAFT",
+  });
+  const [generalInfo, setGeneralInfo] = useState<AdmissionGeneralInfo>({
+    applicationFormId: applicationForm?.id ?? 0,
+    dateOfBirth: new Date().toISOString().split('T')[0],
     email: "",
-    phone: "",
-    dateOfBirth: "",
-    address: "",
-    city: "",
-    state: "",
-    zipCode: "",
-
-    // Academic Information
-    previousEducation: "",
-    gpa: "",
-    graduationYear: "",
-    institution: "",
-    major: "",
-    academicReferences: "",
-
-    // Course Application
-    program: "",
-    startDate: "",
-    studyMode: "",
-    campus: "",
-    specializations: [],
-
-    // Additional Information
-    workExperience: "",
-    extracurriculars: "",
-    personalStatement: "",
-    emergencyContact: "",
-    emergencyPhone: "",
-
-    // Payment
-    paymentMethod: "",
-    scholarships: false,
-    financialAid: false,
+    firstName: "",
+    middleName: null,
+    lastName: "",
+    mobileNumber: "",
+    password: "",
+    categoryId: null,
+    degreeLevel: "UNDER_GRADUATE",
+    residenceOfKolkata: true,
+    gender: "FEMALE",
+    isGujarati: false,
+    nationalityId: null,
+    otherNationality: null,
+    religionId: null,
+    whatsappNumber: null,    
   });
 
   const steps: Step[] = [
@@ -149,8 +141,44 @@ export default function StudentSignupForm() {
     { number: 5, title: "Payment" },
   ];
 
-  const handleInputChange = (field: keyof FormData, value: any) => {
-    setFormData((prev) => ({
+  useEffect(() => {
+    if (isNaN(Number(year))) {
+      router.push("/");
+      return;
+    }
+
+    fetchAdmission()
+      .then(async (adm) => {
+        setAdmisson(adm as Admission);
+        if (adm) {
+          await fetchApplicantionForm(adm.id!)
+        }
+      })
+      .catch(err => alert(err));
+
+  }, [year, router]);
+
+  const fetchAdmission = async (): Promise<Admission  | null> => {
+    try {
+      
+    } catch (error) {
+      
+    }
+
+    return null; // TODO
+  }
+  const fetchApplicantionForm =  async (admissionId: number): Promise<ApplicationForm  | null> => {
+    try {
+      
+    } catch (error) {
+      
+    }
+
+    return null; // TODO
+  }
+
+  const handleInputChange = (field: keyof ApplicationForm, value: any) => {
+    setApplicationForm((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -169,49 +197,50 @@ export default function StudentSignupForm() {
   };
 
   const handleSubmit = () => {
-    console.log("Form submitted:", formData);
+    console.log("Form submitted:", applicationForm);
     alert("Application submitted successfully!");
   };
+
+  
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
           <GeneralInfoStep
-            formData={formData}
-            handleInputChange={handleInputChange}
+          setGeneralInfo={setGeneralInfo}
+            applicationForm={applicationForm}
             stepNotes={stepNotes[currentStep]}
+            generalInfo={generalInfo}
           />
         );
       case 2:
         return (
           <AcademicInfoStep
-            formData={formData}
-            handleInputChange={handleInputChange}
+            applicationForm={applicationForm}
             stepNotes={stepNotes[currentStep]}
           />
         );
       case 3:
         return (
           <CourseApplicationStep
-            formData={formData}
-            handleInputChange={handleInputChange}
+            applicationForm={applicationForm}
             stepNotes={stepNotes[currentStep]}
           />
         );
       case 4:
         return (
           <AdditionalInfoStep
-            formData={formData}
-            handleInputChange={handleInputChange}
+            generalInfo={generalInfo}
+            applicationForm={applicationForm}
             stepNotes={stepNotes[currentStep]}
           />
         );
       case 5:
         return (
           <PaymentStep
-            formData={formData}
-            handleInputChange={handleInputChange}
+          onPaymentInfoChange={(field: keyof ApplicationForm, value: any) => {}}
+            applicationForm={applicationForm}
             stepNotes={stepNotes[currentStep]}
           />
         );
