@@ -139,7 +139,7 @@ export async function formatAppform(form: ApplicationForm): Promise<ApplicationF
 
     dto.academicInfo = await findAcademicInfoByApplicationFormId(form.id!);
 
-    dto.additonalInfo = await findAdditionalInfoByApplicationFormId(form.id!);
+    dto.additonalInfo = { ...(await findAdditionalInfoByApplicationFormId(form.id!)), sportsInfo: [] };
 
     dto.courseApplication = await findCourseApplicationByApplicationFormId(form.id!);
 
