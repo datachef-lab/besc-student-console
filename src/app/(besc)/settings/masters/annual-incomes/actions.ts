@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/db";
+import dbPostgres, { db } from "@/db";
 import { annualIncomes } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -25,7 +25,7 @@ export async function addAnnualIncome(formData: FormData): Promise<AddAnnualInco
   }
 
   try {
-    await db.insert(annualIncomes).values(validation.data);
+    await dbPostgres.insert(annualIncomes).values(validation.data);
     revalidatePath("/settings/masters/annual-incomes");
     return { success: true, message: "Annual Income range added successfully." };
   } catch (error) {
@@ -36,7 +36,7 @@ export async function addAnnualIncome(formData: FormData): Promise<AddAnnualInco
 
 export async function deleteAnnualIncome(id: number): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
-    await db.delete(annualIncomes).where(eq(annualIncomes.id, id));
+    await dbPostgres.delete(annualIncomes).where(eq(annualIncomes.id, id));
     console.log("Deleted annual income with ID:", id);
     revalidatePath("/settings/masters/annual-incomes");
     return { success: true, message: "Annual Income range deleted successfully." };
