@@ -109,7 +109,7 @@ export async function checkExistingEntry(givenDto: AdmissionAcademicInfoDto) {
                 eq(admissionAcademicInfo.boardUniversityId, givenDto.boardUniversityId),
                 eq(admissionAcademicInfo.boardResultStatus, givenDto.boardResultStatus),
                 ilike(admissionAcademicInfo.cuRegistrationNumber, givenDto.cuRegistrationNumber!.trim()),
-                ilike(admissionAcademicInfo.indexNumber, givenDto.indexNumber!.trim()),
+
                 ilike(admissionAcademicInfo.streamType, givenDto.streamType!.trim()),
             )
         );
