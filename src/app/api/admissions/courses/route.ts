@@ -24,10 +24,10 @@ async function verifyAuth(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     try {
-        const authResult = await verifyAuth(request);
-        if ('error' in authResult) {
-            return NextResponse.json({ error: authResult.error }, { status: authResult.status });
-        }
+        // const authResult = await verifyAuth(request);
+        // if ('error' in authResult) {
+        //     return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+        // }
 
         const courses = await findAllDbCourses();
         return NextResponse.json(courses || []);

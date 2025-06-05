@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { FormData } from "../../types";
 import { AdmissionCourseApplication, ApplicationForm, Course } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,13 +30,26 @@ export default function CourseApplicationStep({ applicationForm, availableCourse
 
   useEffect(() => {
     // Populate courses state from availableCourses prop when it becomes available
-    if (availableCourses && availableCourses.length > 0) {
-      setCourses(availableCourses.map(course => ({
-        ...course,
-        selected: false,
-      })));
+    // if (availableCourses && availableCourses.length > 0) {
+    //   setCourses(availableCourses.map(course => ({
+    //     ...course,
+    //     selected: false,
+    //   })));
+    // }
+    fetchCourses();
+  }, []); // Dependency array includes availableCourses
+
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch("/api/admissions/courses");
+      const data = (await response.json()) as { courses: Course[]};
+      console.log("courses:", data)
+      setCourses(data.courses);
+
+    } catch (error) {
+      console.log(error)
     }
-  }, [availableCourses]); // Dependency array includes availableCourses
+  }
 
   const handleCourseSelect = (courseId: number, isSelected: boolean) => {
     if (isSelected) {

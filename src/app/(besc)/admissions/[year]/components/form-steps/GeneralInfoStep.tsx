@@ -138,8 +138,12 @@ export default function GeneralInfoStep({
         if (!response.ok) {
           throw new Error('Failed to fetch nationalities');
         }
-        const data = await response.json();
-        setNationalities(data);
+        const result = await response.json();
+        if (result.success && result.data) {
+          setNationalities(result.data);
+        } else {
+          throw new Error(result.message || 'Failed to fetch nationalities');
+        }
       } catch (error) {
         console.error('Error fetching nationalities:', error);
       }
