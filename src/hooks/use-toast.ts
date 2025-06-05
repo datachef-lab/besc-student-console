@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 
 interface Toast {
+  [x: string]: Key | null | undefined;
   title: string;
   description?: string;
   variant?: 'default' | 'destructive';
