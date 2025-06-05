@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/db';
+import dbPostgres from '@/db';
 import { categories } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -13,7 +13,7 @@ const categorySchema = z.object({
 
 export async function GET() {
   try {
-    const allCategories = await db.select().from(categories);
+    const allCategories = await dbPostgres.select().from(categories);
     return NextResponse.json({ success: true, data: allCategories });
   } catch (error: any) {
     console.error('Error fetching categories:', error);
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validatedData = categorySchema.parse(body);
 
-    const [newCategory] = await db
+    const [newCategory] = await dbPostgres
       .insert(categories)
       .values({ name: validatedData.name, documentRequired: validatedData.documentRequired, code: validatedData.code })
       .returning();
@@ -50,9 +50,9 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const validatedData = categorySchema.parse(body);
 
-    const [updatedCategory] = await db
+    const [updatedCategory] = await dbPostgres
       .update(categories)
-      .set({ name: validatedData.name, documentRequired: validatedData.documentRequired, code: validatedData.code, updatedAt: new Date() })
+      .set({ name: validatedData.name, documentRequired: validatedData.documentRequired, code: validatedData.code })
       .where(eq(categories.id, parseInt(id)))
       .returning();
 
@@ -76,7 +76,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: false, message: 'ID is required' }, { status: 400 });
     }
 
-    const [deletedCategory] = await db
+    const [deletedCategory] = await dbPostgres
       .delete(categories)
       .where(eq(categories.id, parseInt(id)))
       .returning();
