@@ -26,7 +26,10 @@ export default function AdmissionsPage() {
   ];
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState({
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof typeof mockData[0];
+    direction: "asc" | "desc";
+  }>({
     key: "year",
     direction: "desc",
   });
@@ -61,29 +64,34 @@ export default function AdmissionsPage() {
 
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
 
-  const handleSort = (key) => {
-    let direction = "asc";
+const handleSort = (key: keyof typeof mockData[0]): void => {
+    let direction: "asc" | "desc" = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
+        direction = "desc";
     }
     setSortConfig({ key, direction });
     setCurrentPage(1);
-  };
+};
 
-  const getSortIcon = (columnName) => {
+interface SortConfig {
+    key: keyof typeof mockData[0];
+    direction: "asc" | "desc";
+}
+
+const getSortIcon = (columnName: keyof typeof mockData[0]): JSX.Element => {
     if (sortConfig.key === columnName) {
-      return sortConfig.direction === "asc" ? (
-        <ChevronUp className="w-4 h-4 ml-1" />
-      ) : (
-        <ChevronDown className="w-4 h-4 ml-1" />
-      );
+        return sortConfig.direction === "asc" ? (
+            <ChevronUp className="w-4 h-4 ml-1" />
+        ) : (
+            <ChevronDown className="w-4 h-4 ml-1" />
+        );
     }
     return <ChevronDown className="w-4 h-4 ml-1 opacity-30" />;
-  };
+};
 
-  const handlePageChange = (page) => {
+const handlePageChange = (page: number): void => {
     setCurrentPage(page);
-  };
+};
 
   const getPageNumbers = () => {
     const pages = [];
@@ -357,7 +365,7 @@ export default function AdmissionsPage() {
                         return (
                           <button
                             key={page}
-                            onClick={() => handlePageChange(page)}
+                            onClick={() => handlePageChange(+page)}
                             className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                               currentPage === page
                                 ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
