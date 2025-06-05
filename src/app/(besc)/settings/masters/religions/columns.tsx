@@ -70,14 +70,15 @@ export const columns: ColumnDef<Religion>[] = [
       return (
         <div className="flex items-center gap-2">
           <AddReligionDialog 
-            initialData={{ id: religion.id, name: religion.name }}
-            trigger={
-              <Button variant="ghost" size="icon">
-                <Pencil className="h-4 w-4" />
-              </Button>
-            }
+            initialData={{ id: Number(religion.id), name: religion.name }}
+            // trigger={
+            //   <Button variant="ghost" size="icon">
+            //     <Pencil className="h-4 w-4" />
+            //   </Button>
+            // }
+            onSuccess={() => {}}
           />
-          <DeleteReligionDialog religionId={religion.id} />
+          <DeleteReligionDialog religionId={Number(religion.id)} onSuccess={() => {}} />
         </div>
       );
     },
