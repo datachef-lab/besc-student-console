@@ -71,7 +71,7 @@ export async function checkExistingEntry(generalInfo: AdmissionGeneralInfo) {
                 eq(admissionGeneralInfo.dateOfBirth, generalInfo.dateOfBirth!),
                 eq(admissionGeneralInfo.mobileNumber, generalInfo.mobileNumber!),
                 eq(admissionGeneralInfo.gender, generalInfo.gender!),
-                eq(admissionGeneralInfo.degreeId, generalInfo.degreeId!),
+                // eq(admissionGeneralInfo.degreeId, generalInfo.degreeId!),
             )
         );
 
