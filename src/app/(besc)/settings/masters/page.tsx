@@ -1,13 +1,18 @@
 import React from "react";
-import db from "@/db";
-import { courses } from "@/db/schema";
-import { desc } from "drizzle-orm";
 import { CourseList } from "./course-list";
+import { findAllDbCourses } from "@/lib/services/course.service";
+
+const ITEMS_PER_PAGE = 10; // Define the limit
 
 export default async function MastersPage() {
-  const allCourses = await db.select().from(courses).orderBy(desc(courses.createdAt));
+  // Fetch paginated courses and total count
+  const { courses: initialCourses, totalCount: totalCourseCount } = await findAllDbCourses(1, ITEMS_PER_PAGE); // Use the defined limit
 
   return (
-    <CourseList initialCourses={allCourses} />
+    <CourseList 
+      initialCourses={initialCourses} 
+      totalCount={totalCourseCount} 
+      limit={ITEMS_PER_PAGE} // Pass the limit to CourseList
+    />
   );
 }

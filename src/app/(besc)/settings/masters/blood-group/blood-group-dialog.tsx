@@ -1,59 +1,85 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { addBloodGroup, type AddBloodGroupResult } from "./actions";
-import { useState } from "react";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useFormStatus } from 'react-dom';
+import { Loader2 } from 'lucide-react';
+import { addBloodGroup, type AddBloodGroupResult } from './actions';
+import { useToast } from "@/hooks/use-toast";
 
-// Define the expected return type of the server action
-// interface AddBloodGroupActionReturn { success: boolean; message?: string; error?: string; }
+// --- Add/Edit Blood Group Dialog ---
+interface AddBloodGroupDialogProps {
+  onSuccess: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialData?: {
+    id: number;
+    type: string;
+  };
+}
 
-export function BloodGroupDialog() {
-    const [isOpen, setIsOpen] = useState(false);
-    const [bloodGroupType, setBloodGroupType] = useState('');
+export function BloodGroupDialog({ onSuccess, open, onOpenChange, initialData }: AddBloodGroupDialogProps) {
+  const [type, setType] = useState(initialData?.type || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        const formData = new FormData(event.currentTarget);
-        // Call the server action and cast the result to the expected type
-        const result: AddBloodGroupResult = await addBloodGroup(formData);
-        
-        // Assuming the action returns { success: boolean, message?: string, error?: string }
-        if (result && result.success) {
-            setIsOpen(false); // Close modal on success
-            setBloodGroupType(''); // Clear input
-            // Potentially show a success toast using result.message
-             console.log("Success:", result.message);
-        } else {
-            // Handle error (e.g., show error message using result.error)
-            console.error("Error:", result && result.error ? result.error : "An unknown error occurred.");
+  useEffect(() => {
+    if (initialData) {
+      setType(initialData.type);
+    }
+  }, [initialData]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('type', type);
+
+      const result: AddBloodGroupResult = await addBloodGroup(formData);
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.message || "Blood group saved successfully.",
+        });
+        setType('');
+        onSuccess();
+        if (onOpenChange) {
+          onOpenChange(false);
         }
-    };
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to save blood group.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Blood Group
-        </Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild={!initialData}>
+        {!initialData && <Button>Add Blood Group</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Blood Group</DialogTitle>
+          <DialogTitle>{initialData ? 'Edit Blood Group' : 'Add New Blood Group'}</DialogTitle>
           <DialogDescription>
-            Enter the details for the new blood group.
+            {initialData ? 'Edit the blood group details here.' : "Add a new blood group here. Click save when you're done."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -62,18 +88,26 @@ export function BloodGroupDialog() {
               <Label htmlFor="type" className="text-right">
                 Type
               </Label>
-              <Input 
-                id="type" 
-                name="type" 
-                className="col-span-3" 
-                required 
-                value={bloodGroupType}
-                onChange={(e) => setBloodGroupType(e.target.value)}
+              <Input
+                id="type"
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                className="col-span-3"
+                disabled={isSubmitting}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Save changes</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save changes'
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,75 +1,99 @@
 "use server";
 
-import db from "@/db";
-import { courses } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { createCourse as createCourseService, findAllDbCourses, updateCourse as updateCourseService } from "@/lib/services/course.service";
+
 import { revalidatePath } from "next/cache";
-import { NextResponse } from "next/server";
-import { type Course } from "@/db/schema";
+import * as XLSX from 'xlsx';
 
-export async function deleteCourse(courseId: number) {
-  await db.delete(courses).where(eq(courses.id, courseId));
-  revalidatePath("/settings/masters");
-}
+export async function handleCourseSubmit(formData: FormData) {
+  const courseData = {
+    name: formData.get('name') as string,
+    shortName: formData.get('shortName') as string,
+    codePrefix: formData.get('codePrefix') as string,
+    universityCode: formData.get('universityCode') as string,
+  };
 
-export async function downloadCourses() {
-  const allCourses = await db.select().from(courses).orderBy(courses.id);
-
-  // Create CSV content
-  const csvHeader = ["Sr. No", "Name", "Short Name", "Code Prefix", "University Code"].join(",") + "\n";
-  const csvBody = allCourses.map((course, index) =>
-    `${index + 1},${course.name},${course.shortName || ""},${course.codePrefix || ""},${course.universityCode || ""}`
-  ).join("\n");
-
-  const csvContent = csvHeader + csvBody;
-
-  // Create a downloadable response
-  const headers = new Headers();
-  headers.append('Content-Type', 'text/csv');
-  headers.append('Content-Disposition', 'attachment; filename="courses.csv"');
-
-  return new NextResponse(csvContent, { headers });
-}
-
-export async function handleCourseSubmit(formData: FormData, course?: Course) {
-  const name = formData.get("name") as string;
-  const shortName = formData.get("shortName") as string;
-  const codePrefix = formData.get("codePrefix") as string;
-  const universityCode = formData.get("universityCode") as string;
-
-  if (!course) { // Add mode
-    await db.insert(courses).values({
-      name,
-      shortName,
-      codePrefix,
-      universityCode,
-    });
-  } else if (typeof course.id === 'number') { // Edit mode
-    await db
-      .update(courses)
-      .set({
-        name,
-        shortName,
-        codePrefix,
-        universityCode,
-      })
-      .where(eq(courses.id, course.id));
+  try {
+    const courseId = formData.get('id');
+    if (courseId) {
+      await updateCourseService(Number(courseId), courseData as any);
+    } else {
+      await createCourseService(courseData as any);
+    }
+    revalidatePath('/settings/masters');
+    return { success: true };
+  } catch (error) {
+    console.error('Error submitting course:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to submit course' 
+    };
   }
-
-  revalidatePath("/settings/masters");
 }
 
 export async function uploadCoursesFromFile(formData: FormData) {
-  "use server";
   const file = formData.get('file') as File;
-  if (!file || file.size === 0) {
-    console.error("No file uploaded or empty file.");
-    return;
+  if (!file) {
+    return { success: false, error: 'No file provided' };
   }
 
-  // TODO: Implement file parsing and database insertion
-  console.log("Uploaded file:", file.name);
-  
-  // Revalidate path after upload
-  // revalidatePath("/settings/masters");
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    const coursesData = XLSX.utils.sheet_to_json(worksheet);
+
+    for (const course of coursesData) {
+      await createCourseService(course as any);
+    }
+
+    revalidatePath('/settings/masters');
+    return { success: true };
+  } catch (error) {
+    console.error('Error uploading courses:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to upload courses' 
+    };
+  }
+}
+
+export async function downloadCourses() {
+  console.log("Server Action: downloadCourses started");
+  try {
+    console.log("Server Action: Calling findAllCourse...");
+    const coursesData = await findAllDbCourses(1, 10000); 
+    console.log("Server Action: findAllCourse returned data.", { count: coursesData.courses.length });
+
+    console.log("Server Action: Returning success with data.");
+    return { success: true, data: coursesData };
+
+  } catch (error: any) { 
+    console.error('Server Action: Error in downloadCourses:', error);
+    if (error.cause) {
+      console.error('Server Action: Error Cause:', error.cause);
+    }
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to download courses' 
+    };
+  }
+}
+
+export async function fetchPaginatedCourses(page: number, limit: number) {
+  console.log("Server Action: fetchPaginatedCourses started", { page, limit });
+  try {
+    const result = await findAllDbCourses(page, limit);
+    console.log("Server Action: findAllDbCourses returned data.", { count: result.courses.length, totalCount: result.totalCount });
+    return { success: true, data: result.courses, totalCount: result.totalCount };
+  } catch (error: any) {
+    console.error('Server Action: Error in fetchPaginatedCourses:', error);
+    return { 
+      success: false, 
+      data: [], // Return empty array on error
+      totalCount: 0,
+      error: error instanceof Error ? error.message : 'Failed to fetch paginated courses' 
+    };
+  }
 } 

@@ -1,11 +1,64 @@
 // 'use client'
 
-// import * as React from "react"
-// import * as ToastPrimitives from "@radix-ui/react-toast"
-// import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-// import { cn } from "@/lib/utils"
-// import { X } from "lucide-react"
+interface ToastProps extends React.HTMLAttributes<HTMLDivElement> {
+  title: string;
+  description?: string;
+  variant?: 'default' | 'destructive';
+  onClose: () => void;
+}
+
+export function Toast({
+  title,
+  description,
+  variant = 'default',
+  onClose,
+  className,
+  ...props
+}: ToastProps) {
+  return (
+    <div
+      className={cn(
+        "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all",
+        variant === 'default' && "bg-white border-gray-200",
+        variant === 'destructive' && "bg-red-50 border-red-200",
+        className
+      )}
+      {...props}
+    >
+      <div className="grid gap-1">
+        <div className={cn(
+          "text-sm font-semibold",
+          variant === 'default' && "text-gray-900",
+          variant === 'destructive' && "text-red-900"
+        )}>
+          {title}
+        </div>
+        {description && (
+          <div className={cn(
+            "text-sm opacity-90",
+            variant === 'default' && "text-gray-500",
+            variant === 'destructive' && "text-red-700"
+          )}>
+            {description}
+          </div>
+        )}
+      </div>
+      <button
+        onClick={onClose}
+        className={cn(
+          "absolute right-2 top-2 rounded-md p-1 text-gray-400 opacity-0 transition-opacity hover:text-gray-500 focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
+          variant === 'destructive' && "text-red-400 hover:text-red-500"
+        )}
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
 
 // const ToastProvider = ToastPrimitives.Provider
 

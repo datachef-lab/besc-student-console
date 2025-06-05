@@ -11,37 +11,71 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { addAnnualIncome, type AddAnnualIncomeResult } from "./actions";
+import { useToast } from "@/hooks/use-toast";
+import React from 'react';
 
-export function AnnualIncomeDialog() {
+interface AnnualIncomeDialogProps {
+  onSuccess: () => void;
+  children?: React.ReactNode;
+}
+
+export function AnnualIncomeDialog({ onSuccess, children }: AnnualIncomeDialogProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [incomeRange, setIncomeRange] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setIsSubmitting(true);
+
         const formData = new FormData(event.currentTarget);
         
-        const result: AddAnnualIncomeResult = await addAnnualIncome(formData);
-        
-        if (result && result.success) {
-            setIsOpen(false); // Close modal on success
-            setIncomeRange(''); // Clear input
-            console.log("Success:", result.message);
-        } else {
-            console.error("Error:", result && result.error ? result.error : "An unknown error occurred.");
+        try {
+          const result: AddAnnualIncomeResult = await addAnnualIncome(formData);
+          
+          if (result && result.success) {
+              toast({
+                title: "Success",
+                description: result.message || "Annual income range added successfully.",
+              });
+              setIsOpen(false);
+              setIncomeRange('');
+              onSuccess();
+          } else {
+              toast({
+                title: "Error",
+                description: result.error || "Failed to add annual income range.",
+                variant: "destructive",
+              });
+          }
+        } catch (error) {
+          console.error("Error adding annual income range:", error);
+           toast({
+            title: "Error",
+            description: "An unexpected error occurred.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsSubmitting(false);
         }
     };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Annual Income Range
-        </Button>
+        {children || (
+          <Button
+            className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Annual Income Range
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -63,11 +97,21 @@ export function AnnualIncomeDialog() {
                 required 
                 value={incomeRange}
                 onChange={(e) => setIncomeRange(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Save changes</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                'Save changes'
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

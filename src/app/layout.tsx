@@ -4,6 +4,7 @@ import { AuthProvider } from "@/providers/auth-provider";
 // This is imported but not directly used in the component
 // It sets up the database shutdown handlers in the Node.js environment
 import { setupDatabaseShutdownHandlers } from "@/lib/setup-db-handlers";
+import { ToastProvider } from "@/components/ui/toast-provider";
 
 // Initialize database shutdown handlers in Node.js environment
 // This is wrapped in a try-catch because it will error in
@@ -43,7 +44,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased w-screen h-screen`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );

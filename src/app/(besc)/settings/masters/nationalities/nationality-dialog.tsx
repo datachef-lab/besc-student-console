@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -8,63 +8,165 @@ import { Label } from '@/components/ui/label';
 import { useFormStatus } from 'react-dom';
 import { Loader2, Trash2 } from 'lucide-react';
 import { addNationality, deleteNationality, AddNationalityResult } from './actions';
+import { useToast } from "@/hooks/use-toast";
+import { NationalityService, type ApiResponse } from '@/services/nationality.service';
 
 // --- Add/Edit Nationality Dialog ---
 interface AddNationalityDialogProps {
+  onSuccess: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   initialData?: {
-    id: string;
+    id: number;
     name: string;
+    sequence?: number | null;
+    code?: number | null;
   };
-  trigger?: React.ReactNode;
 }
 
-export function AddNationalityDialog({ initialData, trigger }: AddNationalityDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
+export function AddNationalityDialog({ onSuccess, open, onOpenChange, initialData }: AddNationalityDialogProps) {
+  const [name, setName] = useState(initialData?.name || '');
+  const [sequence, setSequence] = useState<number | ''> (initialData?.sequence ?? '');
+  const [code, setCode] = useState<number | ''> (initialData?.code ?? '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = async (formData: FormData) => {
-    setError(undefined);
+  // Reset form when dialog opens for adding or initial data changes for editing
+  useEffect(() => {
     if (initialData) {
-      formData.append('id', initialData.id);
-    }
-    const result: AddNationalityResult = await addNationality(formData);
-    if (!result.success) {
-      setError(result.error);
+      setName(initialData.name);
+      setSequence(initialData.sequence ?? '');
+      setCode(initialData.code ?? '');
     } else {
-      setIsOpen(false);
+      setName('');
+      setSequence('');
+      setCode('');
     }
+  }, [initialData]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!name.trim()) {
+      toast({
+        title: "Name is required",
+        description: "Please enter a nationality name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    let response: ApiResponse<any>;
+
+    const nationalityData = {
+        name: name.trim(),
+        sequence: sequence === '' ? undefined : Number(sequence),
+        code: code === '' ? undefined : Number(code),
+    };
+
+    if (initialData) {
+      // Update existing nationality
+      response = await NationalityService.updateNationality({ ...nationalityData, id: initialData.id });
+      if (response.success) {
+        toast({
+          title: "Nationality updated",
+          description: "The nationality has been successfully updated.",
+        });
+        onSuccess();
+        if (onOpenChange) onOpenChange(false);
+      } else {
+        toast({
+          title: "Update failed",
+          description: response.message || "An error occurred while updating the nationality.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // Add new nationality
+      response = await NationalityService.createNationality(nationalityData);
+      if (response.success) {
+        toast({
+          title: "Nationality added",
+          description: "The nationality has been successfully added.",
+        });
+        onSuccess();
+        setName(''); // Clear form
+        setSequence('');
+        setCode('');
+        if (onOpenChange) onOpenChange(false);
+      } else {
+        toast({
+          title: "Addition failed",
+          description: response.message || "An error occurred while adding the nationality.",
+          variant: "destructive",
+        });
+      }
+    }
+
+    setIsSubmitting(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger || <Button>{initialData ? 'Edit' : 'Add Nationality'}</Button>}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild={!initialData}>
+        {!initialData && <Button>Add Nationality</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Edit Nationality' : 'Add New Nationality'}</DialogTitle>
         </DialogHeader>
-        <form action={handleSubmit}>
+        <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
-                Nationality Name
+                Name
               </Label>
-              <Input 
-                id="name" 
-                name="name" 
-                defaultValue={initialData?.name} 
-                className="col-span-3" 
-                required 
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="col-span-3"
+                disabled={isSubmitting}
               />
             </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="sequence" className="text-right">
+                Sequence
+              </Label>
+              <Input
+                id="sequence"
+                type="number"
+                value={sequence}
+                onChange={(e) => setSequence(Number(e.target.value))}
+                className="col-span-3"
+                disabled={isSubmitting}
+              />
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="code" className="text-right">
+                Code
+              </Label>
+              <Input
+                id="code"
+                type="number"
+                value={code}
+                onChange={(e) => setCode(Number(e.target.value))}
+                className="col-span-3"
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">Cancel</Button>
-            </DialogClose>
-            <SubmitButton />
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                initialData ? 'Save changes' : 'Add Nationality'
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
