@@ -99,7 +99,7 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
         const boardUniversitiesResponse = await fetch('/api/board-universities');
         if (boardUniversitiesResponse.ok) {
           const data = await boardUniversitiesResponse.json();
-          setBoardUniversities(data);
+          setBoardUniversities(data.data);
         }
 
         // Fetch language mediums
