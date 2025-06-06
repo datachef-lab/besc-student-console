@@ -42,10 +42,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const authResult = await verifyAuth(request);
-        if ('error' in authResult) {
-            return NextResponse.json({ error: authResult.error }, { status: authResult.status });
-        }
+        // const authResult = await verifyAuth(request);
+        // if ('error' in authResult) {
+        //     return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+        // }
 
         const body = await request.json();
         const course = body as Course;
@@ -70,10 +70,10 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
     try {
-        const authResult = await verifyAuth(request);
-        if ('error' in authResult) {
-            return NextResponse.json({ error: authResult.error }, { status: authResult.status });
-        }
+        // const authResult = await verifyAuth(request);
+        // if ('error' in authResult) {
+        //     return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+        // }
 
         const body = await request.json();
         const { id, ...courseData } = body;
