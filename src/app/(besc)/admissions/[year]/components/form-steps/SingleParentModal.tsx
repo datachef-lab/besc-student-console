@@ -17,23 +17,35 @@ const SingleParentModal: React.FC<SingleParentModalProps> = ({ isOpen, onClose, 
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px] p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>Important Information Regarding Single Parent Status</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg font-semibold">Important Information Regarding Single Parent Status</DialogTitle>
         </DialogHeader>
-        <DialogDescription>
-          <p className="text-sm text-gray-700 mb-4">
+        <DialogDescription className="mt-3">
+          <p className="text-xs sm:text-sm text-gray-700 mb-4">
             Please select Single Parent as 'Yes' only in case of separation
             between the parents. In case of the demise of parent(s), the student
             needs to Select 'No' & mention the demised parent's name as per
             Class XII Board Admit Card or Marksheet by selecting 'Late' in Sr.
             No. 25 &/or 27, as applicable.
           </p>
-           <p className="text-sm text-gray-700 font-semibold mb-2">Which parent's details will you be providing?</p>
+          <p className="text-xs sm:text-sm text-gray-700 font-semibold mb-4">Which parent's details will you be providing?</p>
         </DialogDescription>
-        <div className="flex justify-end space-x-4">
-          <Button variant="outline" onClick={() => handleSelectParent('father')}>Father's Details</Button>
-          <Button variant="outline" onClick={() => handleSelectParent('mother')}>Mother's Details</Button>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4">
+          <Button 
+            variant="outline" 
+            onClick={() => handleSelectParent('father')}
+            className="w-full sm:w-auto text-sm"
+          >
+            Father's Details
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => handleSelectParent('mother')}
+            className="w-full sm:w-auto text-sm"
+          >
+            Mother's Details
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

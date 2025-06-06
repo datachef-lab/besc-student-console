@@ -64,10 +64,10 @@ export default function CourseApplicationStep({ applicationForm, availableCourse
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 p-2 sm:p-4">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold mb-2">Step 3 of 5 - Course Selection</h2>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-4 text-left text-sm">
+        <h2 className="text-base sm:text-lg font-semibold mb-2">Step 3 of 5 - Course Selection</h2>
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-3 sm:p-4 text-left text-xs sm:text-sm">
           <p className="font-semibold mb-2">Please Note:</p>
           <ol className="list-decimal list-inside space-y-1">
             <li>Course / Session selected here can not be Removed once Saved.</li>
@@ -76,27 +76,24 @@ export default function CourseApplicationStep({ applicationForm, availableCourse
         </div>
       </div>
 
-      {/* Add heading for Course Selection table */}
-      <h3 className="text-lg font-semibold mb-2">18. Course Selection</h3>
+      <h3 className="text-base sm:text-lg font-semibold mb-2">18. Course Selection</h3>
 
-      <div className="overflow-x-auto rounded-md border">
+      {/* Desktop Table View */}
+      <div className="hidden sm:block overflow-x-auto rounded-md border">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sl</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Sl</th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Select</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Select</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {/* Render courses only if they are loaded */}
             {courses.map((course, index) => (
               <tr key={course.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
-                {/* Assuming Course schema has a 'name' property */}
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{course.name}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {/* Ensure course.id is a number before calling handleCourseSelect */}
                   {typeof course.id === 'number' && (
                     <Checkbox
                       checked={courseApplication.some(crs => crs.courseId === course.id)}
@@ -110,15 +107,37 @@ export default function CourseApplicationStep({ applicationForm, availableCourse
         </table>
       </div>
 
-      <div className="flex items-center justify-end space-x-2 mt-4">
-        <Label className="text-sm font-medium">Total Application Fees to be paid:</Label>
-        <span className="text-sm">₹</span>
-        <Input type="text" value="" className="w-24 text-right" readOnly />{/* Placeholder for fee */} 
-        <span className="text-sm">.00</span>
+      {/* Mobile Card View */}
+      <div className="sm:hidden space-y-3">
+        {courses.map((course, index) => (
+          <div key={course.id} className="bg-white border rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-900">{index + 1}.</span>
+                <span className="text-sm text-gray-500">{course.name}</span>
+              </div>
+              {typeof course.id === 'number' && (
+                <Checkbox
+                  checked={courseApplication.some(crs => crs.courseId === course.id)}
+                  onCheckedChange={(isChecked: boolean) => handleCourseSelect(course.id as number, isChecked)}
+                />
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="flex justify-end mt-6">
-        <Button>Submit</Button>
+      <div className="flex flex-col sm:flex-row items-center justify-end gap-2 mt-6">
+        <Label className="text-sm font-medium">Total Application Fees to be paid:</Label>
+        <div className="flex items-center gap-1">
+          <span className="text-sm">₹</span>
+          <Input type="text" value="" className="w-24 text-right" readOnly />
+          <span className="text-sm">.00</span>
+        </div>
+      </div>
+
+      <div className="flex justify-center mt-6">
+        <Button className="w-32 sm:w-24">Submit</Button>
       </div>
     </div>
   );

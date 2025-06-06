@@ -185,22 +185,22 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold mb-2">{stepHeading || "Step 2 of 5 - Academic Details (Sr. No. 14 to 17)"}</h2>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-4 text-left">
+        <h2 className="text-base sm:text-lg font-semibold mb-2">{stepHeading || "Step 2 of 5 - Academic Details (Sr. No. 14 to 17)"}</h2>
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-3 sm:p-4 text-left text-sm">
           {stepNotes}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6">
         <div>
-          <Label className="flex items-center mb-1">14. Board Result Status <span className="text-red-600">*</span></Label>
+          <Label className="flex items-center mb-1 text-sm">14. Board Result Status <span className="text-red-600">*</span></Label>
           <Select 
             value={academicInfo.boardResultStatus} 
             onValueChange={(val) => handleAcademicInfoChange("boardResultStatus", val)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Status" />
             </SelectTrigger>
             <SelectContent>
@@ -212,12 +212,12 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
         </div>
 
         <div>
-          <Label className="flex items-center mb-1">15. Board/University <span className="text-red-600">*</span></Label>
+          <Label className="flex items-center mb-1 text-sm">15. Board/University <span className="text-red-600">*</span></Label>
           <Select 
             value={academicInfo.boardUniversityId.toString()} 
             onValueChange={(val) => handleAcademicInfoChange("boardUniversityId", parseInt(val))}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Board/University" />
             </SelectTrigger>
             <SelectContent>
@@ -232,18 +232,18 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
           </Select>
         </div>
 
-        <div className="md:col-span-2">
-          <Label className="flex items-center mb-1">16. Subjectwise Marks <span className="text-red-600">*</span></Label>
+        <div>
+          <Label className="flex items-center mb-1 text-sm">16. Subjectwise Marks <span className="text-red-600">*</span></Label>
           <Dialog open={showMarksEntryModal} onOpenChange={setShowMarksEntryModal}>
             <DialogTrigger asChild>
-              <Button onClick={handleOpenMarksEntry}>Marks Entry</Button>
+              <Button onClick={handleOpenMarksEntry} className="w-full sm:w-auto">Marks Entry</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-screen-xl max-h-[95vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-screen-xl max-h-[95vh] overflow-y-auto p-4 sm:p-6">
               <SubjectMarksModal 
                 onSave={handleSaveMarksEntry} 
                 onClose={handleCloseMarksEntry} 
-                academicSubjects={academicSubjects} // Pass academic subjects as prop
-                initialSubjects={academicInfo.subjects} // Pass existing subjects for editing
+                academicSubjects={academicSubjects}
+                initialSubjects={academicInfo.subjects}
               />
             </DialogContent>
           </Dialog>
@@ -253,21 +253,21 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sl</th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Subject</th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Full Marks</th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Marks Obtained (Including Practical)</th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Subject Result Status</th>
+                    <th scope="col" className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sl</th>
+                    <th scope="col" className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 sm:w-48">Subject</th>
+                    <th scope="col" className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Marks</th>
+                    <th scope="col" className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marks Obtained</th>
+                    <th scope="col" className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 sm:w-40">Status</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {academicInfo.subjects.map((subject, index) => (
                     <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{subject.academicSubjectId}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{subject.fullMarks}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{subject.totalMarks}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{subject.resultStatus}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{index + 1}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{subject.academicSubjectId}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{subject.fullMarks}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{subject.totalMarks}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{subject.resultStatus}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -277,12 +277,12 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
         </div>
 
         <div>
-          <Label className="flex items-center mb-1">17. Institute Details <span className="text-red-600">*</span></Label>
+          <Label className="flex items-center mb-1 text-sm">17. Institute Details <span className="text-red-600">*</span></Label>
           <Dialog open={showInstituteDetailsModal} onOpenChange={setShowInstituteDetailsModal}>
             <DialogTrigger asChild>
-              <Button onClick={handleOpenInstituteDetails}>Institute Details Entry</Button>
+              <Button onClick={handleOpenInstituteDetails} className="w-full sm:w-auto">Institute Details Entry</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-screen-lg max-h-[95vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-screen-lg max-h-[95vh] overflow-y-auto p-4 sm:p-6">
               <InstituteDetailsModal 
                 colleges={colleges}
                 institutions={institutions}
@@ -295,9 +295,9 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
           </Dialog>
 
           {enteredInstituteDetails && (
-            <div className="mt-4 p-4 border rounded-md bg-gray-50">
-              <p className="font-semibold mb-2">Entered Institute Details:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+            <div className="mt-4 p-3 sm:p-4 border rounded-md bg-gray-50">
+              <p className="font-semibold mb-2 text-sm sm:text-base">Entered Institute Details:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
                 <p><strong>Roll No:</strong> {enteredInstituteDetails.rollNo}</p>
                 <p><strong>School No:</strong> {enteredInstituteDetails.schoolNo}</p>
                 <p><strong>Center No:</strong> {enteredInstituteDetails.centerNo}</p>
@@ -307,7 +307,7 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
                   <p><strong>Other Institute:</strong> {enteredInstituteDetails.otherInstitute}</p>
                 )}
                 <p><strong>Medium:</strong> {enteredInstituteDetails.medium}</p>
-                <p><strong>Year Of Passing:</strong> {enteredInstituteDetails.yearOfPassing}{enteredInstituteDetails.yearOfPassing !== admissionYear.toString()}</p>
+                <p><strong>Year Of Passing:</strong> {enteredInstituteDetails.yearOfPassing}</p>
                 <p><strong>Stream:</strong> {enteredInstituteDetails.stream}</p>
                 <p><strong>Calcutta University Registered:</strong> {enteredInstituteDetails.calcuttaUniversityRegistered}</p>
                 {enteredInstituteDetails.calcuttaUniversityRegistered === 'Yes' && (

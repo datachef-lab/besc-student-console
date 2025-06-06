@@ -223,35 +223,38 @@ export default function GeneralInfoStep({
       <Card className="p-6 space-y-6">
         {/* 1. Applicant's Name */}
         <div>
-          <div className="flex flex-col md:flex-row md:items-end gap-4 ">
-            <div className="flex-1 ">
-              <Label className="mb-1 block">1. Applicant's Name</Label>
-              <div className="flex w-full gap-2 mt-4">
-                <div className="w-1/3">
-                  <Label className="mb-1 flex items-center">First Name <RedDot /></Label>
+          <div className="flex flex-col gap-4">
+            <div className="flex-1">
+              <Label className="mb-1 block text-sm sm:text-base">1. Applicant's Name</Label>
+              <div className="flex flex-col sm:flex-row w-full gap-3 mt-2">
+                <div className="w-full sm:w-1/3">
+                  <Label className="mb-1 flex items-center text-sm">First Name <RedDot /></Label>
                   <Input 
                     value={generalInfo.firstName} 
                     onChange={e => handleGeneralInfoChange("firstName", e.target.value)} 
                     required 
                     placeholder="AS PER CLASS XII BOARD MARKSHEET" 
+                    className="w-full"
                   />
                 </div>
-                <div className="w-1/3">
-                  <Label className="mb-1 flex items-center"> Middle Name </Label>
+                <div className="w-full sm:w-1/3">
+                  <Label className="mb-1 flex items-center text-sm">Middle Name</Label>
                   <Input 
                     value={generalInfo.middleName || ""} 
                     onChange={e => handleGeneralInfoChange("middleName", e.target.value)} 
                     placeholder="AS PER CLASS XII BOARD MARKSHEET" 
+                    className="w-full"
                   />
-                  <p className="text-red-500 font-semibold text-xs">(Do not write if not given in Class XII Board Marksheet)</p>
+                  <p className="text-red-500 font-semibold text-xs mt-1">(Do not write if not given in Class XII Board Marksheet)</p>
                 </div>
-                <div className="w-1/3">
-                  <Label className="mb-1 flex items-center">Last Name <RedDot /></Label>
+                <div className="w-full sm:w-1/3">
+                  <Label className="mb-1 flex items-center text-sm">Last Name <RedDot /></Label>
                   <Input 
                     value={generalInfo.lastName || ""} 
                     onChange={e => handleGeneralInfoChange("lastName", e.target.value)} 
                     required 
                     placeholder="AS PER CLASS XII BOARD MARKSHEET" 
+                    className="w-full"
                   />
                 </div>
               </div>
@@ -388,64 +391,72 @@ export default function GeneralInfoStep({
           </Select>
         </div>
         {/* 8(a) and 8(b) Mobile/WhatsApp on same line */}
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col gap-4">
           {/* 8(a). Mobile Number */}
           <div className="flex-1">
-            <Label className="flex items-center mb-1">8(a). Mobile Number <span className="text-blue-700 font-bold">(10-digit only.)</span> <RedDot /></Label>
-            <Input 
-              value={generalInfo.mobileNumber} 
-              onChange={e => handleGeneralInfoChange("mobileNumber", e.target.value)} 
-              required 
-              placeholder="All future communication from college will be on this No." 
-              disabled={mobileVerified} 
-            />
-            {/* OTP logic */}
-            <div className="flex items-center gap-2 mt-2">
-              {!mobileVerified && !mobileOtpSent && (
-                <Button type="button" size="sm" onClick={() => setMobileOtpSent(true)}>Send OTP</Button>
-              )}
-              {mobileOtpSent && !mobileVerified && (
-                <>
-                  <Input 
-                    className="w-32" 
-                    value={mobileOtp} 
-                    onChange={e => setMobileOtp(e.target.value)} 
-                    placeholder="Enter OTP" 
-                    size={"sm" as any} 
-                  />
-                  <Button 
-                    type="button" 
-                    size="sm" 
-                    onClick={() => { if (mobileOtp === "123456") setMobileVerified(true); }}
-                  >
-                    Verify OTP
-                  </Button>
-                </>
-              )}
-              {mobileVerified && <span className="text-green-600 font-semibold ml-2">Verified</span>}
+            <Label className="flex items-center mb-1 text-sm">8(a). Mobile Number <span className="text-blue-700 font-bold text-xs sm:text-sm">(10-digit only.)</span> <RedDot /></Label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input 
+                value={generalInfo.mobileNumber} 
+                onChange={e => handleGeneralInfoChange("mobileNumber", e.target.value)} 
+                required 
+                placeholder="All future communication from college will be on this No." 
+                disabled={mobileVerified}
+                className="w-full"
+              />
+              <div className="flex flex-col sm:flex-row gap-2">
+                {!mobileVerified && !mobileOtpSent && (
+                  <Button type="button" size="sm" className="w-full sm:w-auto">Send OTP</Button>
+                )}
+                {mobileOtpSent && !mobileVerified && (
+                  <>
+                    <Input 
+                      className="w-full sm:w-32" 
+                      value={mobileOtp} 
+                      onChange={e => setMobileOtp(e.target.value)} 
+                      placeholder="Enter OTP" 
+                      size={"sm" as any} 
+                    />
+                    <Button 
+                      type="button" 
+                      size="sm" 
+                      onClick={() => { if (mobileOtp === "123456") setMobileVerified(true); }}
+                      className="w-full sm:w-auto"
+                    >
+                      Verify OTP
+                    </Button>
+                  </>
+                )}
+                {mobileVerified && <span className="text-green-600 font-semibold text-sm">Verified</span>}
+              </div>
             </div>
           </div>
+          
+          {/* 8(b). WhatsApp Number */}
           <div className="flex-1">
-            <Label className="flex items-center mb-1">8(b). WhatsApp Number <RedDot /></Label>
-            <div className="flex items-center gap-2">
+            <Label className="flex items-center mb-1 text-sm">8(b). WhatsApp Number <RedDot /></Label>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <Input 
                 value={sameAsMobile ? generalInfo.mobileNumber : (generalInfo.whatsappNumber || "")} 
                 onChange={e => handleGeneralInfoChange("whatsappNumber", e.target.value)} 
                 required 
                 disabled={sameAsMobile} 
                 placeholder="WhatsApp Number" 
+                className="w-full"
               />
-              <Checkbox 
-                checked={sameAsMobile} 
-                onCheckedChange={checked => {
-                  setSameAsMobile(!!checked);
-                  if (checked) {
-                    handleGeneralInfoChange("whatsappNumber", generalInfo.mobileNumber);
-                  }
-                }} 
-                id="sameAsMobile" 
-              />
-              <Label htmlFor="sameAsMobile" className="text-xs">Same As Mobile Number</Label>
+              <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                <Checkbox 
+                  checked={sameAsMobile} 
+                  onCheckedChange={checked => {
+                    setSameAsMobile(!!checked);
+                    if (checked) {
+                      handleGeneralInfoChange("whatsappNumber", generalInfo.mobileNumber);
+                    }
+                  }} 
+                  id="sameAsMobile" 
+                />
+                <Label htmlFor="sameAsMobile" className="text-xs sm:text-sm">Same As Mobile Number</Label>
+              </div>
             </div>
           </div>
         </div>

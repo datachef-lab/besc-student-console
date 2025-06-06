@@ -250,18 +250,18 @@ export default function StudentSignupForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="h-screen flex">
-        {/* Progress Timeline */}
-        <div className="w-[280px] flex-shrink-0 h-full">
-          <div className="h-full bg-gradient-to-b from-purple-700 to-purple-600 p-6 rounded-xl shadow-lg">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <div className="h-screen flex flex-col lg:flex-row">
+        {/* Progress Timeline - Now responsive */}
+        <div className="w-full lg:w-[280px] lg:flex-shrink-0 lg:h-full">
+          <div className="h-auto lg:h-full bg-gradient-to-b from-purple-700 to-purple-600 p-4 lg:p-6 shadow-lg">
             <ProgressTimeline currentStep={currentStep} steps={steps} />
           </div>
         </div>
 
         {/* Form Content */}
-        <div className="flex-1 p-4 overflow-y-auto">
-          <div className=" mx-auto bg-white p-3 rounded-xl shadow-sm">
+        <div className="flex-1 flex flex-col p-4 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full">
+          <div className="flex-1 mx-auto bg-white p-3 rounded-xl shadow-sm w-full">
             {renderStepContent()}
 
             <NavigationButtons
@@ -272,12 +272,17 @@ export default function StudentSignupForm() {
               onSubmit={handleSubmit}
             />
           </div>
+
+          {/* Footer - Only visible on mobile */}
+          <div className="lg:hidden py-4 px-2 text-xs text-gray-500 text-center border-t border-gray-200 mt-4">
+            © 2025 DataChef. All rights reserved.
+          </div>
         </div>
 
-        {/* Right Sidebar */}
-        <div className="w-[280px] flex-shrink-0 h-full">
+        {/* Right Sidebar - Hide on mobile */}
+        <div className="hidden lg:block w-[280px] flex-shrink-0 h-full">
           <div
-            className="h-full bg-white p-0 shadow-sm overflow-hidden relative rounded-xl"
+            className="h-full bg-white p-0 shadow-sm overflow-hidden relative"
             style={{
               backgroundImage: "url('/illustrations/admission-form.png')",
               backgroundSize: 'cover',

@@ -194,12 +194,12 @@ export default function AdditionalInfoStep({
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">
+    <div className="space-y-4 p-2 sm:p-4">
+      <h2 className="text-base sm:text-xl font-semibold mb-4">
         Step 4 of 5 - Additional Information (Sr. No 19 to 37)
       </h2>
-      {stepNotes && <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-4 text-left text-sm">{stepNotes}</div>}
-      <div className="grid grid-cols-1 gap-4">
+      {stepNotes && <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-3 sm:p-4 text-left text-xs sm:text-sm">{stepNotes}</div>}
+      <div className="grid grid-cols-1 gap-3 sm:gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">
             19. Alternate Mobile Number (10-digit only) *
@@ -386,7 +386,7 @@ export default function AdditionalInfoStep({
           <select
             value={additionalInfo.isEitherParentStaff ? 'Yes' : 'No'}
             onChange={(e) => handleAdditionalInfoChange("isEitherParentStaff", e.target.value === 'Yes')}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:focus:border-blue-500"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:focus:border-blue-500"
             required
           >
             <option value="">Select</option>
@@ -519,62 +519,109 @@ export default function AdditionalInfoStep({
         </div>
         {additionalInfo.applyUnderSportsCategory && (
           <div className="md:col-span-2">
-            <h3 className="text-lg font-semibold mb-2">Sports Details</h3>
-            <table className="min-w-full bg-white border border-gray-300">
-              <thead>
-                <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sports</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>{/* Added Action column */}
-                </tr>
-              </thead>
-              <tbody>
-                {additionalInfo.sportsInfo.map((entry, index) => (
-                  <tr key={index}>
-                    <td className="py-2 px-4 border-b">
-                      {index + 1}
-                    </td>
-                    <td className="py-2 px-4 border-b">
+            <h3 className="text-base sm:text-lg font-semibold mb-2">Sports Details</h3>
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto rounded-md border">
+              <table className="min-w-full bg-white border border-gray-300">
+                <thead>
+                  <tr>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Sr. No.</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sports</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {additionalInfo.sportsInfo.map((entry, index) => (
+                    <tr key={index}>
+                      <td className="py-2 px-4 border-b">
+                        {index + 1}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        <select
+                          value={entry.sportsCategoryId || ''}
+                          onChange={(e) => handleSportsEntryChange(index, 'sportsCategoryId', e.target.value)}
+                          className="w-full p-1 border border-gray-300 rounded-md"
+                        >
+                          <option value="">Select Sport</option>
+                          {sportsCategories.map(sport => (
+                            sport.id && (
+                              <option key={sport.id} value={sport.id}>{sport.name}</option>
+                            )
+                          ))}
+                        </select>
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        <input
+                          type="text"
+                          value={entry.level || ''}
+                          onChange={(e) => handleSportsEntryChange(index, 'level', e.target.value)}
+                          className="w-full p-1 border border-gray-300 rounded-md"
+                        />
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        <button
+                          type="button"
+                          onClick={() => removeSportsEntry(index)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="sm:hidden space-y-3">
+              {additionalInfo.sportsInfo.map((entry, index) => (
+                <div key={index} className="bg-white border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-900">Sr. No. {index + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeSportsEntry(index)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Sports</label>
                       <select
                         value={entry.sportsCategoryId || ''}
                         onChange={(e) => handleSportsEntryChange(index, 'sportsCategoryId', e.target.value)}
-                        className="w-full p-1 border border-gray-300 rounded-md"
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
                       >
                         <option value="">Select Sport</option>
-                         {sportsCategories.map(sport => (
+                        {sportsCategories.map(sport => (
                           sport.id && (
-                          <option key={sport.id} value={sport.id}>{sport.name}</option>
-                         )
+                            <option key={sport.id} value={sport.id}>{sport.name}</option>
+                          )
                         ))}
                       </select>
-                    </td>
-                    <td className="py-2 px-4 border-b">
-                       <input
-                        type="text" // Assuming level is a string input
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Level</label>
+                      <input
+                        type="text"
                         value={entry.level || ''}
                         onChange={(e) => handleSportsEntryChange(index, 'level', e.target.value)}
-                        className="w-full p-1 border border-gray-300 rounded-md"
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
                       />
-                       {/* If level is a select, use select element and map options */}
-                    </td>
-                     <td className="py-2 px-4 border-b">
-                        <button
-                            type="button"
-                            onClick={() => removeSportsEntry(index)}
-                            className="text-red-600 hover:text-red-800"
-                        >
-                            Remove
-                        </button>
-                     </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <button
               type="button"
               onClick={addSportsEntry}
-              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              className="mt-3 w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-sm"
             >
               Add Row
             </button>
