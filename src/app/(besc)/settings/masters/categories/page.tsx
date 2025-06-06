@@ -66,7 +66,7 @@ export default function CategoriesPage() {
       const result = await response.json();
 
       if (result.success) {
-        setData(result.categories); // Assuming the API returns categories in a 'categories' field
+        setData(result.data ); // Assuming the API returns categories in a 'categories' field
         setTotalCount(result.totalCount); // Assuming the API returns total count in a 'totalCount' field
       } else {
         toast({

@@ -63,7 +63,7 @@ export default function BoardUniversitiesPage() {
       const result = await response.json();
 
       if (result.success) {
-        setData(result.boardUniversities); // Assuming the API returns board universities in a 'boardUniversities' field
+        setData(result.data); // Assuming the API returns board universities in a 'boardUniversities' field
         setTotalCount(result.totalCount); // Assuming the API returns total count in a 'totalCount' field
       } else {
         toast({
