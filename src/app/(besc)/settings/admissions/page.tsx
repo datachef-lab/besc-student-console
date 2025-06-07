@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ChevronUp,
   ChevronDown,
@@ -20,6 +20,11 @@ import {
 import { useRouter } from "next/navigation";
 
 export default function AdmissionsPage() {
+  // to set the document title
+  useEffect(() => {
+    document.title = "Admissions Dashboard";
+  }, []);
+
   const mockData = [
     { year: 2024, totalApplications: 1250, paymentsDone: 980, drafts: 270 },
     { year: 2023, totalApplications: 1180, paymentsDone: 920, drafts: 260 },
@@ -278,6 +283,9 @@ export default function AdmissionsPage() {
                       Drafts
                       {getSortIcon("drafts")}
                     </div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center">Actions</div>
                   </th>
                 </tr>
               </thead>
