@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ChevronUp,
   ChevronDown,
@@ -8,8 +8,23 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 
 export default function AdmissionsPage() {
+  // to set the document title
+  useEffect(() => {
+    document.title = "Admissions Dashboard";
+  }, []);
+
   const mockData = [
     { year: 2024, totalApplications: 1250, paymentsDone: 980, drafts: 270 },
     { year: 2023, totalApplications: 1180, paymentsDone: 920, drafts: 260 },
@@ -25,9 +40,13 @@ export default function AdmissionsPage() {
     { year: 2013, totalApplications: 480, paymentsDone: 370, drafts: 110 },
   ];
 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const router = useRouter();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{
-    key: keyof typeof mockData[0];
+    key: keyof (typeof mockData)[0];
     direction: "asc" | "desc";
   }>({
     key: "year",
@@ -64,34 +83,34 @@ export default function AdmissionsPage() {
 
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
 
-const handleSort = (key: keyof typeof mockData[0]): void => {
+  const handleSort = (key: keyof (typeof mockData)[0]): void => {
     let direction: "asc" | "desc" = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
-        direction = "desc";
+      direction = "desc";
     }
     setSortConfig({ key, direction });
     setCurrentPage(1);
-};
+  };
 
-interface SortConfig {
-    key: keyof typeof mockData[0];
+  interface SortConfig {
+    key: keyof (typeof mockData)[0];
     direction: "asc" | "desc";
-}
+  }
 
-const getSortIcon = (columnName: keyof typeof mockData[0]): JSX.Element => {
+  const getSortIcon = (columnName: keyof (typeof mockData)[0]): JSX.Element => {
     if (sortConfig.key === columnName) {
-        return sortConfig.direction === "asc" ? (
-            <ChevronUp className="w-4 h-4 ml-1" />
-        ) : (
-            <ChevronDown className="w-4 h-4 ml-1" />
-        );
+      return sortConfig.direction === "asc" ? (
+        <ChevronUp className="w-4 h-4 ml-1" />
+      ) : (
+        <ChevronDown className="w-4 h-4 ml-1" />
+      );
     }
     return <ChevronDown className="w-4 h-4 ml-1 opacity-30" />;
-};
+  };
 
-const handlePageChange = (page: number): void => {
+  const handlePageChange = (page: number): void => {
     setCurrentPage(page);
-};
+  };
 
   const getPageNumbers = () => {
     const pages = [];
@@ -125,6 +144,20 @@ const handlePageChange = (page: number): void => {
       }
     }
     return pages;
+  };
+
+  const handleView = (year: number) => {
+    router.push(`/settings/admissions/${year}`);
+  };
+
+  const handleCloseAdmission = (year: number) => {
+    setSelectedYear(year);
+    setIsDialogOpen(true);
+  };
+
+  const confirmCloseAdmission = () => {
+    console.log(`Closed admission for year ${selectedYear}`);
+    setIsDialogOpen(false);
   };
 
   return (
@@ -251,6 +284,9 @@ const handlePageChange = (page: number): void => {
                       {getSortIcon("drafts")}
                     </div>
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center">Actions</div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -291,6 +327,49 @@ const handlePageChange = (page: number): void => {
                           %)
                         </span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                      <Button size="sm" onClick={() => handleView(item.year)}>
+                        View Details
+                      </Button>
+
+                      <Dialog
+                        open={isDialogOpen && selectedYear === item.year}
+                        onOpenChange={setIsDialogOpen}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleCloseAdmission(item.year)}
+                          >
+                            Close Admission
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Confirm Close Admission</DialogTitle>
+                          </DialogHeader>
+                          <div className="px-4 text-sm text-gray-600">
+                            Are you sure you want to close admissions for{" "}
+                            <strong>{item.year}</strong>?
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="destructive"
+                              onClick={confirmCloseAdmission}
+                            >
+                              Confirm
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </td>
                   </tr>
                 ))}
