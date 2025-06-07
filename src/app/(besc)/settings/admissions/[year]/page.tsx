@@ -1,6 +1,24 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { useParams, usePathname } from "next/navigation";
+import { Search } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationLink,
+  PaginationNext,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 // Simulated API data fetcher
 async function fetchAdmissionsData({
@@ -14,15 +32,125 @@ async function fetchAdmissionsData({
 }) {
   // In real implementation, make API call here
   return [
-    { year: 2020, totalApplications: 300, paymentsDone: 200, drafts: 100 },
-    { year: 2021, totalApplications: 320, paymentsDone: 250, drafts: 70 },
-    { year: 2022, totalApplications: 310, paymentsDone: 270, drafts: 40 },
-    { year: 2023, totalApplications: 400, paymentsDone: 390, drafts: 10 },
+    {
+      id: 1,
+      name: "John Doe",
+      formStatus: "Submitted",
+      payment: "Paid",
+      submittedAt: "2023-05-15",
+      category: "General",
+      religion: "Hindu",
+      nationality: "Indian",
+      annualIncome: "5-10 LPA",
+      gender: "Male",
+      course: "B.Tech",
+    },
+    {
+      id: 2,
+      name: "Jane Smith",
+      formStatus: "Draft",
+      payment: "Pending",
+      submittedAt: "2023-05-18",
+      category: "OBC",
+      religion: "Christian",
+      nationality: "Indian",
+      annualIncome: "2-5 LPA",
+      gender: "Female",
+      course: "B.Sc",
+    },
+    {
+      id: 3,
+      name: "Robert Johnson",
+      formStatus: "Submitted",
+      payment: "Paid",
+      submittedAt: "2023-05-20",
+      category: "SC",
+      religion: "Muslim",
+      nationality: "Indian",
+      annualIncome: "Below 2 LPA",
+      gender: "Male",
+      course: "B.Com",
+    },
+    {
+      id: 4,
+      name: "Emily Davis",
+      formStatus: "Submitted",
+      payment: "Paid",
+      submittedAt: "2023-05-22",
+      category: "ST",
+      religion: "Sikh",
+      nationality: "NRI",
+      annualIncome: "Above 10 LPA",
+      gender: "Female",
+      course: "MBA",
+    },
+    // Duplicate with unique IDs for demo
+    {
+      id: 5,
+      name: "John Doe",
+      formStatus: "Submitted",
+      payment: "Paid",
+      submittedAt: "2023-05-15",
+      category: "General",
+      religion: "Hindu",
+      nationality: "Indian",
+      annualIncome: "5-10 LPA",
+      gender: "Male",
+      course: "B.Tech",
+    },
+    {
+      id: 6,
+      name: "Jane Smith",
+      formStatus: "Draft",
+      payment: "Pending",
+      submittedAt: "2023-05-18",
+      category: "OBC",
+      religion: "Christian",
+      nationality: "Indian",
+      annualIncome: "2-5 LPA",
+      gender: "Female",
+      course: "B.Sc",
+    },
+    {
+      id: 7,
+      name: "Robert Johnson",
+      formStatus: "Submitted",
+      payment: "Paid",
+      submittedAt: "2023-05-20",
+      category: "SC",
+      religion: "Muslim",
+      nationality: "Indian",
+      annualIncome: "Below 2 LPA",
+      gender: "Male",
+      course: "B.Com",
+    },
+    {
+      id: 8,
+      name: "Emily Davis",
+      formStatus: "Submitted",
+      payment: "Paid",
+      submittedAt: "2023-05-22",
+      category: "ST",
+      religion: "Sikh",
+      nationality: "NRI",
+      annualIncome: "Above 10 LPA",
+      gender: "Female",
+      course: "MBA",
+    },
   ];
 }
 
 export default function AdmissionPage() {
-  const [collegeId] = useState(1); // Can be controlled via props
+  const params = useParams();
+  const pathname = usePathname();
+  const year = pathname.split("/").pop(); // Extract year from route
+
+  // Set dynamic page title
+  useEffect(() => {
+    document.title = `Admissions - ${year}`;
+  }, [year]);
+
+  const [collegeId] = useState(1);
   const [departmentId] = useState<number | undefined>(undefined);
   const [yearRange] = useState<[number, number] | undefined>(undefined);
 
@@ -30,8 +158,25 @@ export default function AdmissionPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<keyof (typeof data)[0] | "">("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  }>({
+    key: "submittedAt",
+    direction: "desc",
+  });
+
+  // Filter states
+  const [filters, setFilters] = useState({
+    category: "",
+    religion: "",
+    nationality: "",
+    annualIncome: "",
+    gender: "",
+    course: "",
+    formStatus: "",
+    payment: "",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,19 +191,37 @@ export default function AdmissionPage() {
   }, [collegeId, departmentId, yearRange]);
 
   const filteredData = useMemo(() => {
-    return data.filter((item) =>
-      item.year.toString().includes(searchTerm.trim())
-    );
-  }, [data, searchTerm]);
+    return data.filter((item) => {
+      // Search filter
+      const matchesSearch =
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.id.toString().includes(searchTerm);
+
+      // Other filters
+      const matchesFilters = Object.entries(filters).every(([key, value]) => {
+        if (!value) return true;
+        return item[key] === value;
+      });
+
+      return matchesSearch && matchesFilters;
+    });
+  }, [data, searchTerm, filters]);
 
   const sortedData = useMemo(() => {
-    if (!sortField) return filteredData;
-    return [...filteredData].sort((a, b) => {
-      const valA = a[sortField];
-      const valB = b[sortField];
-      return sortOrder === "asc" ? valA - valB : valB - valA;
-    });
-  }, [filteredData, sortField, sortOrder]);
+    const sortableItems = [...filteredData];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredData, sortConfig]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -67,34 +230,196 @@ export default function AdmissionPage() {
 
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
 
-  const handleSort = (field: keyof (typeof data)[0]) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+  const handleSort = (key: string) => {
+    let direction: "asc" | "desc" = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    setCurrentPage(1);
+  };
+
+  // Get unique values for filter dropdowns
+  const getUniqueValues = (field: string) => {
+    const values = new Set(data.map((item) => item[field]));
+    return Array.from(values).filter(Boolean);
+  };
+
+  const submittedCount = data.filter(
+    (item) => item.formStatus === "Submitted"
+  ).length;
+  const draftCount = data.filter((item) => item.formStatus === "Draft").length;
+  const paidCount = data.filter((item) => item.payment === "Paid").length;
+
+  // Generate pagination items
+  const getPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={() => setCurrentPage(i)}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
     } else {
-      setSortField(field);
-      setSortOrder("asc");
-    }
-  };
+      // First page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            isActive={currentPage === 1}
+            onClick={() => setCurrentPage(1)}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
 
-  const getSortIcon = (field: keyof (typeof data)[0]) => {
-    if (sortField !== field) return null;
-    return sortOrder === "asc" ? "▲" : "▼";
-  };
+      // Ellipsis or more pages
+      if (currentPage > 3) {
+        items.push(<PaginationEllipsis key="ellipsis-start" />);
+      }
 
-  const getPageNumbers = () => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(i);
+      // Middle pages
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={() => setCurrentPage(i)}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+
+      // Ellipsis or more pages
+      if (currentPage < totalPages - 2) {
+        items.push(<PaginationEllipsis key="ellipsis-end" />);
+      }
+
+      // Last page
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink
+            isActive={currentPage === totalPages}
+            onClick={() => setCurrentPage(totalPages)}
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
     }
-    return pages;
+
+    return items;
   };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Admissions Data
-        </h1> */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+          Admissions Dashboard - {year}
+        </h1>
+
+        {/* Summary Stats */}
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard
+            label="Total Applications"
+            value={data.length}
+            bgColor="bg-blue-50"
+            textColor="text-blue-600"
+          />
+          <StatCard
+            label="Payments Completed"
+            value={paidCount}
+            bgColor="bg-green-50"
+            textColor="text-green-600"
+          />
+          <StatCard
+            label="Drafts"
+            value={draftCount}
+            bgColor="bg-yellow-50"
+            textColor="text-yellow-600"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <h2 className="text-lg font-medium text-gray-700 mb-4">Filters</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <FilterSelect
+              label="Category"
+              options={getUniqueValues("category")}
+              value={filters.category}
+              onChange={(e) => handleFilterChange("category", e.target.value)}
+            />
+            <FilterSelect
+              label="Religion"
+              options={getUniqueValues("religion")}
+              value={filters.religion}
+              onChange={(e) => handleFilterChange("religion", e.target.value)}
+            />
+            <FilterSelect
+              label="Nationality"
+              options={getUniqueValues("nationality")}
+              value={filters.nationality}
+              onChange={(e) =>
+                handleFilterChange("nationality", e.target.value)
+              }
+            />
+            <FilterSelect
+              label="Annual Income"
+              options={getUniqueValues("annualIncome")}
+              value={filters.annualIncome}
+              onChange={(e) =>
+                handleFilterChange("annualIncome", e.target.value)
+              }
+            />
+            <FilterSelect
+              label="Gender"
+              options={getUniqueValues("gender")}
+              value={filters.gender}
+              onChange={(e) => handleFilterChange("gender", e.target.value)}
+            />
+            <FilterSelect
+              label="Course"
+              options={getUniqueValues("course")}
+              value={filters.course}
+              onChange={(e) => handleFilterChange("course", e.target.value)}
+            />
+            <FilterSelect
+              label="Form Status"
+              options={getUniqueValues("formStatus")}
+              value={filters.formStatus}
+              onChange={(e) => handleFilterChange("formStatus", e.target.value)}
+            />
+            <FilterSelect
+              label="Payment Status"
+              options={getUniqueValues("payment")}
+              value={filters.payment}
+              onChange={(e) => handleFilterChange("payment", e.target.value)}
+            />
+          </div>
+        </div>
 
         {/* Search and Pagination Controls */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -102,7 +427,7 @@ export default function AdmissionPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search by year..."
+              placeholder="Search by name or ID..."
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={searchTerm}
               onChange={(e) => {
@@ -132,100 +457,124 @@ export default function AdmissionPage() {
           </div>
         </div>
 
-        {/* Summary Stats */}
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <StatCard label="Total Years" value={sortedData.length} />
-          <StatCard
-            label="Total Applications"
-            value={sortedData.reduce((sum, x) => sum + x.totalApplications, 0)}
-          />
-          <StatCard
-            label="Total Payments"
-            value={sortedData.reduce((sum, x) => sum + x.paymentsDone, 0)}
-          />
-          <StatCard
-            label="Total Drafts"
-            value={sortedData.reduce((sum, x) => sum + x.drafts, 0)}
-          />
-        </div>
-
         {/* Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <Th>Sr No</Th>
-                  <Th onClick={() => handleSort("year")}>
-                    Admission Year {getSortIcon("year")}
-                  </Th>
-                  <Th onClick={() => handleSort("totalApplications")}>
-                    Applications {getSortIcon("totalApplications")}
-                  </Th>
-                  <Th onClick={() => handleSort("paymentsDone")}>
-                    Payments {getSortIcon("paymentsDone")}
-                  </Th>
-                  <Th onClick={() => handleSort("drafts")}>
-                    Drafts {getSortIcon("drafts")}
-                  </Th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedData.map((item, index) => (
-                  <tr key={item.year}>
-                    <Td>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
-                    <Td>{item.year}</Td>
-                    <Td>{item.totalApplications.toLocaleString()}</Td>
-                    <Td>
-                      {item.paymentsDone.toLocaleString()} (
-                      {Math.round(
-                        (item.paymentsDone / item.totalApplications) * 100
-                      )}
-                      %)
-                    </Td>
-                    <Td>
-                      {item.drafts.toLocaleString()} (
-                      {Math.round((item.drafts / item.totalApplications) * 100)}
-                      %)
-                    </Td>
-                  </tr>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">ID</TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort("name")}
+                  >
+                    Name
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort("formStatus")}
+                  >
+                    Form Status
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort("payment")}
+                  >
+                    Payment
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort("submittedAt")}
+                  >
+                    Submitted At
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.map((item) => (
+                  <TableRow key={item.id} className="hover:bg-gray-50">
+                    <TableCell className="font-medium">{item.id}</TableCell>
+                    <TableCell>{item.name}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          item.formStatus === "Submitted"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {item.formStatus}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          item.payment === "Paid"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {item.payment}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(item.submittedAt).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="p-4 flex justify-between items-center">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="text-sm px-4 py-2 border rounded disabled:opacity-50"
-              >
-                <ChevronLeft className="w-4 h-4 inline" /> Prev
-              </button>
-              <div className="flex gap-2">
-                {getPageNumbers().map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`text-sm px-3 py-1 border rounded ${
-                      currentPage === page ? "bg-blue-100 text-blue-700" : ""
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+            <div className="p-4 flex flex-col sm:flex-row justify-between items-center border-t border-gray-200">
+              <div className="mb-2 sm:mb-0">
+                <span className="text-sm text-gray-700">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                  {Math.min(currentPage * itemsPerPage, filteredData.length)} of{" "}
+                  {filteredData.length} entries
+                </span>
               </div>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-                className="text-sm px-4 py-2 border rounded disabled:opacity-50"
-              >
-                Next <ChevronRight className="w-4 h-4 inline" />
-              </button>
+              <Pagination className="justify-end">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => {
+                        if (currentPage !== 1) {
+                          setCurrentPage((p) => Math.max(1, p - 1));
+                        }
+                      }}
+                      aria-disabled={currentPage === 1}
+                      tabIndex={currentPage === 1 ? -1 : 0}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+
+                  {getPaginationItems()}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => {
+                        if (currentPage !== totalPages) {
+                          setCurrentPage((p) => Math.min(totalPages, p + 1));
+                        }
+                      }}
+                      aria-disabled={currentPage === totalPages}
+                      tabIndex={currentPage === totalPages ? -1 : 0}
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
         </div>
@@ -234,32 +583,51 @@ export default function AdmissionPage() {
   );
 }
 
-const StatCard = ({ label, value }: { label: string; value: number }) => (
-  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+const StatCard = ({
+  label,
+  value,
+  bgColor = "bg-white",
+  textColor = "text-gray-900",
+}: {
+  label: string;
+  value: number;
+  bgColor?: string;
+  textColor?: string;
+}) => (
+  <div className={`${bgColor} p-4 rounded-lg shadow-sm border border-gray-200`}>
     <div className="text-sm font-medium text-gray-500">{label}</div>
-    <div className="text-2xl font-bold text-gray-900">
+    <div className={`text-2xl font-bold ${textColor}`}>
       {value.toLocaleString()}
     </div>
   </div>
 );
 
-const Th = ({
-  children,
-  onClick,
+const FilterSelect = ({
+  label,
+  options,
+  value,
+  onChange,
 }: {
-  children: React.ReactNode;
-  onClick?: () => void;
+  label: string;
+  options: any[];
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }) => (
-  <th
-    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-    onClick={onClick}
-  >
-    {children}
-  </th>
-);
-
-const Td = ({ children }: { children: React.ReactNode }) => (
-  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-    {children}
-  </td>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {label}
+    </label>
+    <select
+      value={value}
+      onChange={onChange}
+      className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    >
+      <option value="">All</option>
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  </div>
 );
