@@ -1,14 +1,25 @@
 import dbPostgres from "@/db";
 import { admissionGeneralInfo, AdmissionGeneralInfo } from "@/db/schema";
 import { and, eq, ilike } from "drizzle-orm";
+import bcrypt from "bcrypt";
+import { findAdmissionById } from "./admission.service";
+import { findApplicationFormById } from "./application-form.service";
 
-export async function createGeneralInfo(generalInfo: AdmissionGeneralInfo) {
+const JWT_SECRET = process.env.JWT_SECRET;
+
+export async function createGeneralInfo(generalInfo: Omit<AdmissionGeneralInfo, "id" | "createdAt" | "updatedAt">) {
     const existingEntry = await checkExistingEntry(generalInfo);
     if (existingEntry) {
         return { generalInfo: existingEntry, message: "General info already exists for this student." };
     }
+    // Encrypt the password
+    const hashedPassword = await bcrypt.hash(generalInfo.password, 10);
+
     const [newGeneralInfo] = await dbPostgres
-        .insert(admissionGeneralInfo)
+        .insert({
+            ...admissionGeneralInfo,
+            password: hashedPassword
+        })
         .values(generalInfo)
         .returning();
 
@@ -16,6 +27,29 @@ export async function createGeneralInfo(generalInfo: AdmissionGeneralInfo) {
         generalInfo: newGeneralInfo, message: "New General Info Created!"
     }
 
+}
+
+export async function findByLoginIdAndPassword(mobileNumber: string, password: string) {
+    const users = await dbPostgres
+        .select()
+        .from(admissionGeneralInfo)
+        .where(ilike(admissionGeneralInfo.mobileNumber, mobileNumber.trim()));
+
+    if (users.length === 0) {
+        return null;
+    }
+
+    for (const user of users) {
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (isPasswordValid) {
+            // Fetch the application-form entry
+            const applicationForm = await findApplicationFormById(user.applicationFormId)
+
+            return { generalInfo: user, applicationForm };
+        }
+    }
+
+    return null; // If no matching password found
 }
 
 export async function findGeneralInfoById(id: number) {

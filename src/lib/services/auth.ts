@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
 import { Student } from '@/types/academics/student';
 import { findStudentByEmail, findStudentByUid } from './student.service';
+import { ApplicationFormDto } from '@/types/admissions';
 
 // JWT Secret should be in environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
@@ -128,6 +129,25 @@ export function setAuthCookies(tokens: AuthTokens) {
     return response;
 }
 
+export function setApplicationFormCookies(applicationFormId: number) {
+    const response = new NextResponse(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+    });
+
+    response.cookies.set({
+        name: 'applicationForm',
+        value: String(applicationFormId),
+        httpOnly: true,
+        secure: false,
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+        path: '/',
+    });
+
+    return response;
+}
+
 // Clear auth cookies
 export async function clearAuthCookies() {
     const cookieStore = await cookies();
@@ -147,6 +167,7 @@ export async function getUserByUid(uid: string): Promise<Student | null> {
     if (uid === 'admin') {
         return {
             id: 0,
+            tmpApplicationId: null,
             name: 'Admin',
             codeNumber: 'admin',
             institutionalemail: 'admin@example.com',

@@ -2,6 +2,10 @@ import { Nationality } from "../resources/nationality";
 
 export type DbStudent = {
     readonly id?: number;
+    
+
+    tmpApplicationId: number | null;
+
     mailingPinNo: string | undefined;
     resiPinNo: string | undefined;
     admissionYear: number | undefined;

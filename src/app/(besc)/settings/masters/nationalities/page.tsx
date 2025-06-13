@@ -1,7 +1,14 @@
-'use client';
+"use client";
 
-import React, { useState, useTransition, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useTransition,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { Button } from "@/components/ui/button";
+// import * as XLSX from "xlsx";
 import {
   Table,
   TableBody,
@@ -10,26 +17,38 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Pencil, Upload, Download, Loader2, FileText, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
-import { AddNationalityDialog } from './nationality-dialog';
+import {
+  Pencil,
+  Upload,
+  Download,
+  Loader2,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+} from "lucide-react";
+import { AddNationalityDialog } from "./nationality-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import * as XLSX from 'xlsx';
-import { uploadNationalitiesFromFile } from './actions'; // Keep upload for now
-import { NationalityService, type ApiResponse } from '@/services/nationality.service';
+import * as XLSX from "xlsx";
+import { uploadNationalitiesFromFile } from "./actions"; // Keep upload for now
+import {
+  NationalityService,
+  type ApiResponse,
+} from "@/services/nationality.service";
 
 interface Nationality {
-    id: number; // Changed to number based on schema
-    name: string;
-    sequence?: number | null; // Added optional sequence and code
-    code?: number | null;
-    createdAt: string; // Assuming string format from API
-    updatedAt: string; // Assuming string format from API
+  id: number; // Changed to number based on schema
+  name: string;
+  sequence?: number | null; // Added optional sequence and code
+  code?: number | null;
+  createdAt: string; // Assuming string format from API
+  updatedAt: string; // Assuming string format from API
 }
 
 const ITEMS_PER_PAGE = 10;
-const REQUIRED_HEADERS = ['name', 'sequence', 'code']; // Updated required headers
+const REQUIRED_HEADERS = ["name", "sequence", "code"]; // Updated required headers
 
 export default function NationalitiesPage() {
   const [data, setData] = useState<Nationality[]>([]);
@@ -40,7 +59,8 @@ export default function NationalitiesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [editingNationality, setEditingNationality] = useState<Nationality | null>(null);
+  const [editingNationality, setEditingNationality] =
+    useState<Nationality | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -60,7 +80,8 @@ export default function NationalitiesPage() {
     } else {
       toast({
         title: "Error fetching nationalities",
-        description: response.message || "An error occurred while fetching data.",
+        description:
+          response.message || "An error occurred while fetching data.",
         variant: "destructive",
       });
     }
@@ -72,17 +93,14 @@ export default function NationalitiesPage() {
   }, [fetchNationalities]);
 
   const downloadTemplate = () => {
-    const sampleData = [
-      REQUIRED_HEADERS,
-      ['Sample Nationality', 1, 101],
-    ];
+    const sampleData = [REQUIRED_HEADERS, ["Sample Nationality", 1, 101]];
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(sampleData);
 
-    XLSX.utils.book_append_sheet(wb, ws, 'Nationality Template');
+    XLSX.utils.book_append_sheet(wb, ws, "Nationality Template");
 
-    XLSX.writeFile(wb, 'nationality_template.xlsx');
+    XLSX.writeFile(wb, "nationality_template.xlsx");
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,16 +111,17 @@ export default function NationalitiesPage() {
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: 'array' });
+          const workbook = XLSX.read(data, { type: "array" });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+            header: 1,
+          }) as any[][];
 
           if (jsonData.length > 1) {
             setNumberOfEntries(jsonData.length - 1);
           } else {
             setNumberOfEntries(0);
           }
-
         } catch (error) {
           console.error("Error reading file for entry count:", error);
           setSelectedFile(null);
@@ -127,17 +146,23 @@ export default function NationalitiesPage() {
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: 'array' });
+          const workbook = XLSX.read(data, { type: "array" });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
-          const headers = (jsonData[0] as string[]).map(h => h.trim());
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+            header: 1,
+          }) as any[][];
+          const headers = (jsonData[0] as string[]).map((h) => h.trim());
 
-          const missingHeaders = REQUIRED_HEADERS.filter(h => !headers.includes(h));
+          const missingHeaders = REQUIRED_HEADERS.filter(
+            (h) => !headers.includes(h)
+          );
 
           if (missingHeaders.length > 0) {
             toast({
               title: "Invalid File Format",
-              description: `Missing required headers: ${missingHeaders.join(', ')}`,
+              description: `Missing required headers: ${missingHeaders.join(
+                ", "
+              )}`,
               variant: "destructive",
             });
             resolve(false);
@@ -157,9 +182,12 @@ export default function NationalitiesPage() {
     });
   };
 
-  const handleUploadSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleUploadSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
     console.log("Upload button clicked");
+
     if (!selectedFile) {
       console.log("No file selected");
       toast({
@@ -177,37 +205,70 @@ export default function NationalitiesPage() {
       return;
     }
 
-    console.log("File valid, preparing formData...");
-    const formData = new FormData();
-    formData.append('file', selectedFile);
+    const reader = new FileReader();
 
-    console.log("Starting upload transition...");
-    startUploadTransition(async () => {
-      console.log("Inside upload transition, calling uploadNationalitiesFromFile...");
-      // Using the existing server action for upload for now
-      const result = await uploadNationalitiesFromFile(formData);
-      console.log("uploadNationalitiesFromFile result:", result);
-      if (!result.success) {
-        console.error("Upload failed with error:", result.error);
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const nationalities = XLSX.utils.sheet_to_json(worksheet, {
+          defval: "",
+        });
+
+        console.log("Parsed nationalities:", nationalities);
+
+        console.log("Starting upload transition...");
+        startUploadTransition(async () => {
+          for (const nationality of nationalities) {
+            const response = await fetch("/api/nationalities", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(nationality),
+            });
+            const data = await response.json();
+            console.log(data);
+
+            if (!response.ok) {
+              const error = await response.json();
+              console.error("Upload error:", error);
+              toast({
+                title: "Upload Failed",
+                description:
+                  error.message || "An error occurred during upload.",
+                variant: "destructive",
+              });
+              return;
+            }
+          }
+
+          console.log("All nationalities uploaded successfully");
+          toast({
+            title: "Upload Successful",
+            description: "Nationalities have been uploaded successfully",
+          });
+
+          setSelectedFile(null);
+          setNumberOfEntries(0);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          fetchNationalities(); // Refresh data after upload
+        });
+      } catch (error) {
+        console.error("Error processing file:", error);
         toast({
-          title: "Upload Failed",
-          description: result.error || "An error occurred during upload.",
+          title: "Processing Error",
+          description: "Failed to read the Excel file",
           variant: "destructive",
         });
-      } else {
-        console.log("Upload successful");
-        toast({
-          title: "Upload Successful",
-          description: "Nationalities have been uploaded successfully",
-        });
-        setSelectedFile(null);
-        setNumberOfEntries(0);
-        if(fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        fetchNationalities(); // Refresh data after upload
       }
-    });
+    };
+
+    reader.readAsArrayBuffer(selectedFile);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -238,12 +299,16 @@ export default function NationalitiesPage() {
           });
         }
       } else if (!response.success) {
-         console.error("Download failed with error from service:", response.error);
-         toast({
-           title: "Download Failed",
-           description: response.message || "Failed to fetch nationalities for download.",
-           variant: "destructive",
-         });
+        console.error(
+          "Download failed with error from service:",
+          response.error
+        );
+        toast({
+          title: "Download Failed",
+          description:
+            response.message || "Failed to fetch nationalities for download.",
+          variant: "destructive",
+        });
       }
     });
   };
@@ -285,43 +350,72 @@ export default function NationalitiesPage() {
   return (
     <div className="container mx-auto px-4">
       <div className="flex flex-col gap-4 mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Nationalities Management</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Nationalities Management
+        </h1>
         <div className="flex flex-wrap justify-between items-center gap-3">
-           <div className="flex items-center gap-2">
-             <form onSubmit={handleUploadSubmit} className="flex items-center gap-2">
-                <Label htmlFor="upload-file" className="cursor-pointer bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200 flex items-center gap-2">
-                    <Upload size={20} />
-                    Select File
-                </Label>
-                <Input
-                  id="upload-file"
-                  type="file"
-                  accept=".xlsx, .xls"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  ref={fileInputRef}
-                />
-                {selectedFile && (
-                  <span className="text-gray-700 text-sm">{selectedFile.name} ({numberOfEntries} entries)</span>
+          <div className="flex items-center gap-2">
+            <form
+              onSubmit={handleUploadSubmit}
+              className="flex items-center gap-2"
+            >
+              <Label
+                htmlFor="upload-file"
+                className="cursor-pointer bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200 flex items-center gap-2"
+              >
+                <Upload size={20} />
+                Select File
+              </Label>
+              <Input
+                id="upload-file"
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleFileSelect}
+                className="hidden"
+                ref={fileInputRef}
+              />
+              {selectedFile && (
+                <span className="text-gray-700 text-sm">
+                  {selectedFile.name} ({numberOfEntries} entries)
+                </span>
+              )}
+              <Button
+                type="submit"
+                className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
+                disabled={!selectedFile || isPendingUpload}
+              >
+                {isPendingUpload ? (
+                  <Loader2 size={20} className="animate-spin" />
+                ) : (
+                  <Upload size={20} />
                 )}
-                 <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2" disabled={!selectedFile || isPendingUpload}>
-                  {isPendingUpload ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
-                  Upload
-                </Button>
-             </form>
-           </div>
-           <div className="flex items-center gap-2">
-              <Button className="bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-2" onClick={handleDownloadClick} disabled={isPendingDownload || data.length === 0}>
-                  {isPendingDownload ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
-                  Download All
+                Upload
               </Button>
-             <Button className="bg-gray-500 hover:bg-gray-600 text-white flex items-center gap-2" onClick={downloadTemplate}>
-                <FileText size={20} />
-                Download Template
-             </Button>
-             {/* Add Nationality Dialog Trigger */}
-             <AddNationalityDialog onSuccess={handleAddSuccess} />
-           </div>
+            </form>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              className="bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-2"
+              onClick={handleDownloadClick}
+              disabled={isPendingDownload || data.length === 0}
+            >
+              {isPendingDownload ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                <Download size={20} />
+              )}
+              Download All
+            </Button>
+            <Button
+              className="bg-gray-500 hover:bg-gray-600 text-white flex items-center gap-2"
+              onClick={downloadTemplate}
+            >
+              <FileText size={20} />
+              Download Template
+            </Button>
+            {/* Add Nationality Dialog Trigger */}
+            <AddNationalityDialog onSuccess={handleAddSuccess} />
+          </div>
         </div>
       </div>
 
@@ -340,29 +434,55 @@ export default function NationalitiesPage() {
                 <TableHead className="text-gray-700">Code</TableHead>
                 <TableHead className="text-gray-700">Created At</TableHead>
                 <TableHead className="text-gray-700">Updated At</TableHead>
-                <TableHead className="text-gray-700 text-right">Actions</TableHead>
+                <TableHead className="text-gray-700 text-right">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500">No nationalities found.</TableCell>
+                  <TableCell colSpan={7} className="text-center text-gray-500">
+                    No nationalities found.
+                  </TableCell>
                 </TableRow>
               ) : (
                 paginatedData.map((nationality) => (
                   <TableRow key={nationality.id} className="hover:bg-gray-50">
-                    <TableCell className="font-medium text-gray-700">{nationality.id}</TableCell>
-                    <TableCell className="text-gray-700">{nationality.name}</TableCell>
-                    <TableCell className="text-gray-700">{nationality.sequence ?? 'N/A'}</TableCell>
-                    <TableCell className="text-gray-700">{nationality.code ?? 'N/A'}</TableCell>
-                    <TableCell className="text-gray-700">{new Date(nationality.createdAt).toLocaleString()}</TableCell>
-                    <TableCell className="text-gray-700">{new Date(nationality.updatedAt).toLocaleString()}</TableCell>
+                    <TableCell className="font-medium text-gray-700">
+                      {nationality.id}
+                    </TableCell>
+                    <TableCell className="text-gray-700">
+                      {nationality.name}
+                    </TableCell>
+                    <TableCell className="text-gray-700">
+                      {nationality.sequence ?? "N/A"}
+                    </TableCell>
+                    <TableCell className="text-gray-700">
+                      {nationality.code ?? "N/A"}
+                    </TableCell>
+                    <TableCell className="text-gray-700">
+                      {new Date(nationality.createdAt).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-gray-700">
+                      {new Date(nationality.updatedAt).toLocaleString()}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => handleEdit(nationality)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-gray-100"
+                          onClick={() => handleEdit(nationality)}
+                        >
                           <Pencil className="h-4 w-4 text-blue-500" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => handleDelete(nationality.id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-gray-100"
+                          onClick={() => handleDelete(nationality.id)}
+                        >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
@@ -402,12 +522,13 @@ export default function NationalitiesPage() {
       {editingNationality && (
         <AddNationalityDialog
           open={!!editingNationality}
-          onOpenChange={(open) => {!open && setEditingNationality(null)}}
+          onOpenChange={(open) => {
+            !open && setEditingNationality(null);
+          }}
           onSuccess={handleEditSuccess}
           initialData={editingNationality}
         />
       )}
-
     </div>
   );
 }

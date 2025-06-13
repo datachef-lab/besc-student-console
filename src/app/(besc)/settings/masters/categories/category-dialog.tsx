@@ -1,24 +1,34 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useFormStatus } from 'react-dom';
-import { Loader2, Trash2 } from 'lucide-react';
-import { addCategory, deleteCategory, AddCategoryResult } from './actions'; // Import actions
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useFormStatus } from "react-dom";
+import { Loader2, Trash2 } from "lucide-react";
+import { addCategory, deleteCategory, AddCategoryResult } from "./actions"; // Import actions
+import { Category } from "@/db/schema";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // --- Add/Edit Category Dialog ---
 interface AddCategoryDialogProps {
-  initialData?: {
-    id: string;
-    name: string;
-  };
+  initialData?: Category;
   trigger?: React.ReactNode;
 }
 
-export function AddCategoryDialog({ initialData, trigger }: AddCategoryDialogProps) {
+export function AddCategoryDialog({
+  initialData,
+  trigger,
+}: AddCategoryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
 
@@ -26,7 +36,7 @@ export function AddCategoryDialog({ initialData, trigger }: AddCategoryDialogPro
     setError(undefined); // Clear previous errors
     // If initialData exists, add the ID for update action (adjust action accordingly)
     if (initialData) {
-      formData.append('id', initialData.id);
+      formData.append("id", String(initialData!.id));
     }
     const result: AddCategoryResult = await addCategory(formData);
     if (!result.success) {
@@ -39,11 +49,13 @@ export function AddCategoryDialog({ initialData, trigger }: AddCategoryDialogPro
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        {trigger || <Button>{initialData ? 'Edit' : 'Add Category'}</Button>}
+        {trigger || <Button>{initialData ? "Edit" : "Add Category"}</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Edit Category' : 'Add New Category'}</DialogTitle>
+          <DialogTitle>
+            {initialData ? "Edit Category" : "Add New Category"}
+          </DialogTitle>
         </DialogHeader>
         <form action={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -51,19 +63,45 @@ export function AddCategoryDialog({ initialData, trigger }: AddCategoryDialogPro
               <Label htmlFor="name" className="text-right">
                 Category Name
               </Label>
-              <Input 
-                id="name" 
-                name="name" 
-                defaultValue={initialData?.name} 
-                className="col-span-3" 
-                required 
+              <Input
+                id="name"
+                name="name"
+                defaultValue={initialData?.name}
+                className="col-span-3"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Code
+              </Label>
+              <Input
+                id="code"
+                name="code"
+                defaultValue={initialData?.code}
+                className="col-span-3"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Is Document Required?
+              </Label>
+              <input type="hidden" name="documentRequired" value="false" />
+              <Checkbox
+                name="documentRequired"
+                value="true"
+                defaultChecked={!!initialData?.documentRequired}
+                className="col-span-3"
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
             </DialogClose>
             <SubmitButton />
           </DialogFooter>
@@ -83,7 +121,7 @@ function SubmitButton() {
           Saving...
         </>
       ) : (
-        'Save changes'
+        "Save changes"
       )}
     </Button>
   );
@@ -94,7 +132,9 @@ interface DeleteCategoryDialogProps {
   categoryId: string;
 }
 
-export function DeleteCategoryDialog({ categoryId }: DeleteCategoryDialogProps) {
+export function DeleteCategoryDialog({
+  categoryId,
+}: DeleteCategoryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -128,20 +168,26 @@ export function DeleteCategoryDialog({ categoryId }: DeleteCategoryDialogProps) 
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline" disabled={isDeleting}>Cancel</Button>
+            <Button type="button" variant="outline" disabled={isDeleting}>
+              Cancel
+            </Button>
           </DialogClose>
-          <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
             {isDeleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Deleting...
               </>
             ) : (
-              'Delete'
+              "Delete"
             )}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-} 
+}

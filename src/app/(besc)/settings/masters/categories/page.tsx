@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
-import { uploadCategoriesFromFile, downloadCategories } from './actions';
+import { uploadCategoriesFromFile, downloadCategories, fetchCategories as getCategories } from './actions';
 
 // Assuming a type definition for Category exists (adjust import path if needed)
 interface Category { // Placeholder type, replace with actual schema type if available
@@ -60,6 +60,7 @@ export default function CategoriesPage() {
   // Function to fetch paginated categories from the API
   const fetchCategories = async (page: number, limit: number) => {
     setLoading(true);
+    const arr = await getCategories()
     try {
       // Assuming your API endpoint for categories is /api/categories and supports pagination via query params
       const response = await fetch(`/api/categories?page=${page}&limit=${limit}`);

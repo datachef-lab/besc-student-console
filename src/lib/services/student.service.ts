@@ -49,6 +49,10 @@ export async function findStudentByEmail(email: string): Promise<Student | null>
     }
 }
 
+export async function findStudentByApplicationId(applicationId: number): Promise<Student | null> {
+    return null;
+}
+
 export async function findStudentByUid(uid: string): Promise<Student | null> {
     try {
         // Don't log the function itself

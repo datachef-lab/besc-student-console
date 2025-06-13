@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
             console.log("Admin login successful");
             const tokens = generateTokens({
                 id: 0,
+                tmpApplicationId: null,
                 name: 'Admin',
                 codeNumber: 'admin',
                 institutionalemail: 'admin@example.com',
