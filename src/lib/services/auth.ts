@@ -56,6 +56,7 @@ export function generateTokens(user: Student): AuthTokens {
     return { accessToken, refreshToken };
 }
 
+
 // Verify JWT access token
 export function verifyAccessToken(token: string): TokenPayload | null {
     try {
@@ -78,28 +79,7 @@ export function verifyRefreshToken(token: string): TokenPayload | null {
     }
 }
 
-// Set auth cookies
-// export async function setAuthCookies(tokens: AuthTokens, response: ) {
-//     const cookieStore = await cookies();
 
-//     // Set refresh token in HTTP-only cookie for security
-//     cookieStore.set('refreshToken', tokens.refreshToken, {
-//         httpOnly: true,
-//         secure: false,
-//         sameSite: 'strict',
-//         maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
-//         path: '/'
-//     });
-
-//     // Just for fallback/compatibility, not the main storage method
-//     cookieStore.set('accessToken', tokens.accessToken, {
-//         httpOnly: true,
-//         secure: false,
-//         sameSite: 'strict',
-//         maxAge: 60 * 60, // 15 minutes in seconds
-//         path: '/'
-//     });
-// }
 export function setAuthCookies(tokens: AuthTokens) {
     const response = new NextResponse(JSON.stringify({ success: true }), {
         status: 200,
@@ -129,7 +109,27 @@ export function setAuthCookies(tokens: AuthTokens) {
     return response;
 }
 
-export function setApplicationFormCookies(applicationFormId: number) {
+// Generate JWT tokens
+export function generateApplicationFormToken(applicationForm: ApplicationFormDto): string {
+    const payload = { applicationForm };
+
+    const applicationFormToken = jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+
+    return applicationFormToken;
+}
+
+// Verify application-form
+export function verifyApplicationForm(applicationFormToken: string): ApplicationFormDto | null {
+    try {
+        const decoded = jwt.verify(applicationFormToken, JWT_REFRESH_SECRET) as { applicationForm: ApplicationFormDto };
+        return decoded.applicationForm;
+    } catch (error) {
+        console.log(error)
+        return null;
+    }
+}
+
+export function setApplicationFormCookies(applicationFormToken: string) {
     const response = new NextResponse(JSON.stringify({ success: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -137,7 +137,7 @@ export function setApplicationFormCookies(applicationFormId: number) {
 
     response.cookies.set({
         name: 'applicationForm',
-        value: String(applicationFormId),
+        value: applicationFormToken,
         httpOnly: true,
         secure: false,
         sameSite: 'strict',

@@ -35,6 +35,7 @@ export async function GET() {
         if (payload.uid === 'admin' || payload.isAdmin) {
             user = {
                 id: 0,
+                tmpApplicationId: null,
                 name: 'Admin',
                 codeNumber: 'admin',
                 institutionalemail: 'admin@example.com',
