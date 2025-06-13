@@ -33,6 +33,8 @@ export interface ApplicationFormContextType {
   setApplicationForm: React.Dispatch<
     React.SetStateAction<ApplicationFormDto | null>
   >;
+  login: (mobileNumber: string, password: string) => Promise<void>;
+  admission: Admission;
   displayFlag: boolean;
   isLoading: boolean;
 }
@@ -48,7 +50,7 @@ interface ApplicationFormProviderProps {
 
 export const ApplicationFormProvider: React.FC<
   ApplicationFormProviderProps
-> = ({ children }) => {
+> = ({ children, admission }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [displayFlag, setDisplayFlag] = useState(false);
   const [applicationForm, setApplicationForm] =
@@ -63,20 +65,42 @@ export const ApplicationFormProvider: React.FC<
     return () => clearTimeout(timeout);
   }, []);
 
-  type LoginCred = {
-    accessToken: string;
-    user: Student;
-    accessControl: StudentAccessControl;
+  const login = async (mobileNumber: string, password: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axiosInstance.post<
+        LoginCred | { applicationForm: ApplicationFormDto }
+      >("/api/auth/admission-form-login", {
+        loginId: mobileNumber,
+        password,
+      });
+
+      const data = response.data;
+
+      if ("accessToken" in data && "user" in data) {
+        router.push("/dashboard"); // Fully authenticated student
+        return;
+      }
+
+      if ("applicationForm" in data) {
+        setApplicationForm(data.applicationForm);
+      }
+    } catch (error: any) {
+      console.error("Login failed:", error?.response?.data || error.message);
+      throw new Error("Invalid credentials or login error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const fetchApplicationForm =
+  const fetchApplicationFormRefresh =
     useCallback(async (): Promise<ApplicationFormDto | null> => {
       if (!pathname.startsWith("/admissions")) return null;
 
       try {
         const response = await axiosInstance.get<
           LoginCred | { applicationForm: ApplicationFormDto }
-        >("/api/auth/admission-form-login/refresh", { withCredentials: true });
+        >("/api/auth/admission-refresh", { withCredentials: true });
 
         console.log("Token refresh response received");
 
@@ -90,7 +114,10 @@ export const ApplicationFormProvider: React.FC<
         }
 
         if ("applicationForm" in data) {
-          setApplicationForm(data.applicationForm);
+          setApplicationForm({
+            ...data.applicationForm,
+            admissionId: admission.id!,
+          });
           return data.applicationForm;
         }
 
@@ -105,13 +132,15 @@ export const ApplicationFormProvider: React.FC<
 
   useEffect(() => {
     if (!applicationForm) {
-      fetchApplicationForm();
+      fetchApplicationFormRefresh();
     }
-  }, [applicationForm, pathname, fetchApplicationForm]);
+  }, [applicationForm, pathname, fetchApplicationFormRefresh]);
 
   const contextValue: ApplicationFormContextType = {
     applicationForm,
     setApplicationForm,
+    login,
+    admission,
     displayFlag,
     isLoading,
   };
