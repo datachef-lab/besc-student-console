@@ -5,6 +5,7 @@ import { AuthProvider } from "@/providers/auth-provider";
 // It sets up the database shutdown handlers in the Node.js environment
 import { setupDatabaseShutdownHandlers } from "@/lib/setup-db-handlers";
 import { ToastProvider } from "@/components/ui/toast-provider";
+import { Toaster } from "sonner";
 
 // Initialize database shutdown handlers in Node.js environment
 // This is wrapped in a try-catch because it will error in
@@ -47,6 +48,7 @@ export default function RootLayout({
         <ToastProvider>
           <AuthProvider>{children}</AuthProvider>
         </ToastProvider>
+        <Toaster />
       </body>
     </html>
   );

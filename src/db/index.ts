@@ -1,14 +1,15 @@
 import dotenv from 'dotenv';
 import { drizzle } from 'drizzle-orm/mysql2';
 import { createPool, type Pool, type PoolConnection, type RowDataPacket } from 'mysql2/promise';
-import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js';
+import { drizzle as drizzlePostgres, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import * as schema from "./schema"; // Import your schema
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });
 
-const dbPostgres = drizzlePostgres(process.env.DATABASE_URL!);
+const dbPostgres: PostgresJsDatabase<typeof schema> = drizzlePostgres(process.env.DATABASE_URL!, { schema });
 
-// Connection configuration
+// Connection configuration for MySQL (assuming it's still used elsewhere)
 const dbConfig = {
     host: process.env.DB_HOST!,
     port: parseInt(process.env.DB_PORT!, 10),
@@ -22,21 +23,21 @@ const dbConfig = {
     keepAliveInitialDelay: 10000,
 };
 
-// Create a global pool that can be reused
+// Create a global pool that can be reused for MySQL
 let pool: Pool;
 let db: ReturnType<typeof drizzle>;
 
-// Initialize pool right away
+// Initialize MySQL pool right away
 try {
     pool = createPool(dbConfig);
     db = drizzle(pool);
-    console.log('Database pool created');
+    console.log('MySQL Database pool created');
 } catch (error) {
-    console.error('Failed to create database pool:', error);
-    throw error;
+    console.error('Failed to create MySQL database pool:', error);
+    // Do not throw here if MySQL is optional/not critical for all operations
 }
 
-// Simple query function that properly returns results
+// Simple query function for MySQL
 export async function query<T extends RowDataPacket[]>(
     sql: string,
     values?: unknown[]
@@ -44,6 +45,7 @@ export async function query<T extends RowDataPacket[]>(
     let connection: PoolConnection | null = null;
 
     try {
+        if (!pool) throw new Error("MySQL pool not initialized");
         // Get connection from the pool
         connection = await pool.getConnection();
 
@@ -53,7 +55,7 @@ export async function query<T extends RowDataPacket[]>(
         // Return just the results (not the fields info)
         return results;
     } catch (error) {
-        console.error('Query execution error:', error);
+        console.error('MySQL Query execution error:', error);
         throw error;
     } finally {
         // Always release the connection back to the pool
@@ -74,5 +76,4 @@ export async function query<T extends RowDataPacket[]>(
 // The process listeners will be set up in a separate file that's only
 // loaded in a Node.js environment (not in Edge functions/middleware)
 
-export { pool, db };
-export default dbPostgres;
+export { pool, db, dbPostgres };

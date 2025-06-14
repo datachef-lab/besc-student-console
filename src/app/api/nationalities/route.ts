@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { nationality } from '@/db/schema';
 import { eq, ilike } from 'drizzle-orm';
 import { z } from 'zod';
-import dbPostgres from '@/db';
+import {dbPostgres} from '@/db/index';
 
 const nationalitySchema = z.object({
     id: z.number().optional(),

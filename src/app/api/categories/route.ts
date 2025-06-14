@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import dbPostgres from '@/db';
+import {dbPostgres} from '@/db';
 import { categories } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';

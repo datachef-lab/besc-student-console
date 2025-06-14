@@ -1,4 +1,4 @@
-import dbPostgres from "@/db";
+import {dbPostgres} from "@/db";
 import { admissionGeneralInfo, AdmissionGeneralInfo } from "@/db/schema";
 import { and, eq, ilike } from "drizzle-orm";
 import bcrypt from "bcrypt";

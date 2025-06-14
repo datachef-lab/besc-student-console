@@ -7,6 +7,12 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Plus,
+  Users,
+  CheckCircle,
+  DollarSign,
+  FileText,
+  IndianRupee,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +24,27 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import CreateAdmissionDialog from "./components/create-admission-dialog";
+import AdmissionsStats from "./components/admissions-stats";
+
+interface AdmissionData {
+  id: number;
+  admissionYear: number;
+  totalApplications: number;
+  totalPayments: number;
+  totalDrafts: number;
+  isClosed: boolean;
+}
+
+export interface Stats {
+  admissionYearCount: number;
+  totalApplications: number;
+  totalPayments: number;
+  totalDrafts: number;
+}
 
 export default function AdmissionsPage() {
   // to set the document title
@@ -25,40 +52,69 @@ export default function AdmissionsPage() {
     document.title = "Admissions Dashboard";
   }, []);
 
-  const mockData = [
-    { year: 2024, totalApplications: 1250, paymentsDone: 980, drafts: 270 },
-    { year: 2023, totalApplications: 1180, paymentsDone: 920, drafts: 260 },
-    { year: 2022, totalApplications: 1050, paymentsDone: 850, drafts: 200 },
-    { year: 2021, totalApplications: 950, paymentsDone: 780, drafts: 170 },
-    { year: 2020, totalApplications: 890, paymentsDone: 720, drafts: 170 },
-    { year: 2019, totalApplications: 820, paymentsDone: 650, drafts: 170 },
-    { year: 2018, totalApplications: 750, paymentsDone: 590, drafts: 160 },
-    { year: 2017, totalApplications: 680, paymentsDone: 530, drafts: 150 },
-    { year: 2016, totalApplications: 620, paymentsDone: 480, drafts: 140 },
-    { year: 2015, totalApplications: 580, paymentsDone: 450, drafts: 130 },
-    { year: 2014, totalApplications: 520, paymentsDone: 400, drafts: 120 },
-    { year: 2013, totalApplications: 480, paymentsDone: 370, drafts: 110 },
-  ];
-
+  const [data, setData] = useState<AdmissionData[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [toggleAdmCloseLoading, setToggleAdmLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const router = useRouter();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{
-    key: keyof (typeof mockData)[0];
+    key: keyof AdmissionData;
     direction: "asc" | "desc";
   }>({
-    key: "year",
+    key: "admissionYear",
     direction: "desc",
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newAdmissionYear, setNewAdmissionYear] = useState<number>(
+    new Date().getFullYear()
+  );
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `/api/admissions?page=${currentPage}&size=${itemsPerPage}`
+      );
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to fetch data");
+      }
+
+      console.log("Fetched admissions data:", result.admissions);
+      const processedAdmissions = result.admissions.map((admission: any) => ({
+        ...admission,
+        isClosed: admission.isClosed === "true",
+      }));
+      setData(processedAdmissions);
+      setStats(result.stats);
+      setTotalItems(result.stats.admissionYearCount);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to fetch admissions data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [currentPage, itemsPerPage]);
 
   const filteredData = useMemo(() => {
-    if (!searchTerm) return mockData;
-    return mockData.filter((item) => item.year.toString().includes(searchTerm));
-  }, [searchTerm]);
+    if (!searchTerm) return data;
+    return data.filter((item) =>
+      item.admissionYear.toString().includes(searchTerm)
+    );
+  }, [data, searchTerm]);
 
   const sortedData = useMemo(() => {
     const sortableItems = [...filteredData];
@@ -76,28 +132,17 @@ export default function AdmissionsPage() {
     return sortableItems;
   }, [filteredData, sortConfig]);
 
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return sortedData.slice(startIndex, startIndex + itemsPerPage);
-  }, [sortedData, currentPage, itemsPerPage]);
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-
-  const handleSort = (key: keyof (typeof mockData)[0]): void => {
+  const handleSort = (key: keyof AdmissionData): void => {
     let direction: "asc" | "desc" = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
     }
     setSortConfig({ key, direction });
-    setCurrentPage(1);
   };
 
-  interface SortConfig {
-    key: keyof (typeof mockData)[0];
-    direction: "asc" | "desc";
-  }
-
-  const getSortIcon = (columnName: keyof (typeof mockData)[0]): JSX.Element => {
+  const getSortIcon = (columnName: keyof AdmissionData): JSX.Element => {
     if (sortConfig.key === columnName) {
       return sortConfig.direction === "asc" ? (
         <ChevronUp className="w-4 h-4 ml-1" />
@@ -155,110 +200,130 @@ export default function AdmissionsPage() {
     setIsDialogOpen(true);
   };
 
-  const confirmCloseAdmission = () => {
-    console.log(`Closed admission for year ${selectedYear}`);
-    setIsDialogOpen(false);
+  const confirmCloseAdmission = async () => {
+    setToggleAdmLoading(true);
+    try {
+      const admission = data.find((a) => a.admissionYear === selectedYear);
+      if (!admission) return;
+
+      const response = await fetch(`/api/admissions/close/${admission.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isClosed: !!admission.isClosed }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update admission status");
+      }
+
+      toast.success(
+        `Admission ${admission.isClosed ? "opened" : "closed"} successfully`
+      );
+      fetchData(); // Refresh the data
+    } catch (error) {
+      console.error("Error updating admission status:", error);
+      toast.error("Failed to update admission status");
+    } finally {
+      setIsDialogOpen(false);
+      setToggleAdmLoading(false);
+    }
   };
 
+  const handleCreateAdmission = async () => {
+    try {
+      const year = newAdmissionYear;
+      if (isNaN(year)) {
+        toast.error("Please enter a valid year");
+        return;
+      }
+
+      const response = await fetch("/api/admissions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ year }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create admission");
+      }
+
+      toast.success("Admission created successfully");
+      setIsCreateDialogOpen(false);
+      setNewAdmissionYear(new Date().getFullYear());
+      fetchData(); // Refresh the data
+    } catch (error: any) {
+      console.error("Error creating admission:", error);
+      toast.error(error.message || "Failed to create admission");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Admissions Data
-        </h1>
-
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search by year..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-          </div>
-
-          <div className="flex gap-2 items-center">
-            <span className="text-sm text-gray-600">Show:</span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
-            <span className="text-sm text-gray-600">entries</span>
-          </div>
+    <div className="">
+      <div className="max-w-7xl mx-auto bg-white p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Admissions Data</h1>
         </div>
 
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="text-sm font-medium text-gray-500">Total Years</div>
-            <div className="text-2xl font-bold text-gray-900">
-              {sortedData.length}
+        {stats && <AdmissionsStats stats={stats} />}
+
+        <div className="flex justify-between items-center">
+          <div className="mb-6 p-4  flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-white shadow-sm">
+            <div className="relative w-full sm:w-auto">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search by year..."
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="text-sm font-medium text-gray-500">
-              Total Applications
-            </div>
-            <div className="text-2xl font-bold text-gray-900">
-              {sortedData
-                .reduce((sum, item) => sum + item.totalApplications, 0)
-                .toLocaleString()}
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="text-sm font-medium text-gray-500">
-              Total Payments
-            </div>
-            <div className="text-2xl font-bold text-gray-900">
-              {sortedData
-                .reduce((sum, item) => sum + item.paymentsDone, 0)
-                .toLocaleString()}
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="text-sm font-medium text-gray-500">
-              Total Drafts
-            </div>
-            <div className="text-2xl font-bold text-gray-900">
-              {sortedData
-                .reduce((sum, item) => sum + item.drafts, 0)
-                .toLocaleString()}
-            </div>
-          </div>
+          <CreateAdmissionDialog
+            open={isCreateDialogOpen}
+            setOpen={setIsCreateDialogOpen}
+            onCreate={handleCreateAdmission}
+            onYearChange={(year) => setNewAdmissionYear(year)}
+            year={newAdmissionYear}
+          />
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+            <table className="w-full table-auto">
+              <thead className="bg-gray-100 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Sr No
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort("year")}
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors duration-150"
+                    onClick={() => handleSort("admissionYear")}
                   >
                     <div className="flex items-center">
                       Admission Year
-                      {getSortIcon("year")}
+                      {getSortIcon("admissionYear")}
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors duration-150"
                     onClick={() => handleSort("totalApplications")}
                   >
                     <div className="flex items-center">
@@ -267,99 +332,123 @@ export default function AdmissionsPage() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort("paymentsDone")}
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors duration-150"
+                    onClick={() => handleSort("totalPayments")}
                   >
                     <div className="flex items-center">
                       Payments Done
-                      {getSortIcon("paymentsDone")}
+                      {getSortIcon("totalPayments")}
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort("drafts")}
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors duration-150"
+                    onClick={() => handleSort("totalDrafts")}
                   >
                     <div className="flex items-center">
                       Drafts
-                      {getSortIcon("drafts")}
+                      {getSortIcon("totalDrafts")}
                     </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     <div className="flex items-center">Actions</div>
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedData.map((item, index) => (
+                {sortedData.map((item, index) => (
                   <tr
-                    key={item.year}
-                    className="hover:bg-gray-50 transition-colors"
+                    key={item.id}
+                    className="hover:bg-gray-50 transition-colors duration-150"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {item.year}
+                      {item.admissionYear}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                       {item.totalApplications.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                       <div className="flex items-center">
-                        {item.paymentsDone.toLocaleString()}
+                        {item.totalPayments.toLocaleString()}
                         <span className="ml-2 text-xs text-gray-500">
                           (
-                          {Math.round(
-                            (item.paymentsDone / item.totalApplications) * 100
-                          )}
+                          {Number(item.totalApplications) > 0
+                            ? Math.round(
+                                (Number(item.totalPayments) /
+                                  Number(item.totalApplications)) *
+                                  100
+                              )
+                            : "0"}
                           %)
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                       <div className="flex items-center">
-                        {item.drafts.toLocaleString()}
+                        {item.totalDrafts.toLocaleString()}
                         <span className="ml-2 text-xs text-gray-500">
                           (
-                          {Math.round(
-                            (item.drafts / item.totalApplications) * 100
-                          )}
+                          {Number(item.totalApplications) > 0
+                            ? Math.round(
+                                (Number(item.totalDrafts) /
+                                  Number(item.totalApplications)) *
+                                  100
+                              )
+                            : "0"}
                           %)
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap space-x-2">
-                      <Button size="sm" onClick={() => handleView(item.year)}>
+                      <Button
+                        size="sm"
+                        onClick={() => handleView(item.admissionYear)}
+                      >
                         View Details
                       </Button>
 
                       <Dialog
-                        open={isDialogOpen && selectedYear === item.year}
+                        open={
+                          isDialogOpen && selectedYear === item.admissionYear
+                        }
                         onOpenChange={setIsDialogOpen}
                       >
                         <DialogTrigger asChild>
                           <Button
-                            variant="destructive"
+                            variant={item.isClosed == false ? "ghost" : "destructive"}
                             size="sm"
-                            onClick={() => handleCloseAdmission(item.year)}
+                            disabled={
+                              new Date().getFullYear() !== item.admissionYear
+                            }
+                            onClick={() =>
+                              handleCloseAdmission(item.admissionYear)
+                            }
                           >
-                            Close Admission
+                              {Boolean(item.isClosed) == true ? "Closed?" : "Open?"}
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-md">
                           <DialogHeader>
-                            <DialogTitle>Confirm Close Admission</DialogTitle>
+                            <DialogTitle>
+                              {Boolean(item.isClosed) == false ? "Open" : "Closed"} Admission
+                            </DialogTitle>
                           </DialogHeader>
                           <div className="px-4 text-sm text-gray-600">
-                            Are you sure you want to close admissions for{" "}
-                            <strong>{item.year}</strong>?
+                            Are you sure you want to{" "}
+                            <span className="font-bold">
+                              {Boolean(item.isClosed) == false ? "open" : "close"}
+                              </span> admissions for{" "}
+                            <strong>{item.admissionYear}</strong>?
                           </div>
                           <DialogFooter>
                             <Button
-                              variant="destructive"
+                            disabled={toggleAdmCloseLoading}
+                              variant={"destructive"}
                               onClick={confirmCloseAdmission}
                             >
-                              Confirm
+                              {toggleAdmCloseLoading ? "Please wait..." : "Confirm"}
                             </Button>
                             <Button
                               variant="outline"
@@ -406,19 +495,31 @@ export default function AdmissionsPage() {
                       </span>{" "}
                       to{" "}
                       <span className="font-medium">
-                        {Math.min(
-                          currentPage * itemsPerPage,
-                          sortedData.length
-                        )}
+                        {Math.min(currentPage * itemsPerPage, totalItems)}
                       </span>{" "}
-                      of{" "}
-                      <span className="font-medium">{sortedData.length}</span>{" "}
+                      of <span className="font-medium">{totalItems}</span>{" "}
                       results
                     </p>
                   </div>
-                  <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Show:</span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <span className="text-sm text-gray-600">entries</span>
+
                     <nav
-                      className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                      className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px ml-4"
                       aria-label="Pagination"
                     >
                       <button

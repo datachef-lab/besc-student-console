@@ -1,4 +1,4 @@
-import dbPostgres from "@/db";
+import {dbPostgres} from "@/db";
 import { admissionAdditionalInfo, AdmissionAdditionalInfo } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 

@@ -298,50 +298,167 @@ import { Admission } from "@/db/schema";
 import { ApplicationFormProvider } from "@/providers/adm-application-form-provider";
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
+import { Loader2, AlertCircle } from "lucide-react";
+import Image from "next/image";
 
 export default function AdmissionFormPage() {
   const { year } = useParams<{ year: string }>();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [admission, setAdmisson] = useState<Admission | null>(null);
-
-  if (isNaN(Number(year))) {
-    return <p>Invalid Admission Year</p>;
-  }
-
-  useEffect(() => {
-    fetchAdmission();
-  }, [year]);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAdmission = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const response = await fetch(`/api/admissions/${year}`, { method: "GET" });
+      const response = await fetch(`/api/admissions/${year}`, {
+        method: "GET",
+      });
       if (!response.ok) {
-        alert("Unable to load the admission year...");
+        const errorData = await response.json();
+        setError(
+          errorData.message ||
+          "Unable to load the admission year. Please try again later."
+        );
+        setAdmisson(null);
         return;
       }
       const data = (await response.json()) as Admission;
+      console.log("adm data:", data);
       setAdmisson(data);
-    } catch (error) {
-      alert("Something went wrong while loading the admission year...");
-      return;
+    } catch (err) {
+      console.error("Error fetching admission details:", err);
+      setError(
+        "Something went wrong while loading the admission year. Please check your network connection."
+      );
+      setAdmisson(null);
     } finally {
       setIsLoading(false);
     }
   }, [year]);
 
+  useEffect(() => {
+    fetchAdmission();
+  }, [year, fetchAdmission]);
+
   if (isLoading) {
-    return <p>Loading the admission year...</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+        <div className="flex flex-col items-center text-gray-600">
+          <Loader2 className="h-10 w-10 animate-spin text-purple-600" />
+          <p className="mt-4 text-lg font-medium">
+            Loading admission details...
+          </p>
+        </div>
+      </div>
+    );
   }
 
-  if (!isLoading && !admission) {
-    return <p>Invalid Admission Year</p>;
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-lg shadow-md flex flex-col items-center">
+          <AlertCircle className="h-10 w-10 mb-4" />
+          <p className="text-lg font-semibold">Error Loading Admission</p>
+          <p className="mt-2 text-center text-sm">{error}</p>
+        </div>
+      </div>
+    );
   }
+
+  if (!admission) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 p-6 rounded-lg shadow-md flex flex-col items-center">
+          <AlertCircle className="h-10 w-10 mb-4" />
+          <p className="text-lg font-semibold">Admission Not Found</p>
+          <p className="mt-2 text-center text-sm">
+            The admission details for year {year} could not be found.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
-    <ApplicationFormProvider admission={admission!}>
-      <AdmissionForm />
-    </ApplicationFormProvider>
+    <>
+    
+    admission: {JSON.stringify(admission)}
+      {Boolean(admission.isClosed) ? (
+        <ApplicationFormProvider admission={admission}>
+          <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+            <div className="h-screen flex flex-col lg:flex-row">
+              {/* AdmissionForm will manage its own layout within this div */}
+              <AdmissionForm />
+            </div>
+          </div>
+        </ApplicationFormProvider>
+      ) : (
+        <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-purple-50 overflow-hidden">
+          <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl">
+            {/* Header Section */}
+            <div className="bg-purple-600 p-5 text-center">
+              <Image
+                src="/besc-logo.jpeg"
+                alt="BESC Logo"
+                width={70}
+                height={70}
+                className="mx-auto mb-3 rounded-full border-3 border-white shadow-lg"
+              />
+              <h1 className="text-xl font-bold text-white mb-1">The Bhawanipur Education Society College</h1>
+              <p className="text-purple-100 text-sm">Admission Portal</p>
+            </div>
+
+            {/* Main Content */}
+            <div className="p-6 text-center">
+              <div className="mb-4">
+                <Image
+                  src="/admission-close-besc.png"
+                  alt="Admission Closed"
+                  width={130}
+                  height={130}
+                  className="mx-auto animate-pulse"
+                />
+              </div>
+
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                Admission Closed for {year}
+              </h2>
+
+              <div className="space-y-3 text-gray-600 text-sm">
+                <p>
+                  We regret to inform you that the admission process for the academic year {year} has been closed.
+                </p>
+
+                <div className="bg-purple-50 rounded-lg p-3 mt-4">
+                  <h3 className="font-semibold text-purple-800 mb-1">Need Assistance?</h3>
+                  <div className="mt-1 space-y-0.5">
+                    <p>📞 Phone: +91-XXXXXXXXXX</p>
+                    <p>✉️ Email: admissions@besc.edu.in</p>
+                    <p>🏢 Office Hours: Mon - Fri, 10 AM - 4 PM</p>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <a
+                    href="/"
+                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200 text-sm"
+                  >
+                    Return to Home
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 p-2 text-center text-xs text-gray-500 border-t">
+              © {new Date().getFullYear()} BESC. All rights reserved.
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import dbPostgres from "@/db";
+import {dbPostgres} from "@/db";
 import { payments, Payment, applicationForms } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
