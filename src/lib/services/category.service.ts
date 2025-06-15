@@ -1,4 +1,4 @@
-import dbPostgres from "@/db";
+import {dbPostgres} from "@/db";
 import { Category, categories } from "@/db/schema";
 import { eq, ilike } from "drizzle-orm";
 

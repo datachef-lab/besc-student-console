@@ -106,6 +106,8 @@ export const admissions = pgTable("admissions", {
     id: serial().primaryKey().notNull(),
     year: integer("year").notNull(),
     isClosed: boolean("is_closed").default(false).notNull(),
+    startDate: date("start_date"),
+    lastDate: date("last_date"),
     isArchived: boolean("archived").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
@@ -236,8 +238,10 @@ export type StudentAcademicSubjects = z.infer<typeof createStudentAcademicSubjec
 
 export const academicSubjects = pgTable("academic_subjects", {
     id: serial("id").primaryKey(),
-    boardUniversityId: integer("board_university_id_fk"),
+    boardUniversityId: integer("board_university_id_fk").references(() => boardUniversities.id).notNull(),
     name: varchar("name", { length: 500 }).notNull(),
+    passingMarks: integer("passing_marks"),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
@@ -248,6 +252,7 @@ export const colleges = pgTable("colleges", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 500 }).notNull(),
     code: varchar("code", { length: 50 }),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
@@ -328,7 +333,7 @@ export type SportsInfo = z.infer<typeof createSportsInfoSchema>;
 export const sportsCategories = pgTable("sports_categories", {
     id: serial().primaryKey(),
     name: varchar({length: 255}).notNull(),
-    
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
@@ -389,6 +394,7 @@ export const cities = pgTable("cities", {
     name: varchar({ length: 255 }).notNull(),
     documentRequired: boolean("document_required").default(false).notNull(),
     code: varchar({ length: 10 }).notNull(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -509,8 +515,9 @@ export const boardUniversities = pgTable("board_universities", {
     id: serial().primaryKey().notNull(),
     name: varchar({ length: 700 }).notNull(),
     degreeId: integer("degree_id"),
-    passingMarks: integer("passing_marks"),
+    
     code: varchar({ length: 255 }),
+    disabled: boolean().default(false),
     addressId: integer("address_id_fk").references(() => address.id),
     sequence: integer(),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
@@ -568,6 +575,7 @@ export type BoardUniversity = z.infer<typeof createBoardUniversitiesSchema>;
 export const annualIncomes = pgTable("annual_incomes", {
     id: serial().primaryKey().notNull(),
     range: varchar({ length: 255 }).notNull(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });
@@ -577,6 +585,7 @@ export type AnnualIncome = z.infer<typeof createAnnualIncomesSchema>;
 export const bloodGroup = pgTable("blood_group", {
     id: serial().primaryKey().notNull(),
     type: varchar({ length: 255 }).notNull(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -590,6 +599,7 @@ export const categories = pgTable("categories", {
     name: varchar({ length: 255 }).notNull(),
     documentRequired: boolean("document_required"),
     code: varchar({ length: 10 }).notNull(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -613,6 +623,7 @@ export const countries = pgTable("countries", {
     id: serial().primaryKey().notNull(),
     name: varchar({ length: 255 }).notNull(),
     sequence: integer(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -632,11 +643,11 @@ export type Country = z.infer<typeof createCountriesSchema>;
 
 export const courses = pgTable("courses", {
     id: serial().primaryKey().notNull(),
-
     name: varchar({ length: 500 }).notNull(),
     shortName: varchar("short_name", { length: 500 }),
     codePrefix: varchar("code_prefix", { length: 10 }),
     universityCode: varchar("university_code", { length: 10 }),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });
@@ -695,6 +706,7 @@ export type Course = z.infer<typeof createCoursesSchema>;
 export const languageMedium = pgTable("language_medium", {
     id: serial().primaryKey().notNull(),
     name: varchar({ length: 255 }).notNull(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -811,6 +823,7 @@ export const nationality = pgTable("nationality", {
     name: varchar({ length: 255 }).notNull(),
     sequence: integer(),
     code: integer(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -870,6 +883,7 @@ export type Nationality = z.infer<typeof createNationalitySchema>;
 export const occupations = pgTable("occupations", {
     id: serial().primaryKey().notNull(),
     name: varchar({ length: 255 }).notNull(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -959,6 +973,7 @@ export const religion = pgTable("religion", {
     id: serial().primaryKey().notNull(),
     name: varchar({ length: 255 }).notNull(),
     sequence: integer(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -982,6 +997,7 @@ export const streams = pgTable("streams", {
     degreeProgramme: degreeProgrammeType("degree_programme"),
     duration: integer(),
     numberOfSemesters: integer("number_of_semesters"),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -1005,6 +1021,7 @@ export const states = pgTable("states", {
     id: serial().primaryKey().notNull(),
     countryId: integer("country_id").notNull(),
     name: varchar({ length: 255 }).notNull(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -1217,6 +1234,7 @@ export const institutions = pgTable("institutions", {
     degreeId: integer("degree_id").notNull(),
     addressId: integer("address_id"),
     sequence: integer(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -1297,6 +1315,7 @@ export const degree = pgTable("degree", {
     name: varchar({ length: 255 }).notNull(),
     level: degreeLevelType(),
     sequence: integer(),
+    disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [

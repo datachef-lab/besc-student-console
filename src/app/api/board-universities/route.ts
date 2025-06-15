@@ -1,110 +1,93 @@
 import { NextResponse } from 'next/server';
-import dbPostgres, { db } from '@/db';
-import { boardUniversities, degree, address } from '@/db/schema';
+import { dbPostgres } from '@/db';
+import { boardUniversities } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { createBoardUniversity, updateBoardUniversity, toggleBoardUniversityStatus, getAllBoardUniversities, getBoardUniversityById } from "@/lib/services/board-university.service";
+import { BoardUniversityDto } from '@/types/admissions';
+import { createSubject } from '@/lib/services/academic-subject.service';
 
-const boardUniversitySchema = z.object({
-  id: z.number().optional(),
-  name: z.string().min(1),
-  degreeId: z.number().optional(),
-  passingMarks: z.number().optional(),
-  code: z.string().optional(),
-  addressId: z.number().optional(),
-  sequence: z.number().optional(),
-});
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const allBoardUniversities = await dbPostgres.select().from(boardUniversities);
-    return NextResponse.json({ success: true, data: allBoardUniversities });
-  } catch (error: any) {
-    console.error('Error fetching board universities:', error);
-    return NextResponse.json({ success: false, message: 'Failed to fetch board universities', error: error.message }, { status: 500 });
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    const disabled = searchParams.get("disabled");
+
+    if (id) {
+      const university = await getBoardUniversityById(+id) 
+
+      if (!university) {
+        return NextResponse.json({ error: "Board/University not found" }, { status: 404 });
+      }
+
+      return NextResponse.json(university);
+    }
+
+    const universities = await getAllBoardUniversities(disabled === null ? undefined : disabled === "true");
+    return NextResponse.json(universities);
+  } catch (error) {
+    console.error("Error fetching board universities:", error);
+    return NextResponse.json({ error: "Failed to fetch board universities" }, { status: 500 });
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
-    const validatedData = boardUniversitySchema.parse(body);
+    const body: BoardUniversityDto = await request.json();
+    const { subjects, ...base } = body as BoardUniversityDto;
+    console.log("in board-university post route: ", body);
+    const result = await createBoardUniversity(body);
 
-    const [newBoardUniversity] = await dbPostgres
-      .insert(boardUniversities)
-      .values({ 
-        name: validatedData.name,
-        degreeId: validatedData.degreeId,
-        passingMarks: validatedData.passingMarks,
-        code: validatedData.code,
-        addressId: validatedData.addressId,
-        sequence: validatedData.sequence,
-      })
-      .returning();
-
-    return NextResponse.json({ success: true, data: newBoardUniversity });
-  } catch (error: any) {
-    console.error('Error creating board university:', error);
-    return NextResponse.json({ success: false, message: 'Failed to create board university', error: error.message }, { status: 400 });
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("Error creating board university:", error);
+    return NextResponse.json({ error: "Failed to create board university" }, { status: 500 });
   }
 }
 
-export async function PUT(req: Request) {
+export async function PUT(request: Request) {
   try {
-    const url = new URL(req.url);
-    const id = url.searchParams.get('id');
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ success: false, message: 'ID is required' }, { status: 400 });
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const body = await req.json();
-    const validatedData = boardUniversitySchema.parse(body);
+    const body = await request.json();
+    const updatedUniversity = await updateBoardUniversity(parseInt(id), body);
 
-    const [updatedBoardUniversity] = await dbPostgres
-      .update(boardUniversities)
-      .set({
-        name: validatedData.name,
-        degreeId: validatedData.degreeId,
-        passingMarks: validatedData.passingMarks,
-        code: validatedData.code,
-        addressId: validatedData.addressId,
-        sequence: validatedData.sequence,
-      })
-      .where(eq(boardUniversities.id, parseInt(id)))
-      .returning();
+    // Handle subject updates here if needed, or in a separate endpoint
 
-    if (!updatedBoardUniversity) {
-      return NextResponse.json({ success: false, message: 'Board university not found' }, { status: 404 });
+    if (!updatedUniversity) {
+      return NextResponse.json({ error: "Board/University not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: updatedBoardUniversity });
-  } catch (error: any) {
-    console.error('Error updating board university:', error);
-    return NextResponse.json({ success: false, message: 'Failed to update board university', error: error.message }, { status: 400 });
+    return NextResponse.json(updatedUniversity);
+  } catch (error) {
+    console.error("Error updating board university:", error);
+    return NextResponse.json({ error: "Failed to update board university" }, { status: 500 });
   }
 }
 
-export async function DELETE(req: Request) {
+export async function PATCH(request: Request) {
   try {
-    const url = new URL(req.url);
-    const id = url.searchParams.get('id');
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ success: false, message: 'ID is required' }, { status: 400 });
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const [deletedBoardUniversity] = await dbPostgres
-      .delete(boardUniversities)
-      .where(eq(boardUniversities.id, parseInt(id)))
-      .returning();
+    const result = await toggleBoardUniversityStatus(parseInt(id));
 
-    if (!deletedBoardUniversity) {
-      return NextResponse.json({ success: false, message: 'Board university not found' }, { status: 404 });
+    if (!result) {
+      return NextResponse.json({ error: "Board/University not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: deletedBoardUniversity });
-  } catch (error: any) {
-    console.error('Error deleting board university:', error);
-    return NextResponse.json({ success: false, message: 'Failed to delete board university', error: error.message }, { status: 500 });
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("Error toggling board university status:", error);
+    return NextResponse.json({ error: "Failed to toggle board university status" }, { status: 500 });
   }
 } 

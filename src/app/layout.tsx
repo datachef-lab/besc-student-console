@@ -44,6 +44,7 @@ export default function RootLayout({
     <html lang="en" className="html">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased w-screen h-screen`}
+        suppressHydrationWarning
       >
         <ToastProvider>
           <AuthProvider>{children}</AuthProvider>

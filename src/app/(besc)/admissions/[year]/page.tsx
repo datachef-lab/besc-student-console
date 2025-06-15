@@ -324,9 +324,9 @@ export default function AdmissionFormPage() {
         setAdmisson(null);
         return;
       }
-      const data = (await response.json()) as Admission;
-      console.log("adm data:", data);
-      setAdmisson(data);
+      const data = (await response.json()) as {admission: Admission};
+      console.log("adm data (raw):", data);
+      setAdmisson({ ...data.admission });
     } catch (err) {
       console.error("Error fetching admission details:", err);
       setError(
@@ -384,9 +384,7 @@ export default function AdmissionFormPage() {
 
   return (
     <>
-    
-    admission: {JSON.stringify(admission)}
-      {Boolean(admission.isClosed) ? (
+      {(admission.isClosed !== undefined && !admission.isClosed) ? (
         <ApplicationFormProvider admission={admission}>
           <div className="min-h-screen bg-gray-50 overflow-x-hidden">
             <div className="h-screen flex flex-col lg:flex-row">

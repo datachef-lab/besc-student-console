@@ -17,7 +17,8 @@ export async function GET(
         const isGujarati = searchParams.get("isGujarati") ? searchParams.get("isGujarati") === "true" : undefined;
         const formStatus = searchParams.get("formStatus") || undefined;
 
-        const year = parseInt(params.year);
+        const { year: yearParam } = await params;
+        const year = parseInt(yearParam);
         const admission = await findAdmissionByYear(year);
 
         if (!admission) {

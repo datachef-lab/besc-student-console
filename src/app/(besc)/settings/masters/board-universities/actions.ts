@@ -1,7 +1,7 @@
 "use server";
 
-import dbPostgres, { db } from "@/db";
-import { boardUniversities } from "@/db/schema";
+import {dbPostgres, } from "@/db";
+import { boardUniversities, degree } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -18,6 +18,10 @@ const boardUniversitySchema = z.object({
 });
 
 export type AddBoardUniversityResult = { success: boolean; message?: string; error?: string };
+
+export async function getDegrees() {
+  return await dbPostgres.select().from(degree);
+}
 
 export async function addBoardUniversity(formData: FormData): Promise<AddBoardUniversityResult> {
   const data = {

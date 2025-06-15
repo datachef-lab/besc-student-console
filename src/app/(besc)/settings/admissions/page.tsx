@@ -89,11 +89,12 @@ export default function AdmissionsPage() {
         throw new Error(result.error || "Failed to fetch data");
       }
 
-      console.log("Fetched admissions data:", result.admissions);
+      console.log("Fetched admissions raw data:", result.admissions);
       const processedAdmissions = result.admissions.map((admission: any) => ({
         ...admission,
-        isClosed: admission.isClosed === "true",
+        isClosed: admission.isClosed === true,
       }));
+      console.log("Processed admissions data (isClosed as boolean):", processedAdmissions);
       setData(processedAdmissions);
       setStats(result.stats);
       setTotalItems(result.stats.admissionYearCount);
@@ -211,7 +212,7 @@ export default function AdmissionsPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ isClosed: !!admission.isClosed }),
+        body: JSON.stringify({ isClosed: !admission.isClosed }),
       });
 
       if (!response.ok) {
@@ -417,7 +418,7 @@ export default function AdmissionsPage() {
                       >
                         <DialogTrigger asChild>
                           <Button
-                            variant={item.isClosed == false ? "ghost" : "destructive"}
+                            variant={item.isClosed ? "ghost" : "destructive"}
                             size="sm"
                             disabled={
                               new Date().getFullYear() !== item.admissionYear
@@ -426,25 +427,25 @@ export default function AdmissionsPage() {
                               handleCloseAdmission(item.admissionYear)
                             }
                           >
-                              {Boolean(item.isClosed) == true ? "Closed?" : "Open?"}
+                            {item.isClosed ? "Open" : "Close"}
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-md">
                           <DialogHeader>
                             <DialogTitle>
-                              {Boolean(item.isClosed) == false ? "Open" : "Closed"} Admission
+                              {item.isClosed ? "Open" : "Close"} Admission
                             </DialogTitle>
                           </DialogHeader>
                           <div className="px-4 text-sm text-gray-600">
                             Are you sure you want to{" "}
                             <span className="font-bold">
-                              {Boolean(item.isClosed) == false ? "open" : "close"}
-                              </span> admissions for{" "}
+                              {item.isClosed ? "open" : "close"}
+                            </span> admissions for{" "}
                             <strong>{item.admissionYear}</strong>?
                           </div>
                           <DialogFooter>
                             <Button
-                            disabled={toggleAdmCloseLoading}
+                              disabled={toggleAdmCloseLoading}
                               variant={"destructive"}
                               onClick={confirmCloseAdmission}
                             >

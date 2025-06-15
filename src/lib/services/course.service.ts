@@ -1,4 +1,4 @@
-import dbPostgres, { query } from "@/db";
+import {dbPostgres, query } from "@/db";
 import { Course } from "@/types/academics/course";
 import { courses, Course as DbCourse} from "@/db/schema";
 import { eq, ilike, sql } from "drizzle-orm";

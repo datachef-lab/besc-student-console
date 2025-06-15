@@ -22,6 +22,34 @@
       "when": 1749162747230,
       "tag": "0002_classy_mac_gargan",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1749968047465,
+      "tag": "0003_even_pete_wisdom",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1749968137162,
+      "tag": "0004_broken_redwing",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1749968171566,
+      "tag": "0005_concerned_nick_fury",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1749974158082,
+      "tag": "0006_giant_mad_thinker",
+      "breakpoints": true
     }
   ]
 }

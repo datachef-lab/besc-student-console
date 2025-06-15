@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import SubjectMarksModal from "./SubjectMarksModal";
 import InstituteDetailsModal from "./InstituteDetailsModal";
 import { AcademicSubjects, AdmissionAcademicInfo, ApplicationForm, BoardUniversity, Colleges, Institution, LanguageMedium, StudentAcademicSubjects } from "@/db/schema";
-import { AdmissionAcademicInfoDto } from "@/types/admissions";
+import { AdmissionAcademicInfoDto, BoardUniversityDto } from "@/types/admissions";
 import { useParams } from "next/navigation";
 
 // Define a type for Academic Subject for fetching
@@ -76,7 +76,7 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
   });
 
   const [institutions, setInstitutions] = useState<Institution[]>([]);
-  const [boardUniversities, setBoardUniversities] = useState<BoardUniversity[]>([]);
+  const [boardUniversities, setBoardUniversities] = useState<BoardUniversityDto[]>([]);
   const [languageMediums, setLanguageMediums] = useState<LanguageMedium[]>([]);
   const [colleges, setColleges] = useState<Colleges[]>([]);
   const [academicSubjects, setAcademicSubjects] = useState<AcademicSubject[]>([]); // New state for academic subjects
@@ -99,7 +99,7 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
         const boardUniversitiesResponse = await fetch('/api/board-universities');
         if (boardUniversitiesResponse.ok) {
           const data = await boardUniversitiesResponse.json();
-          setBoardUniversities(data.data);
+          setBoardUniversities(data);
         }
 
         // Fetch language mediums

@@ -12,7 +12,8 @@ export async function POST(
     const body = await request.json();
     const { isClosed } = body as { isClosed: boolean };
 
-    console.log("in adm close request, isClosed:", isClosed)
+    console.log("in adm close request, isClosed (before update):", isClosed)
+
     if (isNaN(id)) {
       return NextResponse.json(
         { error: "Invalid Admission ID" },
@@ -25,6 +26,8 @@ export async function POST(
       .set({ isClosed, updatedAt: new Date() })
       .where(eq(admissions.id, id))
       .returning();
+
+    console.log("in adm close request, updatedAdmission.isClosed:", updatedAdmission?.isClosed)
 
     if (!updatedAdmission) {
       return NextResponse.json(

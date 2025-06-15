@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { annualIncomes } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import dbPostgres from '@/db';
+import {dbPostgres} from '@/db';
 
 const annualIncomeSchema = z.object({
   id: z.number().optional(),

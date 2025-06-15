@@ -1,6 +1,6 @@
 "use server";
 
-import dbPostgres, { db } from "@/db";
+import {dbPostgres } from "@/db";
 import { bloodGroup } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
