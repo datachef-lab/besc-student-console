@@ -10,6 +10,7 @@ const mastersLinks = [
     { label: "Annual Income", href: "/settings/masters/annual-incomes" },
     { label: "Categories", href: "/settings/masters/categories" },
     { label: "Courses", href: "/settings/masters" },
+    { label: "Colleges", href: "/settings/masters/colleges" },
     { label: "Religion", href: "/settings/masters/religions" },
     { label: "Nationalities", href: "/settings/masters/nationalities" },
 ];
