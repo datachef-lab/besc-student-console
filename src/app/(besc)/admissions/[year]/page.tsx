@@ -293,13 +293,15 @@
 //   );
 // }
 
-import AdmissionForm from "@/components/admissions/AdmissionForm";
-import { Admission } from "@/db/schema";
-import { ApplicationFormProvider } from "@/providers/adm-application-form-provider";
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { ContinueApplicationModal } from "@/components/admissions/ContinueApplicationModal";
+import AdmissionForm from "@/components/admissions/AdmissionForm";
+import { Admission } from "@/db/schema";
+import { ApplicationFormProvider } from "@/providers/adm-application-form-provider";
 
 export default function AdmissionFormPage() {
   const { year } = useParams<{ year: string }>();
@@ -307,6 +309,7 @@ export default function AdmissionFormPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [admission, setAdmisson] = useState<Admission | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchAdmission = useCallback(async () => {
     setIsLoading(true);
@@ -388,10 +391,25 @@ export default function AdmissionFormPage() {
         <ApplicationFormProvider admission={admission}>
           <div className="min-h-screen bg-gray-50 overflow-x-hidden">
             <div className="h-screen flex flex-col lg:flex-row">
+              {/* Add Continue Application Button */}
+              <div className="absolute top-4 right-4 z-50">
+                <Button
+                  variant="outline"
+                  className="bg-white hover:bg-purple-600 hover:text-white"
+                  onClick={() => setIsModalOpen(true)}
+                >
+                  Continue Application
+                </Button>
+              </div>
+              
               {/* AdmissionForm will manage its own layout within this div */}
               <AdmissionForm />
             </div>
           </div>
+          <ContinueApplicationModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+          />
         </ApplicationFormProvider>
       ) : (
         <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-purple-50 overflow-hidden">

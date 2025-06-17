@@ -1,8 +1,8 @@
 "use server";
 
-import dbPostgres from "@/db";
+import {dbPostgres} from "@/db";
 import { categories, Category } from "@/db/schema";
-import { createCategory } from "@/lib/services/category.service";
+import { createCategory, getAllCategories, updateCategory } from "@/lib/services/category.service";
 import { ilike } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -12,14 +12,23 @@ export type AddCategoryResult = { success: boolean; message?: string; error?: st
 
 export async function addCategory(formData: FormData): Promise<AddCategoryResult> {
     console.log("Add Category action triggered.", formData);
+    const id = formData.get("id");
     const categoryData = {
         name: formData.get("name") as string,
         code: formData.get("code") as string,
         documentRequired: formData.get("documentRequired") === "true" ? true : false,
     };
-    const category = await createCategory(categoryData);
-
-    return { success: true, message: "Category added successfully (placeholder).", category };
+    let category;
+    if (id) {
+        category = await updateCategory(Number(id), categoryData);
+        if (!category) {
+            return { success: false, error: "Category not found.", category: null as any };
+        }
+        return { success: true, message: "Category updated successfully.", category };
+    } else {
+        category = await createCategory(categoryData);
+        return { success: true, message: "Category added successfully.", category };
+    }
 }
 
 export async function deleteCategory(id: string): Promise<{ success: boolean; message?: string; error?: string }> {

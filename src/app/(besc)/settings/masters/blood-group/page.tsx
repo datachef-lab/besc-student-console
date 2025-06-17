@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Pencil, Upload, Download, Loader2, FileText, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Pencil, Upload, Download, Loader2, FileText, ChevronLeft, ChevronRight, Power } from "lucide-react";
 import { BloodGroupDialog } from "./blood-group-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -46,17 +46,9 @@ export default function BloodGroup() {
     try {
       const response = await fetch('/api/blood-groups');
       const result = await response.json();
-
-      if (result.success) {
-        setData(result.bloodGroups);
-        setTotalCount(result.totalCount);
-      } else {
-        toast({
-          title: "Failed to fetch blood groups",
-          description: result.error || "An error occurred while fetching data.",
-          variant: "destructive",
-        });
-      }
+      setData(result);
+      setTotalCount(result.length);
+      
     } catch (error) {
       console.error("Error fetching blood groups:", error);
       toast({
@@ -126,24 +118,33 @@ export default function BloodGroup() {
     startUploadTransition(async () => {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      const result = await uploadBloodGroupsFromFile(formData);
-      if (!result.success) {
+      try {
+        const result = await uploadBloodGroupsFromFile(formData);
+        if (!result.success) {
+          toast({
+            title: "Upload Failed",
+            description: result.error || "Failed to upload blood groups.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Upload Successful",
+            description: "Blood groups have been uploaded successfully",
+          });
+          setSelectedFile(null);
+          setNumberOfEntries(0);
+          if(fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          fetchBloodGroups();
+        }
+      } catch (error) {
+        console.error("Error uploading blood groups:", error);
         toast({
           title: "Upload Failed",
-          description: result.error || "Failed to upload blood groups.",
+          description: error instanceof Error ? error.message : "An unexpected error occurred.",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Upload Successful",
-          description: "Blood groups have been uploaded successfully",
-        });
-        setSelectedFile(null);
-        setNumberOfEntries(0);
-        if(fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        fetchBloodGroups();
       }
     });
   };
@@ -193,39 +194,34 @@ export default function BloodGroup() {
     fetchBloodGroups();
   };
 
-  const handleDelete = async (id: number | undefined) => {
+  const handleToggleStatus = async (id: number | undefined) => {
     if (!id) return;
-    if (confirm("Are you sure you want to delete this blood group?")) {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/blood-groups?id=${id}`, {
-          method: 'DELETE',
-        });
-        const result = await response.json();
-
-        if (result.success) {
-          toast({
-            title: "Blood group deleted",
-            description: "The blood group has been successfully deleted.",
-          });
-          fetchBloodGroups();
-        } else {
-          toast({
-            title: "Deletion failed",
-            description: result.error || "An error occurred while deleting.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Error deleting blood group:", error);
-        toast({
-          title: "Deletion failed",
-          description: "An unexpected error occurred.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/blood-groups?id=${id}`, {
+        method: 'PATCH',
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to toggle blood group status');
       }
+      
+      toast({
+        title: "Status Updated",
+        description: `Blood group has been ${result.disabled ? 'disabled' : 'enabled'}.`,
+      });
+      fetchBloodGroups();
+    } catch (error) {
+      console.error("Error toggling blood group status:", error);
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -282,6 +278,7 @@ export default function BloodGroup() {
               <TableRow className="bg-gray-100">
                 <TableHead className="text-gray-700">ID</TableHead>
                 <TableHead className="text-gray-700">Blood Group</TableHead>
+                <TableHead className="text-gray-700">Status</TableHead>
                 <TableHead className="text-gray-700">Created At</TableHead>
                 <TableHead className="text-gray-700">Updated At</TableHead>
                 <TableHead className="text-gray-700 text-right">Actions</TableHead>
@@ -290,13 +287,18 @@ export default function BloodGroup() {
             <TableBody>
               {paginatedData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-500">No blood groups found.</TableCell>
+                  <TableCell colSpan={6} className="text-center text-gray-500">No blood groups found.</TableCell>
                 </TableRow>
               ) : (
                 paginatedData.map((bloodGroup) => (
                   <TableRow key={bloodGroup.id} className="hover:bg-gray-50">
                     <TableCell className="font-medium text-gray-700">{bloodGroup.id}</TableCell>
                     <TableCell className="text-gray-700">{bloodGroup.type}</TableCell>
+                    <TableCell className="text-gray-700">
+                      <span className={`px-2 py-1 rounded-full text-xs ${bloodGroup.disabled ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                        {bloodGroup.disabled ? 'Disabled' : 'Active'}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-gray-700">{bloodGroup.createdAt ? new Date(bloodGroup.createdAt).toLocaleString() : 'N/A'}</TableCell>
                     <TableCell className="text-gray-700">{bloodGroup.updatedAt ? new Date(bloodGroup.updatedAt).toLocaleString() : 'N/A'}</TableCell>
                     <TableCell className="text-right">
@@ -304,8 +306,13 @@ export default function BloodGroup() {
                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => handleEdit(bloodGroup)}>
                           <Pencil className="h-4 w-4 text-blue-500" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => handleDelete(bloodGroup.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className={`hover:bg-gray-100 ${bloodGroup.disabled ? 'text-green-500' : 'text-red-500'}`}
+                          onClick={() => handleToggleStatus(bloodGroup.id)}
+                        >
+                          <Power className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>

@@ -9,20 +9,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import SubjectMarksModal from "./SubjectMarksModal";
 import InstituteDetailsModal from "./InstituteDetailsModal";
-import { AcademicSubjects, AdmissionAcademicInfo, ApplicationForm, BoardUniversity, Colleges, Institution, LanguageMedium, StudentAcademicSubjects } from "@/db/schema";
+import { AcademicSubjects, ApplicationForm, boardResultStatusType, BoardUniversity, Colleges, Institution, LanguageMedium, StudentAcademicSubjects, Course } from "@/db/schema";
 import { AdmissionAcademicInfoDto, BoardUniversityDto } from "@/types/admissions";
 import { useParams } from "next/navigation";
+import { getCourses } from "../../action";
 
 // Define a type for Academic Subject for fetching
 interface AcademicSubject { id: number; name: string; }
 
 interface AcademicInfoStepProps {
-  applicationForm: ApplicationForm,
+  applicationForm: ApplicationForm;
   stepHeading?: string;
   stepNotes: React.ReactNode;
+  academicInfo: AdmissionAcademicInfoDto;
+  setAcademicInfo: React.Dispatch<React.SetStateAction<AdmissionAcademicInfoDto>>;
 }
 
 interface SubjectMark {
@@ -50,36 +53,21 @@ interface InstituteDetails {
   otherCollege: string;
 }
 
-export default function AcademicInfoStep({ applicationForm, stepHeading, stepNotes }: AcademicInfoStepProps) {
+export default function AcademicInfoStep({ applicationForm, stepHeading, stepNotes, academicInfo, setAcademicInfo }: AcademicInfoStepProps) {
   const params = useParams();
   const admissionYear = parseInt(params.year as string);
   
   // Generate year options (current year and 3 years back)
   const yearOptions = Array.from({ length: 4 }, (_, i) => admissionYear - i);
 
-  const [academicInfo, setAcademicInfo] = useState<AdmissionAcademicInfoDto>({
-    applicationFormId: applicationForm.id ?? 0,
-    boardResultStatus: "PASS",
-    boardUniversityId: 0,
-    instituteId: 0,
-    otherInstitute: null,
-    languageMediumId: 0,
-    streamType: "COMMERCE",
-    yearOfPassing: admissionYear,
-    cuRegistrationNumber: null,
-    isRegisteredForUGInCU: false,
-    previousCollegeId: 0,
-    otherCollege: null,
-    previouslyRegisteredCourseId: 0,
-    otherPreviouslyRegisteredCourse: null,
-    subjects: []
-  });
-
-  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  
   const [boardUniversities, setBoardUniversities] = useState<BoardUniversityDto[]>([]);
   const [languageMediums, setLanguageMediums] = useState<LanguageMedium[]>([]);
   const [colleges, setColleges] = useState<Colleges[]>([]);
   const [academicSubjects, setAcademicSubjects] = useState<AcademicSubject[]>([]); // New state for academic subjects
+  const [courses, setCourses] = useState<Course[]>([]); // New state for courses
+
+  console.log('academicSubjects in AcademicInfoStep:', academicSubjects);
 
   const [showMarksEntryModal, setShowMarksEntryModal] = useState(false);
   const [showInstituteDetailsModal, setShowInstituteDetailsModal] = useState(false);
@@ -88,13 +76,6 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch institutions
-        const institutionsResponse = await fetch('/api/institutions');
-        if (institutionsResponse.ok) {
-          const data = await institutionsResponse.json();
-          setInstitutions(data);
-        }
-
         // Fetch board universities
         const boardUniversitiesResponse = await fetch('/api/board-universities');
         if (boardUniversitiesResponse.ok) {
@@ -105,7 +86,7 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
         // Fetch language mediums
         const languageMediumsResponse = await fetch('/api/language-mediums');
         if (languageMediumsResponse.ok) {
-          const data = await languageMediumsResponse.json();
+          const {data} = await languageMediumsResponse.json();
           setLanguageMediums(data);
         }
 
@@ -113,16 +94,29 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
         const collegesResponse = await fetch('/api/colleges');
         if (collegesResponse.ok) {
           const data = await collegesResponse.json();
-          setColleges(data);
+          setColleges(data.colleges);
         }
 
+        // Fetch courses
+        const coursesResponse = await getCourses();
+        // const data = await coursesResponse.json();
+        // console.log("courses:", data);
+        setCourses(coursesResponse);
+
+
         // Fetch academic subjects
-        const academicSubjectsResponse = await fetch('/api/academic-subjects'); // Assuming this endpoint exists
+        const academicSubjectsResponse = await fetch('/api/academic-subjects');
         if (academicSubjectsResponse.ok) {
           const data = await academicSubjectsResponse.json();
-          setAcademicSubjects(data);
+          if (data.success && Array.isArray(data.data)) {
+            setAcademicSubjects(data.data);
+          } else {
+            console.error('API response for academic subjects was not successful or data was not an array:', data);
+            setAcademicSubjects([]);
+          }
         } else {
           console.error('Failed to fetch academic subjects:', academicSubjectsResponse.status, academicSubjectsResponse.statusText);
+          setAcademicSubjects([]);
         }
 
       } catch (error) {
@@ -133,7 +127,23 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
     void fetchData();
   }, []);
 
-  const handleAcademicInfoChange = (field: keyof AdmissionAcademicInfo, value: any) => {
+  // Helper to find subject name by ID
+  const getSubjectName = (id: number) => {
+    const subject = (academicSubjects || []).find(sub => sub.id === id);
+    return subject ? subject.name : 'Unknown Subject';
+  };
+
+  // Effect to clear subjects when boardUniversityId changes
+  useEffect(() => {
+    if (academicInfo.boardUniversityId !== 0 && academicInfo.subjects.length > 0) {
+      setAcademicInfo(prev => ({
+        ...prev,
+        subjects: []
+      }));
+    }
+  }, [academicInfo.boardUniversityId]);
+
+  const handleAcademicInfoChange = (field: keyof AdmissionAcademicInfoDto, value: any) => {
     setAcademicInfo(prev => ({
       ...prev,
       [field]: value
@@ -141,6 +151,21 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
   };
 
   const handleOpenMarksEntry = () => {
+    // If no subjects are entered, add 4 default rows
+    if (academicInfo.subjects.length === 0) {
+      const defaultSubjects: StudentAcademicSubjects[] = Array.from({ length: 4 }, () => ({
+        applicationFormId: academicInfo.applicationFormId,
+        academicSubjectId: 0, // Placeholder, will be selected in modal
+        fullMarks: '0',
+        totalMarks: '0',
+        resultStatus: "PASS" as "PASS" | "FAIL" | "FAIL IN THEORY" | "FAIL IN PRACTICAL", // Explicitly cast to the correct union type
+        admissionAcademicInfoId: academicInfo.id ?? 0,
+      }));
+      setAcademicInfo(prev => ({
+        ...prev,
+        subjects: defaultSubjects
+      }));
+    }
     setShowMarksEntryModal(true);
   };
 
@@ -170,7 +195,7 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
     setAcademicInfo(prev => ({
       ...prev,
       indexNumber: details.rollNo,
-      instituteId: institutions.find(i => i.name === details.institute)?.id ?? 0,
+      instituteId: (colleges || []).find(i => i.name === details.institute)?.id ?? 0,
       otherInstitute: details.institute === 'Other Institute' ? details.otherInstitute : null,
       languageMediumId: languageMediums.find(m => m.name === details.medium)?.id ?? 0,
       yearOfPassing: parseInt(details.yearOfPassing),
@@ -204,9 +229,9 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
               <SelectValue placeholder="Select Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="PASS">Pass</SelectItem>
-              <SelectItem value="FAIL">Fail</SelectItem>
-              <SelectItem value="COMPARTMENTAL">Compartmental</SelectItem>
+              {boardResultStatusType.enumValues.map(value => (
+                  <SelectItem key={value} value={value}>{value}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -214,13 +239,15 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
         <div>
           <Label className="flex items-center mb-1 text-sm">15. Board/University <span className="text-red-600">*</span></Label>
           <Select 
-            value={academicInfo.boardUniversityId.toString()} 
+            value={academicInfo.boardUniversityId === 0 ? "0" : academicInfo.boardUniversityId.toString()} 
             onValueChange={(val) => handleAcademicInfoChange("boardUniversityId", parseInt(val))}
+            disabled={academicInfo.boardResultStatus !== "PASS"}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Board/University" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="0">Select Board/University</SelectItem>
               {boardUniversities.map((board) => (
                 board.id && (
                   <SelectItem key={board.id} value={board.id.toString()}>
@@ -230,15 +257,25 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
               ))}
             </SelectContent>
           </Select>
+          {academicInfo.boardResultStatus !== "PASS" && (
+            <p className="text-sm text-red-600 mt-2">
+              Failed or Compartmental students are not allowed to apply as per Calcutta University Norms.
+            </p>
+          )}
         </div>
 
         <div>
           <Label className="flex items-center mb-1 text-sm">16. Subjectwise Marks <span className="text-red-600">*</span></Label>
           <Dialog open={showMarksEntryModal} onOpenChange={setShowMarksEntryModal}>
             <DialogTrigger asChild>
-              <Button onClick={handleOpenMarksEntry} className="w-full sm:w-auto">Marks Entry</Button>
+              <Button 
+                onClick={handleOpenMarksEntry} 
+                className="w-full sm:w-auto"
+                disabled={academicInfo.boardUniversityId === 0}
+              >Marks Entry</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-screen-xl max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+            <DialogContent className="sm:max-w-screen-xl max-h-[95vh] p-4 sm:p-6">
+              <DialogTitle>Marks Entry</DialogTitle>
               <SubjectMarksModal 
                 onSave={handleSaveMarksEntry} 
                 onClose={handleCloseMarksEntry} 
@@ -261,10 +298,10 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {academicInfo.subjects.map((subject, index) => (
+                  {academicInfo.subjects.map((subject: StudentAcademicSubjects, index: number) => (
                     <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                       <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{index + 1}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{subject.academicSubjectId}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{getSubjectName(subject.academicSubjectId)}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{subject.fullMarks}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{subject.totalMarks}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{subject.resultStatus}</td>
@@ -280,16 +317,22 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
           <Label className="flex items-center mb-1 text-sm">17. Institute Details <span className="text-red-600">*</span></Label>
           <Dialog open={showInstituteDetailsModal} onOpenChange={setShowInstituteDetailsModal}>
             <DialogTrigger asChild>
-              <Button onClick={handleOpenInstituteDetails} className="w-full sm:w-auto">Institute Details Entry</Button>
+              <Button 
+                onClick={handleOpenInstituteDetails} 
+                className="w-full sm:w-auto"
+                disabled={academicInfo.boardResultStatus !== "PASS" || academicInfo.boardUniversityId === 0}
+              >Institute Details Entry</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-screen-lg max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+            <DialogContent className="sm:max-w-screen-lg max-h-[95vh] p-4 sm:p-6">
+              <DialogTitle>Institute Details</DialogTitle>
               <InstituteDetailsModal 
                 colleges={colleges}
-                institutions={institutions}
                 languageMediums={languageMediums}
                 onChange={handleAcademicInfoChange} 
                 onClose={handleCloseInstituteDetails} 
-                academicInfo={academicInfo} 
+                academicInfo={academicInfo}
+                registeredCourses={courses}
+                
               />
             </DialogContent>
           </Dialog>

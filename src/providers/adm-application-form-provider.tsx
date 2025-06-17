@@ -12,7 +12,7 @@ import axios from "axios";
 import { Student } from "@/types/academics/student";
 import { StudentAccessControl } from "@/types/academics/access-control";
 import { ApplicationFormDto } from "@/types/admissions";
-import { Admission } from "@/db/schema";
+import { Admission, AdmissionGeneralInfo, ApplicationForm } from "@/db/schema";
 
 const axiosInstance = axios.create({
   baseURL: "", // Use relative URLs
@@ -54,7 +54,16 @@ export const ApplicationFormProvider: React.FC<
   const [isLoading, setIsLoading] = useState(true);
   const [displayFlag, setDisplayFlag] = useState(false);
   const [applicationForm, setApplicationForm] =
-    useState<ApplicationFormDto | null>(null);
+    useState<ApplicationFormDto | null>({
+      admissionId: 0,
+      generalInfo: null,
+      academicInfo: null,
+      additonalInfo: null,
+      admissionStep: "GENERAL_INFORMATION",
+      courseApplication: null,
+      formStatus: "DRAFT",
+      paymentInfo: null,
+    });
   const router = useRouter();
   const pathname = usePathname(); // Get the current route
 
@@ -83,7 +92,29 @@ export const ApplicationFormProvider: React.FC<
       }
 
       if ("applicationForm" in data) {
-        setApplicationForm(data.applicationForm);
+        setApplicationForm({
+          ...data.applicationForm,
+          generalInfo: data.applicationForm.generalInfo || {
+            applicationFormId: data.applicationForm.id ?? 0,
+            dateOfBirth: new Date().toISOString().split('T')[0],
+            email: "",
+            firstName: "",
+            middleName: null,
+            lastName: "",
+            mobileNumber: "",
+            password: "",
+            categoryId: null,
+            degreeLevel: "UNDER_GRADUATE",
+            residenceOfKolkata: true,
+            gender: "FEMALE",
+            isGujarati: false,
+            nationalityId: null,
+            otherNationality: null,
+            religionId: null,
+            whatsappNumber: null,
+          } as AdmissionGeneralInfo,
+          admissionId: admission.id!,
+        });
       }
     } catch (error: any) {
       console.error("Login failed:", error?.response?.data || error.message);
@@ -116,6 +147,25 @@ export const ApplicationFormProvider: React.FC<
         if ("applicationForm" in data) {
           setApplicationForm({
             ...data.applicationForm,
+            generalInfo: data.applicationForm.generalInfo || {
+              applicationFormId: data.applicationForm.id ?? 0,
+              dateOfBirth: new Date().toISOString().split('T')[0],
+              email: "",
+              firstName: "",
+              middleName: null,
+              lastName: "",
+              mobileNumber: "",
+              password: "",
+              categoryId: null,
+              degreeLevel: "UNDER_GRADUATE",
+              residenceOfKolkata: true,
+              gender: "FEMALE",
+              isGujarati: false,
+              nationalityId: null,
+              otherNationality: null,
+              religionId: null,
+              whatsappNumber: null,
+            } as AdmissionGeneralInfo,
             admissionId: admission.id!,
           });
           return data.applicationForm;
@@ -123,7 +173,11 @@ export const ApplicationFormProvider: React.FC<
 
         return null;
       } catch (error) {
-        console.error("Failed to refresh-load applicationForm:", error);
+        // console.error("Failed to refresh-load applicationForm:", 
+        // error);
+        // if (axios.isAxiosError(error) && error.response?.status === 401) {
+        //   router.push("/admission-form-login"); // Redirect to login page on 401
+        // }
         return null;
       } finally {
         setIsLoading(false);

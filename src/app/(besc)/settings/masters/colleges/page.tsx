@@ -1,313 +1,209 @@
 'use client';
 
-import React, { useState, useEffect, useTransition, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Pencil, Loader2, Trash2, Upload, Download, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, Upload, Download, Plus, FileText } from "lucide-react";
 import { CollegeDialog } from "./college-dialog";
-import { useToast } from "@/hooks/use-toast";
 import { Colleges } from "@/db/schema";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { uploadCollegesFromFile, downloadColleges, fetchPaginatedColleges } from "./actions";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import * as XLSX from 'xlsx';
-
-const ITEMS_PER_PAGE = 10;
-const REQUIRED_HEADERS = ['name', 'code'];
 
 export default function CollegePage() {
   const [data, setData] = useState<Colleges[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
+  const [selectedCollege, setSelectedCollege] = useState<Colleges | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadTotal, setUploadTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [isPendingUpload, startUploadTransition] = useTransition();
-  const [isPendingDownload, startDownloadTransition] = useTransition();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const ITEMS_PER_PAGE = 10;
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
-
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedData = data.slice(startIndex, endIndex);
-
-  const fetchColleges = async () => {
+  const fetchColleges = async (page = 1) => {
     setLoading(true);
     try {
-      const result = await fetchPaginatedColleges(currentPage, ITEMS_PER_PAGE);
-
-      if (Array.isArray(result.colleges)) {
-        setData(result.colleges);
-        setTotalCount(result.totalCount);
-      } else {
-        setData([]);
-        setTotalCount(0);
-        toast({
-          title: "Failed to fetch colleges",
-          description: "An error occurred while fetching data.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching colleges:", error);
+      const res = await fetch(`/api/colleges?page=${page}&limit=${ITEMS_PER_PAGE}`);
+      const result = await res.json();
+      setData(result.colleges || []);
+      setTotalCount(result.totalCount || 0);
+    } catch (err) {
       setData([]);
       setTotalCount(0);
-      toast({
-        title: "Failed to fetch colleges",
-        description: "An unexpected error occurred.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
-    fetchColleges();
+    fetchColleges(currentPage);
   }, [currentPage]);
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
-  };
-
-  const handleEdit = (college: Colleges) => {
-    // Edit functionality is handled by the CollegeDialog component
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      const response = await fetch(`/api/colleges?id=${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete college');
-      }
-
-      toast({
-        title: "College deleted successfully",
-        description: "The college has been deleted successfully.",
-      });
-
-      fetchColleges();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
-    } else {
-      setSelectedFile(null);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      toast({
-        title: "No file selected",
-        description: "Please select an Excel file to upload.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
-    startUploadTransition(async () => {
-      const result = await uploadCollegesFromFile(formData);
-      if (result.success) {
-        toast({
-          title: "Upload Successful",
-          description: result.message,
-        });
-        setSelectedFile(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-        fetchColleges();
-      } else {
-        toast({
-          title: "Upload Failed",
-          description: result.error || "An unknown error occurred.",
-          variant: "destructive",
-        });
-      }
-    });
-  };
-
-  const downloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ name: "", code: "" }]);
+  const handleDownloadTemplate = () => {
+    const sampleData = [
+      ["Name", "Code", "Sequence"],
+      ["Sample College", "COL001", 1],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(sampleData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "CollegeTemplate");
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
     XLSX.writeFile(wb, "college_template.xlsx");
   };
 
-  const handleDownload = async () => {
-    startDownloadTransition(async () => {
-      const result = await downloadColleges();
-      if (result.success && result.data) {
-        const link = document.createElement('a');
-        link.href = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + result.data;
-        link.download = 'colleges.xlsx';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast({
-          title: "Download Successful",
-          description: "Colleges data downloaded successfully.",
-        });
-      } else {
-        toast({
-          title: "Download Failed",
-          description: result.error || "Failed to download colleges data.",
-          variant: "destructive",
-        });
-      }
-    });
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setSelectedFile(file);
   };
 
+  const handleUploadFile = async () => {
+    if (!selectedFile) return;
+    setIsUploading(true);
+    setUploadProgress(0);
+    // 1. Read the Excel file
+    const arrayBuffer = await selectedFile.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json: any[] = XLSX.utils.sheet_to_json(sheet);
+    // 2. Validate and filter data
+    const validColleges = json
+      .map(row => ({
+        name: row["Name"] || row["name"],
+        code: row["Code"] || row["code"] || "",
+        sequence: row["Sequence"] || row["sequence"] || null,
+      }))
+      .filter(college => college.name);
+    setUploadTotal(validColleges.length);
+    // 3. Send each college to the backend
+    for (let i = 0; i < validColleges.length; i++) {
+      await fetch("/api/colleges", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validColleges[i]),
+      });
+      setUploadProgress(i + 1);
+    }
+    setIsUploading(false);
+    setSelectedFile(null);
+    setUploadProgress(0);
+    setUploadTotal(0);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    fetchColleges(currentPage);
+  };
+
+  const handleDownloadColleges = async () => {
+    let allColleges: any[] = [];
+    let page = 1;
+    let totalPages = 1;
+    do {
+      const res = await fetch(`/api/colleges?page=${page}&limit=${ITEMS_PER_PAGE}`);
+      const result = await res.json();
+      if (Array.isArray(result.colleges)) {
+        allColleges = allColleges.concat(result.colleges);
+        if (result.totalCount) {
+          totalPages = Math.ceil(result.totalCount / ITEMS_PER_PAGE);
+        }
+      } else {
+        break;
+      }
+      page++;
+    } while (page <= totalPages);
+    // Convert to Excel and download
+    const ws = XLSX.utils.json_to_sheet(allColleges);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Colleges");
+    XLSX.writeFile(wb, "colleges.xlsx");
+  };
+
+  const handleEdit = (college: Colleges) => {
+    setSelectedCollege(college);
+    setDialogMode('edit');
+    setDialogOpen(true);
+  };
+
+  const handleAdd = () => {
+    setSelectedCollege(null);
+    setDialogMode('add');
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    await fetch(`/api/colleges?id=${id}`, { method: 'DELETE' });
+    fetchColleges();
+  };
+
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Colleges</h1>
-        <div className="flex items-center gap-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            accept=".xlsx, .xls"
-            id="upload-file-input"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 flex items-center gap-2"
-          >
-            Choose File
-          </Button>
+    <div className="">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">Colleges Management</h2>
+      </div>
+      <div className="flex justify-between">
+        <div className="flex gap-2 mb-4">
+          <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4" />Choose File</Button>
           {selectedFile && (
             <span className="text-sm text-gray-600">{selectedFile.name}</span>
           )}
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleUpload}
-            disabled={!selectedFile || isPendingUpload}
-            className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
-          >
-            {isPendingUpload ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Upload size={20} />
-            )}
-            Upload File
+          <Button variant="default" onClick={handleUploadFile} disabled={!selectedFile || isUploading}>
+            <Upload className="mr-2 h-4 w-4" />Upload File
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={downloadTemplate}
-            className="bg-gray-500 hover:bg-gray-600 text-white flex items-center gap-2"
-          >
-            <FileText size={20} />
-            Download Template
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleDownload}
-            disabled={isPendingDownload}
-            className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
-          >
-            {isPendingDownload ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download size={20} />
-            )}
-            Download Data
-          </Button>
-          <CollegeDialog onSuccess={fetchColleges} />
+          <Button variant="secondary" onClick={handleDownloadTemplate}><FileText className="mr-2 h-4 w-4" />Download Template</Button>
+        </div>
+        {isUploading && (
+          <div className="mb-2 text-sm text-blue-600">Uploading {uploadProgress} of {uploadTotal} colleges...</div>
+        )}
+        <div className="flex justify-end gap-2 mb-2 pr-6">
+          {/* <Button variant="default" onClick={handleAdd}><Plus className="mr-2 h-4 w-4" />Add College</Button> */}
+        <CollegeDialog
+          key={dialogMode + (selectedCollege?.id ?? 'add')}
+          mode={dialogMode}
+          college={selectedCollege || undefined}
+          onSuccess={() => { setDialogOpen(false); fetchColleges(); }}
+        />
+          <Button variant="secondary" onClick={handleDownloadColleges}><Download className="h-4 w-4" /></Button>
         </div>
       </div>
-
-      <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50 hover:bg-gray-50">
-                <TableHead className="w-[80px] font-semibold text-gray-700">Sr. No</TableHead>
-                <TableHead className="font-semibold text-gray-700">Name</TableHead>
-                <TableHead className="font-semibold text-gray-700">Code</TableHead>
-                <TableHead className="font-semibold text-gray-700">Created At</TableHead>
-                <TableHead className="font-semibold text-gray-700">Updated At</TableHead>
-                <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.length === 0 && !loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-gray-500">
-                    No colleges found.
-                  </TableCell>
-                </TableRow>
+      <div className="bg-white rounded-lg  p-4">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y border divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sequence</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {loading ? (
+                <tr><td colSpan={6} className="text-center py-8">Loading...</td></tr>
+              ) : data.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-8">No colleges found.</td></tr>
               ) : (
-                paginatedData.map((college, index) => (
-                  <TableRow key={college.id} className="hover:bg-gray-50">
-                    <TableCell className="font-medium text-gray-600">
-                      {startIndex + index + 1}
-                    </TableCell>
-                    <TableCell className="text-gray-700">{college.name}</TableCell>
-                    <TableCell className="text-gray-700">{college.code || 'N/A'}</TableCell>
-                    <TableCell className="text-gray-700">
-                      {college.createdAt ? new Date(college.createdAt).toLocaleString() : 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-gray-700">
-                      {college.updatedAt ? new Date(college.updatedAt).toLocaleString() : 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-right">
+                data.map((college, idx) => (
+                  <tr key={college.id} className="hover:bg-gray-50 text-sm">
+                    <td className="px-6 py-2 whitespace-nowrap">{(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}</td>
+                    <td className="px-6 py-2 whitespace-nowrap">{college.name}</td>
+                    <td className="px-6 py-2 whitespace-nowrap">{college.code || '-'}</td>
+                    <td className="px-6 py-2 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${!college.disabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {!college.disabled ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap">{college.sequence ?? '-'}</td>
+                    <td className="px-6 py-2 whitespace-nowrap text-right">
                       <div className="flex justify-end gap-2">
-                        <CollegeDialog mode="edit" college={college} onSuccess={fetchColleges}>
-                          <Button variant="ghost" size="icon" className="hover:bg-gray-100">
-                            <Pencil className="h-4 w-4 text-blue-500" />
-                          </Button>
-                        </CollegeDialog>
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(college)}>
+                          <Pencil className="h-4 w-4 text-blue-500" />
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                            <Button variant="ghost" size="icon">
                               <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
                           </AlertDialogTrigger>
@@ -320,34 +216,30 @@ export default function CollegePage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => college.id && handleDelete(college.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
+                              <AlertDialogAction onClick={() => college.id && handleDelete(college.id)} className="bg-red-600 hover:bg-red-700">
                                 Delete
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))
               )}
-            </TableBody>
-          </Table>
-        )}
+            </tbody>
+          </table>
+        </div>
       </div>
-
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-4">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handlePageChange(currentPage - 1)}
+            onClick={() => setCurrentPage(currentPage - 1)}
             disabled={currentPage === 1}
           >
-            <ChevronLeft size={16} /> Previous
+            Previous
           </Button>
           <span className="text-sm text-gray-600">
             Page {currentPage} of {totalPages}
@@ -355,10 +247,10 @@ export default function CollegePage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handlePageChange(currentPage + 1)}
+            onClick={() => setCurrentPage(currentPage + 1)}
             disabled={currentPage === totalPages}
           >
-            Next <ChevronRight size={16} />
+            Next
           </Button>
         </div>
       )}

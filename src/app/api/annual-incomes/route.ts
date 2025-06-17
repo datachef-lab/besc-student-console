@@ -1,92 +1,90 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import { createAnnualIncome, getAllAnnualIncomes, getAnnualIncomeById, toggleAnnualIncomeStatus, updateAnnualIncome } from "@/lib/services/annual-income.service";
+// import { createAnnualIncomeSchema } from "@/db/schema";
+import { z } from "zod";
 
-import { annualIncomes } from '@/db/schema';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
-import {dbPostgres} from '@/db';
+export async function GET(request: NextRequest) {
+    try {
+        const searchParams = request.nextUrl.searchParams;
+        const id = searchParams.get("id");
 
-const annualIncomeSchema = z.object({
-  id: z.number().optional(),
-  range: z.string().min(1),
-});
+        if (id) {
+            const result = await getAnnualIncomeById(parseInt(id));
+            if (!result) {
+                return NextResponse.json({ error: "Annual income not found" }, { status: 404 });
+            }
+            return NextResponse.json(result);
+        }
 
-export async function GET() {
-  try {
-    const allAnnualIncomes = await dbPostgres.select().from(annualIncomes);
-    return NextResponse.json({ success: true, data: allAnnualIncomes });
-  } catch (error: any) {
-    console.error('Error fetching annual incomes:', error);
-    return NextResponse.json({ success: false, message: 'Failed to fetch annual incomes', error: error.message }, { status: 500 });
-  }
+        const annualIncomes = await getAllAnnualIncomes();
+        return NextResponse.json(annualIncomes);
+    } catch (error) {
+        console.error("Error in GET /api/annual-incomes:", error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
 }
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const validatedData = annualIncomeSchema.parse(body);
-
-    const [newAnnualIncome] = await dbPostgres
-      .insert(annualIncomes)
-      .values({ range: validatedData.range })
-      .returning();
-
-    return NextResponse.json({ success: true, data: newAnnualIncome });
-  } catch (error: any) {
-    console.error('Error creating annual income:', error);
-    return NextResponse.json({ success: false, message: 'Failed to create annual income', error: error.message }, { status: 400 });
-  }
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        // const validatedData = createAnnualIncomeSchema.parse(body);
+        
+        const result = await createAnnualIncome(body);
+        if (!result.success) {
+            return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+        return NextResponse.json(result.data, { status: 201 });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json({ error: error.errors }, { status: 400 });
+        }
+        console.error("Error in POST /api/annual-incomes:", error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
 }
 
-export async function PUT(req: Request) {
-  try {
-    const url = new URL(req.url);
-    const id = url.searchParams.get('id');
+export async function PUT(request: NextRequest) {
+    try {
+        const searchParams = request.nextUrl.searchParams;
+        const id = searchParams.get("id");
 
-    if (!id) {
-      return NextResponse.json({ success: false, message: 'ID is required' }, { status: 400 });
+        if (!id) {
+            return NextResponse.json({ error: "ID is required" }, { status: 400 });
+        }
+
+        const body = await request.json();
+        // const validatedData = createAnnualIncomeSchema.partial().parse(body);
+        
+        const result = await updateAnnualIncome(parseInt(id), body);
+        if (!result.success) {
+            return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+        return NextResponse.json(result.data);
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json({ error: error.errors }, { status: 400 });
+        }
+        console.error("Error in PUT /api/annual-incomes:", error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
-
-    const body = await req.json();
-    const validatedData = annualIncomeSchema.parse(body);
-
-    const [updatedAnnualIncome] = await dbPostgres
-      .update(annualIncomes)
-      .set({ range: validatedData.range })
-      .where(eq(annualIncomes.id, parseInt(id)))
-      .returning();
-
-    if (!updatedAnnualIncome) {
-      return NextResponse.json({ success: false, message: 'Annual income not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true, data: updatedAnnualIncome });
-  } catch (error: any) {
-    console.error('Error updating annual income:', error);
-    return NextResponse.json({ success: false, message: 'Failed to update annual income', error: error.message }, { status: 400 });
-  }
 }
 
-export async function DELETE(req: Request) {
-  try {
-    const url = new URL(req.url);
-    const id = url.searchParams.get('id');
+export async function PATCH(request: NextRequest) {
+    try {
+        const searchParams = request.nextUrl.searchParams;
+        const id = searchParams.get("id");
 
-    if (!id) {
-      return NextResponse.json({ success: false, message: 'ID is required' }, { status: 400 });
+        if (!id) {
+            return NextResponse.json({ error: "ID is required" }, { status: 400 });
+        }
+
+        const result = await toggleAnnualIncomeStatus(parseInt(id));
+        if (!result.success) {
+            return NextResponse.json({ error: result.error }, { status: 404 });
+        }
+        return NextResponse.json(result.data);
+    } catch (error) {
+        console.error("Error in PATCH /api/annual-incomes:", error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
-
-    const [deletedAnnualIncome] = await dbPostgres
-      .delete(annualIncomes)
-      .where(eq(annualIncomes.id, parseInt(id)))
-      .returning();
-
-    if (!deletedAnnualIncome) {
-      return NextResponse.json({ success: false, message: 'Annual income not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true, data: deletedAnnualIncome });
-  } catch (error: any) {
-    console.error('Error deleting annual income:', error);
-    return NextResponse.json({ success: false, message: 'Failed to delete annual income', error: error.message }, { status: 500 });
-  }
 } 

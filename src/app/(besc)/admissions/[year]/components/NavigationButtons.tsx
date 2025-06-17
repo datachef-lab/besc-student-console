@@ -6,6 +6,7 @@ interface NavigationButtonsProps {
   onNext: () => void;
   onSubmit: () => void;
   totalSteps: number;
+  nextButtonDisabled?: boolean;
 }
 
 export default function NavigationButtons({
@@ -14,6 +15,7 @@ export default function NavigationButtons({
   onNext,
   onSubmit,
   totalSteps,
+  nextButtonDisabled = false,
 }: NavigationButtonsProps) {
   return (
     <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
@@ -33,6 +35,7 @@ export default function NavigationButtons({
       {currentStep < totalSteps ? (
         <button
           onClick={onNext}
+          disabled={nextButtonDisabled}
           className="flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition-all duration-200 shadow-sm hover:shadow"
         >
           Next

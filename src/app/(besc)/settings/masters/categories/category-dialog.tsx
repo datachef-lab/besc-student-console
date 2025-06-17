@@ -23,11 +23,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 interface AddCategoryDialogProps {
   initialData?: Category;
   trigger?: React.ReactNode;
+  onSuccess?: () => void;
 }
 
 export function AddCategoryDialog({
   initialData,
   trigger,
+  onSuccess,
 }: AddCategoryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -43,6 +45,7 @@ export function AddCategoryDialog({
       setError(result.error);
     } else {
       setIsOpen(false); // Close on success
+      onSuccess?.(); // Call the success callback
     }
   };
 
@@ -84,15 +87,16 @@ export function AddCategoryDialog({
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
+              <Label htmlFor="documentRequired" className="text-right">
                 Is Document Required?
               </Label>
-              <input type="hidden" name="documentRequired" value="false" />
-              <Checkbox
+              <input
+                id="documentRequired"
                 name="documentRequired"
-                value="true"
-                defaultChecked={!!initialData?.documentRequired}
+                type="checkbox"
                 className="col-span-3"
+                defaultChecked={!!initialData?.documentRequired}
+                value="true"
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -130,10 +134,12 @@ function SubmitButton() {
 // --- Delete Category Dialog ---
 interface DeleteCategoryDialogProps {
   categoryId: string;
+  onSuccess?: () => void;
 }
 
 export function DeleteCategoryDialog({
   categoryId,
+  onSuccess,
 }: DeleteCategoryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -147,6 +153,7 @@ export function DeleteCategoryDialog({
       setError(result.error);
     } else {
       setIsOpen(false); // Close on success
+      onSuccess?.(); // Call the success callback
     }
     setIsDeleting(false);
   };

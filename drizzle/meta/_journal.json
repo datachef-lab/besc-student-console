@@ -50,6 +50,34 @@
       "when": 1749974158082,
       "tag": "0006_giant_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1749996680744,
+      "tag": "0007_great_lady_deathstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1749999353672,
+      "tag": "0008_lovely_wallop",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1749999406709,
+      "tag": "0009_eminent_ravenous",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1750157554369,
+      "tag": "0010_zippy_sentinels",
+      "breakpoints": true
     }
   ]
 }

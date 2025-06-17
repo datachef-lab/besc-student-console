@@ -2,7 +2,7 @@ import {dbPostgres} from "@/db";
 import { AdmissionAcademicInfo, admissionAcademicInfo } from "@/db/schema";
 import { AdmissionAcademicInfoDto } from "@/types/admissions";
 import { and, eq, ilike } from "drizzle-orm";
-import { createSubject, deleteSubject, findSubjectsByAcademicInfoId } from "./adm-stduent-subject.service";
+import { createSubject, deleteSubject, findSubjectsByAcademicInfoId } from "./adm-student-subject.service";
 
 export async function createAcademicInfo(givenDto: AdmissionAcademicInfoDto) {
     const { subjects, ...base } = givenDto;

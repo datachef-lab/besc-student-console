@@ -2,33 +2,18 @@ import { NextResponse } from "next/server";
 import { dbPostgres } from "@/db";
 import { academicSubjects } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { createSubject, updateSubject, toggleSubjectStatus, getAllSubjects } from "@/lib/services/academic-subject.service";
+import { createSubject, updateSubject, toggleSubjectStatus, getAllSubjects, getAllAcademicSubjects } from "@/lib/services/academic-subject.service";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    const disabled = searchParams.get("disabled");
-
-    if (id) {
-      const subject = await dbPostgres
-        .select()
-        .from(academicSubjects)
-        .where(eq(academicSubjects.id, parseInt(id)))
-        .limit(1);
-
-      if (!subject.length) {
-        return NextResponse.json({ error: "Subject not found" }, { status: 404 });
-      }
-
-      return NextResponse.json(subject[0]);
-    }
-
-    const subjects = await getAllSubjects(disabled === null ? undefined : disabled === "true");
-    return NextResponse.json(subjects);
+    const academicSubjects = await getAllSubjects();
+    return NextResponse.json({ success: true, data: academicSubjects });
   } catch (error) {
     console.error("Error fetching academic subjects:", error);
-    return NextResponse.json({ error: "Failed to fetch academic subjects" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch academic subjects" },
+      { status: 500 }
+    );
   }
 }
 

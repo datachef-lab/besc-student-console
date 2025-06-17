@@ -5,14 +5,16 @@ import React from 'react'
 import { usePathname } from 'next/navigation';
 
 const mastersLinks = [
-    { label: "Blood Group", href: "/settings/masters/blood-group" },
-    { label: "Board / universities", href: "/settings/masters/board-universities" },
-    { label: "Annual Income", href: "/settings/masters/annual-incomes" },
+    { label: "Nationalities", href: "/settings/masters/nationalities" },
+    { label: "Religion", href: "/settings/masters/religions" },
     { label: "Categories", href: "/settings/masters/categories" },
+    { label: "Blood Group", href: "/settings/masters/blood-group" },
+    { label: "Annual Income", href: "/settings/masters/annual-incomes" },
+    { label: "Board / universities", href: "/settings/masters/board-universities" },
+    { label: "Degrees", href: "/settings/masters/degrees" },
     { label: "Courses", href: "/settings/masters" },
     { label: "Colleges", href: "/settings/masters/colleges" },
-    { label: "Religion", href: "/settings/masters/religions" },
-    { label: "Nationalities", href: "/settings/masters/nationalities" },
+    { label: "Language Medium", href: "/settings/masters/language-medium" },
 ];
 export default function MastersLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

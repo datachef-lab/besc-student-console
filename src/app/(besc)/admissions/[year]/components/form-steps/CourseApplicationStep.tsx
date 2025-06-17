@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ReactNode } from 'react';
+import { getCourses } from "../../action";
 
 interface CourseApplicationStepProps {
   applicationForm: ApplicationForm,
@@ -41,10 +42,10 @@ export default function CourseApplicationStep({ applicationForm, availableCourse
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch("/api/admissions/courses");
-      const data = (await response.json()) as { courses: Course[]};
-      console.log("courses:", data)
-      setCourses(data.courses);
+      // const response = await fetch("/api/admissions/courses");
+      const data = await getCourses();
+      // console.log("courses:", data)
+      setCourses(data);
 
     } catch (error) {
       console.log(error)
@@ -79,30 +80,30 @@ export default function CourseApplicationStep({ applicationForm, availableCourse
       <h3 className="text-base sm:text-lg font-semibold mb-2">18. Course Selection</h3>
 
       {/* Desktop Table View */}
-      <div className="hidden sm:block overflow-x-auto rounded-md border">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="hidden w-full sm:block rounded-md border max-h-[300px] overflow-y-auto">
+        <table className="min-w-full divide-y divide-gray-200 table-fixed">
+          <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Sl</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">Sl</th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Select</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Select</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {courses.map((course, index) => (
-              <tr key={course.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{course.name}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {typeof course.id === 'number' && (
-                    <Checkbox
-                      checked={courseApplication.some(crs => crs.courseId === course.id)}
-                      onCheckedChange={(isChecked: boolean) => handleCourseSelect(course.id as number, isChecked)}
-                    />
-                  )}
-                </td>
-              </tr>
-            ))}
+              {courses.map((course, index) => (
+                <tr key={course.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                  <td className="px-4 py-4 text-sm font-medium text-gray-900">{index + 1}</td>
+                  <td className="px-4 py-4 text-sm text-gray-500">{course.name}</td>
+                  <td className="px-4 py-4 text-sm text-gray-500">
+                    {typeof course.id === 'number' && (
+                      <Checkbox
+                        checked={courseApplication.some(crs => crs.courseId === course.id)}
+                        onCheckedChange={(isChecked: boolean) => handleCourseSelect(course.id as number, isChecked)}
+                      />
+                    )}
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
@@ -136,9 +137,6 @@ export default function CourseApplicationStep({ applicationForm, availableCourse
         </div>
       </div>
 
-      <div className="flex justify-center mt-6">
-        <Button className="w-32 sm:w-24">Submit</Button>
-      </div>
     </div>
   );
 }

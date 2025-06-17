@@ -477,14 +477,6 @@ export default function NationalitiesPage() {
                         >
                           <Pencil className="h-4 w-4 text-blue-500" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="hover:bg-gray-100"
-                          onClick={() => handleDelete(nationality.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

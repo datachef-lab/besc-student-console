@@ -1,8 +1,21 @@
 import { dbPostgres } from "@/db";
 import { Colleges, colleges } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, ilike } from "drizzle-orm";
 
 export async function createCollege(givenCollege: Colleges) {
+    const [existingCollege] = await dbPostgres
+        .select()
+        .from(colleges)
+        .where(
+            and(
+                ilike(colleges.name, `%${givenCollege.name.trim()}%`)
+            )
+        );
+
+    if (existingCollege) {
+        return { success: false, error: "College already exists." };
+    }
+
     return await dbPostgres.insert(colleges).values(givenCollege).returning();
 }
 

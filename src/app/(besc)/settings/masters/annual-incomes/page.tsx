@@ -16,7 +16,6 @@ import { AnnualIncomeDialog } from "./annual-income-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { uploadAnnualIncomesFromFile, downloadAnnualIncomes } from './actions';
 import * as XLSX from 'xlsx'; // Import xlsx
 
 const ITEMS_PER_PAGE = 10;
@@ -47,19 +46,9 @@ export default function AnnualIncomesPage() {
       // Assuming your API supports pagination, modify the fetch call
       const response = await fetch(`/api/annual-incomes?page=${currentPage}&limit=${ITEMS_PER_PAGE}`);
       const result = await response.json();
-
-      if (result.success && Array.isArray(result.annualIncomes)) {
-        setData(result.annualIncomes);
-        setTotalCount(result.totalCount || result.annualIncomes.length);
-      } else {
-        setData([]);
-        setTotalCount(0);
-        toast({
-          title: "Failed to fetch annual incomes",
-          description: result.error || "An error occurred while fetching data.",
-          variant: "destructive",
-        });
-      }
+      setData(result);
+      setTotalCount(result.length);
+     
     } catch (error) {
       console.error("Error fetching annual incomes:", error);
       setData([]);
@@ -84,22 +73,39 @@ export default function AnnualIncomesPage() {
     }
   };
 
-  // Placeholder for edit logic
   const handleEdit = (annualIncome: AnnualIncome) => {
-    console.log("Edit clicked for:", annualIncome);
-    // TODO: Implement edit dialog opening and passing data
+    // The edit functionality is handled by the AnnualIncomeDialog component
+    // which receives the annualIncome data through its props
   };
 
-  // Placeholder for delete logic
-  const handleDelete = async (id: number | undefined) => {
-    console.log("Delete clicked for ID:", id);
-    if (id === undefined) {
-      console.error("Cannot delete item with undefined ID.");
-      return;
+  const handleToggleStatus = async (id: number) => {
+    try {
+      const response = await fetch(`/api/annual-incomes?id=${id}`, {
+        method: 'PATCH',
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Status Updated",
+          description: "Annual income status has been updated successfully.",
+        });
+        fetchAnnualIncomes();
+      } else {
+        toast({
+          title: "Update Failed",
+          description: result.error || "Failed to update annual income status.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating annual income status:", error);
+      toast({
+        title: "Update Failed",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
     }
-    // TODO: Implement delete API call and data refresh
-    // const result = await deleteAnnualIncome(id);
-    // if (result.success) { fetchAnnualIncomes(); }
   };
 
   const downloadTemplate = () => {
@@ -212,40 +218,65 @@ export default function AnnualIncomesPage() {
     formData.append('file', selectedFile);
 
     startUploadTransition(async () => {
-      const result = await uploadAnnualIncomesFromFile(formData);
-      if (!result.success) {
+      try {
+        const response = await fetch('/api/annual-incomes/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          toast({
+            title: "Upload Successful",
+            description: "Annual incomes have been uploaded successfully",
+          });
+          setSelectedFile(null);
+          setNumberOfEntries(0);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          fetchAnnualIncomes();
+        } else {
+          toast({
+            title: "Upload Failed",
+            description: result.error || "An error occurred during upload.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error uploading file:", error);
         toast({
           title: "Upload Failed",
-          description: result.error || "An error occurred during upload.",
+          description: "An unexpected error occurred during upload.",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Upload Successful",
-          description: "Annual incomes have been uploaded successfully",
-        });
-        setSelectedFile(null);
-        setNumberOfEntries(0);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        fetchAnnualIncomes();
       }
     });
   };
 
   const handleDownloadClick = () => {
     startDownloadTransition(async () => {
-      const result = await downloadAnnualIncomes();
-      if (result.success) {
+      try {
+        const response = await fetch('/api/annual-incomes/download');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'annual_incomes.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
         toast({
           title: "Download Started",
           description: "Your download should begin shortly.",
         });
-      } else {
+      } catch (error) {
+        console.error("Error downloading file:", error);
         toast({
           title: "Download Failed",
-          description: result.error || "An error occurred during download.",
+          description: "An error occurred during download.",
           variant: "destructive",
         });
       }
@@ -351,6 +382,7 @@ export default function AnnualIncomesPage() {
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="w-[80px] font-semibold text-gray-700">Sr. No</TableHead>
                 <TableHead className="font-semibold text-gray-700">Income Range</TableHead>
+                <TableHead className="text-gray-700">Status</TableHead>
                 <TableHead className="text-gray-700">Created At</TableHead>
                 <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
               </TableRow>
@@ -358,24 +390,35 @@ export default function AnnualIncomesPage() {
             <TableBody>
               {paginatedData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-gray-500">No annual income ranges found.</TableCell>
+                  <TableCell colSpan={5} className="text-center text-gray-500">No annual income ranges found.</TableCell>
                 </TableRow>
               ) : (
                 paginatedData.map((annualIncome, index) => (
                   <TableRow key={`annual-income-${annualIncome.id}-${index}`} className="hover:bg-gray-50">
                     <TableCell className="font-medium text-gray-600">{startIndex + index + 1}</TableCell>
                     <TableCell className="text-gray-700">{annualIncome.range}</TableCell>
+                    <TableCell className="text-gray-700">
+                      <span className={`px-2 py-1 rounded-full text-xs ${annualIncome.disabled ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                        {annualIncome.disabled ? 'Disabled' : 'Active'}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-gray-700">{annualIncome.createdAt ? new Date(annualIncome.createdAt).toLocaleString() : 'N/A'}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                          {/* Edit Button */}
-                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => handleEdit(annualIncome)}>
-                            <Pencil className="h-4 w-4 text-blue-500" />
-                         </Button>
+                         <AnnualIncomeDialog annualIncome={annualIncome} onSuccess={fetchAnnualIncomes}>
+                           <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                             <Pencil className="h-4 w-4 text-blue-500" />
+                           </Button>
+                         </AnnualIncomeDialog>
                          {/* Delete Button */}
-                         {/* TODO: Implement Delete Dialog */}
-                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => annualIncome.id !== undefined && handleDelete(annualIncome.id)}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                         <Button 
+                           variant="ghost" 
+                           size="icon" 
+                           className="hover:bg-gray-100"
+                           onClick={() => annualIncome.id && handleToggleStatus(annualIncome.id)}
+                         >
+                           <Trash2 className="h-4 w-4 text-red-500" />
                          </Button>
                       </div>
                     </TableCell>

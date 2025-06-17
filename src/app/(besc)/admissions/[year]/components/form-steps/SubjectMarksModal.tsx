@@ -8,9 +8,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StudentAcademicSubjects } from "@/db/schema";
-import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { StudentAcademicSubjects, subjectResultStatusType } from "@/db/schema";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface SubjectMark {
   subject: string;
@@ -32,11 +48,21 @@ interface SubjectMarksModalProps {
 export default function SubjectMarksModal({ onSave, onClose, academicSubjects, initialSubjects }: SubjectMarksModalProps) {
   // Initialize state with initialSubjects prop
   const [subjects, setSubjects] = useState<StudentAcademicSubjects[]>(initialSubjects);
+  const tableBodyRef = useRef<HTMLTableSectionElement>(null);
+
+  console.log('academicSubjects in SubjectMarksModal:', academicSubjects);
 
   useEffect(() => {
     // If initialSubjects change (e.g., when editing a saved form), update the modal's state
     setSubjects(initialSubjects);
   }, [initialSubjects]);
+
+  useEffect(() => {
+    // Scroll to the bottom when subjects array changes (new row added)
+    if (tableBodyRef.current) {
+      tableBodyRef.current.scrollTop = tableBodyRef.current.scrollHeight;
+    }
+  }, [subjects]);
 
   const handleAddRow = () => {
     setSubjects([...subjects, {
@@ -58,7 +84,10 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
     const newSubjects = [...subjects];
     // Basic type checking and conversion for numeric values
     if (field === 'fullMarks' || field === 'totalMarks') {
-       (newSubjects[index][field] as any) = value.toString(); // Store as string as per schema
+      // Validate if the value is numeric before updating
+      if (!isNaN(Number(value)) || value === '') {
+        (newSubjects[index][field] as any) = value.toString(); // Store as string as per schema
+      }
     } else if (field === 'academicSubjectId') {
        (newSubjects[index][field] as any) = parseInt(value); // Store as number
     } else if (field === 'resultStatus') {
@@ -78,14 +107,14 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
 
   // Helper to find subject name by ID
   const getSubjectName = (id: number) => {
-    const subject = academicSubjects.find(sub => sub.id === id);
+    const subject = (academicSubjects || []).find(sub => sub.id === id);
     return subject ? subject.name : 'Unknown Subject';
   };
 
   return (
     <div className="space-y-4 p-2 sm:p-4 flex flex-col h-full">
       <h3 className="text-lg sm:text-xl font-semibold">Marks Entry</h3>
-      <div className="flex flex-col gap-4 flex-grow overflow-hidden">
+      <div className="flex flex-col gap-4 flex-grow">
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-3 sm:p-4 text-left text-xs sm:text-sm">
           <p className="font-semibold mb-2">Please Note:</p>
           <ol className="list-decimal list-inside space-y-1">
@@ -101,7 +130,7 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
         </div>
         <div className="flex flex-col">
           <div className="overflow-x-auto border rounded-md">
-            <div className="min-w-[800px]">
+            <div className="min-w-[800px] max-h-[230px] overflow-y-auto" ref={tableBodyRef}>
               <table className="w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
@@ -116,53 +145,90 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
                 <tbody className="bg-white divide-y divide-gray-200">
                   {subjects.map((subject, index) => (
                     <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                      <td className="px-2 sm:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{index + 1}</td>
-                      <td className="px-2 sm:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                        <Select 
-                          value={subject.academicSubjectId ? subject.academicSubjectId.toString() : ''}
-                          onValueChange={val => handleInputChange(index, "academicSubjectId", val)}
-                        >
-                          <SelectTrigger className="h-8 text-xs sm:text-sm"><SelectValue placeholder="Select Subject" /></SelectTrigger>
-                          <SelectContent>
-                            {academicSubjects.map(sub => (
-                              <SelectItem key={sub.id} value={sub.id.toString()} className="text-xs sm:text-sm">{sub.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <td className="px-2 sm:px-3 py-1 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{index + 1}</td>
+                      <td className="px-2 sm:px-3 py-1 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className="w-full justify-between h-7 text-xs sm:text-sm"
+                            >
+                              {subject.academicSubjectId !== 0
+                                ? getSubjectName(subject.academicSubjectId)
+                                : "Select Subject"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                            <Command>
+                              <CommandInput placeholder="Search subject..." />
+                              <CommandEmpty>No subject found.</CommandEmpty>
+                              <CommandList>
+                                <CommandGroup>
+                                  {(academicSubjects || [])
+                                    .filter(sub => !subjects.some((s, i) => i !== index && s.academicSubjectId === sub.id))
+                                    .map(sub => (
+                                      <CommandItem
+                                        key={sub.id}
+                                        value={sub.name}
+                                        onSelect={() => {
+                                          handleInputChange(index, "academicSubjectId", sub.id);
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            subject.academicSubjectId === sub.id ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {sub.name}
+                                      </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </td>
-                      <td className="px-2 sm:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      <td className="px-2 sm:px-3 py-1 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                         <Input
-                          type="number"
+                          type="text"
                           value={subject.fullMarks}
                           onChange={(e) => handleInputChange(index, 'fullMarks', e.target.value)}
-                          className="w-full h-8 text-xs sm:text-sm"
+                          className="w-full h-7 text-xs sm:text-sm"
                         />
                       </td>
-                      <td className="px-2 sm:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      <td className="px-2 sm:px-3 py-1 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                         <Input
-                          type="number"
+                          type="text"
                           value={subject.totalMarks}
                           onChange={(e) => handleInputChange(index, 'totalMarks', e.target.value)}
-                          className="w-full h-8 text-xs sm:text-sm"
+                          className="w-full h-7 text-xs sm:text-sm"
                         />
                       </td>
-                      <td className="px-2 sm:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      <td className="px-2 sm:px-3 py-1 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                         <Select 
                           value={subject.resultStatus}
                           onValueChange={val => handleInputChange(index, "resultStatus", val)}
                         >
-                          <SelectTrigger className="h-8 text-xs sm:text-sm"><SelectValue placeholder="Select Status" /></SelectTrigger>
+                          <SelectTrigger className="h-7 text-xs sm:text-sm"><SelectValue placeholder="Select Status" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="PASS" className="text-xs sm:text-sm">Pass</SelectItem>
-                            <SelectItem value="FAIL" className="text-xs sm:text-sm">Fail</SelectItem>
-                            <SelectItem value="FAIL IN THEORY" className="text-xs sm:text-sm">Fail in Theory</SelectItem>
-                            <SelectItem value="FAIL IN PRACTICAL" className="text-xs sm:text-sm">Fail in Practical</SelectItem>
-                          </SelectContent>
+                            {subjectResultStatusType.enumValues.map(value => (
+                              <SelectItem key={value} value={value} className="text-xs sm:text-sm">{value}</SelectItem>
+                            ))}
+                            </SelectContent>
                         </Select>
                       </td>
-                      <td className="px-2 sm:px-3 py-2 whitespace-nowrap text-right text-xs sm:text-sm font-medium">
-                        <Button variant="destructive" size="sm" onClick={() => handleRemoveRow(index)} className="h-8 px-2 py-1">
-                          X
+                      <td className="px-2 sm:px-3 py-1 whitespace-nowrap text-right text-xs sm:text-sm font-medium">
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleRemoveRow(index)} 
+                          className="h-7 px-2 py-1 flex items-center justify-center"
+                          disabled={subjects.length <= 4}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </td>
                     </tr>
@@ -171,19 +237,20 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
               </table>
             </div>
           </div>
-          <div className="flex justify-center mt-4">
+        </div>
+      </div>
+      <div className="flex justify-between my-6 items-center">
+          <div className="flex justify-center ">
             <Button 
               onClick={handleAddRow} 
               className="w-auto min-w-[120px] bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 h-10"
             >
               <Plus className="h-4 w-4" />
-              Add Row
+              Add Subject
             </Button>
           </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3 mt-6">
+      
+      <div className="flex justify-end gap-3  ">
         <Button 
           variant="outline" 
           onClick={onClose} 
@@ -197,6 +264,7 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
         >
           Done
         </Button>
+      </div>
       </div>
     </div>
   );

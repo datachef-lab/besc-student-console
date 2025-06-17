@@ -352,7 +352,7 @@ export default function ReligionPage() {
                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => handleEdit(religion)}>
                           <Pencil className="h-4 w-4 text-blue-500" />
                         </Button>
-                        <DeleteReligionDialog religionId={religion.id as number} onSuccess={handleDeleteSuccess} />
+                        {/* <DeleteReligionDialog religionId={religion.id as number} onSuccess={handleDeleteSuccess} /> */}
                       </div>
                     </TableCell>
                   </TableRow>

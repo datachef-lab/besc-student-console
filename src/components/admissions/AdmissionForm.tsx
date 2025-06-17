@@ -13,6 +13,10 @@ import {
 import Image from "next/image";
 import { Admission, AdmissionGeneralInfo, ApplicationForm } from "@/db/schema";
 import { useParams, useRouter } from "next/navigation";
+import { AdmissionAcademicInfoDto, BoardUniversityDto } from "@/types/admissions";
+import { AcademicSubjects, BoardUniversity, Payment, SportsInfo, StudentAcademicSubjects } from "@/db/schema";
+import { useApplicationForm } from "@/hooks/use-application-form";
+import { useToast } from "@/components/ui/use-toast";
 
 // Notes for each step
 const stepNotes: Record<number, React.ReactNode> = {
@@ -130,35 +134,35 @@ const stepNotes: Record<number, React.ReactNode> = {
 };
 
 export default function AdmissionForm() {
-  const { year } = useParams<{ year: string }>();
-  const router = useRouter();
-
+  const { toast } = useToast();
+  const { applicationForm, setApplicationForm } = useApplicationForm();
   const [currentStep, setCurrentStep] = useState(1);
-  const [admission, setAdmisson] = useState<Admission | null>(null);
-  const [applicationForm, setApplicationForm] = useState<ApplicationForm>({
-    admissionId: 0,
-    admissionStep: "GENERAL_INFORMATION",
-    formStatus: "DRAFT",
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [academicInfo, setAcademicInfo] = useState<AdmissionAcademicInfoDto>({
+    applicationFormId: 0,
+    boardUniversityId: 0,
+    boardResultStatus: "PASS",
+    instituteId: 0,
+    languageMediumId: 0,
+    yearOfPassing: new Date().getFullYear(),
+    streamType: "SCIENCE",
+    isRegisteredForUGInCU: false,
+    subjects: []
   });
-  const [generalInfo, setGeneralInfo] = useState<AdmissionGeneralInfo>({
-    applicationFormId: applicationForm?.id ?? 0,
-    dateOfBirth: new Date().toISOString().split("T")[0],
-    email: "",
-    firstName: "",
-    middleName: null,
-    lastName: "",
-    mobileNumber: "",
-    password: "",
-    categoryId: null,
-    degreeLevel: "UNDER_GRADUATE",
-    residenceOfKolkata: true,
-    gender: "FEMALE",
-    isGujarati: false,
-    nationalityId: null,
-    otherNationality: null,
-    religionId: null,
-    whatsappNumber: null,
-  });
+
+  useEffect(() => {
+    if (applicationForm?.admissionStep) {
+      // Map the admissionStep string to the corresponding step number
+      const stepMap: Record<string, number> = {
+        GENERAL_INFORMATION: 1,
+        ACADEMIC_INFORMATION: 2,
+        COURSE_APPLICATION: 3,
+        ADDITIONAL_INFORMATION: 4,
+        PAYMENT_INFORMATION: 5,
+      };
+      setCurrentStep(stepMap[applicationForm.admissionStep] || 1);
+    }
+  }, [applicationForm]);
 
   const steps: Step[] = [
     { number: 1, title: "General Information" },
@@ -168,46 +172,61 @@ export default function AdmissionForm() {
     { number: 5, title: "Payment" },
   ];
 
-  useEffect(() => {
-    if (isNaN(Number(year))) {
-      router.push("/");
-      return;
-    }
+  const handleNext = async () => {
+    if (currentStep === 1) {
+      // Check if it's a new application or existing one
+      const isNewApplication = !applicationForm?.id || !applicationForm?.generalInfo?.id || applicationForm.id === 0 || applicationForm.generalInfo.id === 0;
 
-    fetchAdmission()
-      .then(async (adm) => {
-        setAdmisson(adm as Admission);
-        if (adm) {
-          await fetchApplicantionForm(adm.id!);
+      try {
+        setIsSubmitting(true);
+        const formData = {
+          form: {
+            admissionId: applicationForm?.admissionId,
+            status: "DRAFT",
+            currentStep: 1,
+            admissionStep: "GENERAL_INFORMATION"
+          },
+          generalInfo: applicationForm?.generalInfo
+        };
+
+        const response = await fetch("/api/admissions/application-forms", {
+          method: isNewApplication ? "POST" : "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to save form");
         }
-      })
-      .catch((err) => alert(err));
-  }, [year, router]);
 
-  const fetchAdmission = async (): Promise<Admission | null> => {
-    try {
-    } catch (error) {}
+        // Update the application form in context
+        setApplicationForm(data);
 
-    return null; // TODO
-  };
-  const fetchApplicantionForm = async (
-    admissionId: number
-  ): Promise<ApplicationForm | null> => {
-    try {
-    } catch (error) {}
+        toast({
+          title: "Success",
+          description: "Form saved successfully",
+          onClose: () => {},
+        });
 
-    return null; // TODO
-  };
-
-  const handleInputChange = (field: keyof ApplicationForm, value: any) => {
-    setApplicationForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleNext = () => {
-    if (currentStep < steps.length) {
+        // Proceed to next step
+        setCurrentStep(currentStep + 1);
+      } catch (error) {
+        console.error("Error saving form:", error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to save form",
+          variant: "destructive",
+          onClose: () => {},
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      // For other steps, just move to next step
       setCurrentStep(currentStep + 1);
     }
   };
@@ -224,47 +243,59 @@ export default function AdmissionForm() {
   };
 
   const renderStepContent = () => {
+    if (!applicationForm) return null;
+
     switch (currentStep) {
       case 1:
         return (
           <GeneralInfoStep
-            setGeneralInfo={setGeneralInfo}
-            applicationForm={applicationForm}
             stepNotes={stepNotes[currentStep]}
-            generalInfo={generalInfo}
+            onNext={handleNext}
+            onPrev={handlePrevious}
           />
         );
       case 2:
         return (
           <AcademicInfoStep
-            applicationForm={applicationForm}
             stepNotes={stepNotes[currentStep]}
+            applicationForm={applicationForm}
+            academicInfo={academicInfo}
+            setAcademicInfo={setAcademicInfo}
           />
         );
       case 3:
+        if (!applicationForm) {
+          return <div>Please complete all previous steps first.</div>;
+        }
         return (
           <CourseApplicationStep
-            applicationForm={applicationForm}
             stepNotes={stepNotes[currentStep]}
+            applicationForm={applicationForm}
           />
         );
       case 4:
+        if (!applicationForm.generalInfo) {
+          return <div>Please complete the general information step first.</div>;
+        }
         return (
           <AdditionalInfoStep
-            generalInfo={generalInfo}
-            applicationForm={applicationForm}
             stepNotes={stepNotes[currentStep]}
+            applicationForm={applicationForm}
+            generalInfo={applicationForm.generalInfo}
           />
         );
       case 5:
+        if (!applicationForm) {
+          return <div>Please complete all previous steps first.</div>;
+        }
         return (
           <PaymentStep
-            onPaymentInfoChange={(
-              field: keyof ApplicationForm,
-              value: any
-            ) => {}}
-            applicationForm={applicationForm}
             stepNotes={stepNotes[currentStep]}
+            applicationForm={applicationForm}
+            onPaymentInfoChange={(paymentInfo) => {
+              // Handle payment info change
+              console.log('Payment info changed:', paymentInfo);
+            }}
           />
         );
       default:
@@ -293,6 +324,7 @@ export default function AdmissionForm() {
               onPrevious={handlePrevious}
               onNext={handleNext}
               onSubmit={handleSubmit}
+              nextButtonDisabled={isSubmitting}
             />
           </div>
 
@@ -308,9 +340,9 @@ export default function AdmissionForm() {
             className="h-full bg-white p-0 shadow-sm overflow-hidden relative"
             style={{
               backgroundImage: "url('/illustrations/admission-form.png')",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
             }}
           ></div>
         </div>

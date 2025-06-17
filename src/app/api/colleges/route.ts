@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
         const id = searchParams.get("id");
+        const page = parseInt(searchParams.get("page") || "1", 10);
+        const limit = parseInt(searchParams.get("limit") || "10", 10);
 
         if (id) {
             const college = await getCollegeById(parseInt(id));
@@ -16,8 +18,16 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(college[0]);
         }
 
-        const colleges = await getColleges();
-        return NextResponse.json(colleges);
+        // Fetch all colleges
+        const allColleges = await getColleges();
+        const totalCount = allColleges.length;
+
+        // Paginate
+        const start = (page - 1) * limit;
+        const end = start + limit;
+        const colleges = allColleges.slice(start, end);
+
+        return NextResponse.json({ colleges, totalCount });
     } catch (error) {
         console.error("Error in GET /api/colleges:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
@@ -29,7 +39,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const validatedData = createCollegesSchema.parse(body);
         const college = await createCollege(validatedData);
-        return NextResponse.json(college[0], { status: 201 });
+        return NextResponse.json(college, { status: 201 });
     } catch (error) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ error: error.errors }, { status: 400 });

@@ -1,4 +1,3 @@
-
 import { pgTable, foreignKey, serial, integer, varchar, timestamp, unique, boolean, date, numeric, text, pgEnum } from "drizzle-orm/pg-core"
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
@@ -18,7 +17,7 @@ export const localityType = pgEnum("locality_type", ['RURAL', 'URBAN'])
 export const marksheetSource = pgEnum("marksheet_source", ['FILE_UPLOAD', 'ADDED'])
 export const paperModeType = pgEnum("paper_mode_type", ['THEORETICAL', 'PRACTICAL', 'VIVA', 'ASSIGNMENT', 'PROJECT', 'MCQ'])
 export const parentType = pgEnum("parent_type", ['BOTH', 'FATHER_ONLY', 'MOTHER_ONLY'])
-export const placeOfStayType = pgEnum("place_of_stay_type", ['OWN', 'HOSTEL', 'FAMILY_FRIENDS', 'PAYING_GUEST', 'RELATIVES'])
+export const placeOfStayType = pgEnum("place_of_stay_type", ['OWN', 'HOSTEL', 'PAYING_GUEST', 'RELATIVES'])
 export const subjectCategoryType = pgEnum("subject_category_type", ['SPECIAL', 'COMMON', 'HONOURS', 'GENERAL', 'ELECTIVE'])
 export const subjectStatus = pgEnum("subject_status", ['PASS', 'FAIL', 'P', 'F', 'F(IN)', 'F(PR)', 'F(TH)'])
 export const transportType = pgEnum("transport_type", ['BUS', 'TRAIN', 'METRO', 'AUTO', 'TAXI', 'CYCLE', 'WALKING', 'OTHER'])
@@ -100,7 +99,26 @@ export const streamType = pgEnum("stream_type", [
     'SCIENCE',
     'COMMERCE',
     "HUMANITIES",
+    "ARTS",
 ]);
+
+export const otpType = pgEnum("otp_type", [
+    'FOR_PHONE',
+    'FOR_EMAIL',
+]);
+
+export const otps = pgTable("otps", {
+    id: serial("id").primaryKey(),
+    otp: varchar("otp", { length: 6 }).notNull(),
+    recipient: varchar("recipient", { length: 255 }).notNull(),
+    type: otpType("type").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+});
+export const createOtpSchema = createInsertSchema(otps);
+export type Otp = z.infer<typeof createOtpSchema>;
+
 
 export const admissions = pgTable("admissions", {
     id: serial().primaryKey().notNull(),
@@ -252,6 +270,7 @@ export const colleges = pgTable("colleges", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 500 }).notNull(),
     code: varchar("code", { length: 50 }),
+    sequence: integer("sequence"),
     disabled: boolean().default(false),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),

@@ -14,13 +14,15 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { AdmissionGeneralInfo, ApplicationForm, Category, Nationality, genderType } from "@/db/schema";
+import { useApplicationForm } from "@/hooks/use-application-form";
+import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 
 interface GeneralInfoStepProps {
-  applicationForm: ApplicationForm,
   stepHeading?: string;
   stepNotes: React.ReactNode;
-  generalInfo: AdmissionGeneralInfo;
-  setGeneralInfo: Dispatch<SetStateAction<AdmissionGeneralInfo>>;
+  onNext?: () => void;
+  onPrev?: () => void;
 }
 
 const STATES = [
@@ -45,10 +47,10 @@ const CATEGORIES = [
   "OBC-B",
 ];
 
-const GENDERS = ["MALE", "FEMALE", "TRANSGENDER"] as const;
+const GENDERS = genderType.enumValues;
 type Gender = typeof GENDERS[number];
 
-const DEGREES = ["Under Graduate", "Post Graduate"];
+// const DEGREES = ["Under Graduate", "Post Graduate"];
 
 // Simple static red dot for required fields
 const RedDot = () => (
@@ -65,70 +67,53 @@ const months = [
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 60 }, (_, i) => currentYear - i);
 
-// const stepNotes: Record<number, React.ReactNode> = {
-//   1: (
-//     <div>
-//       <div><b>Please Note :</b></div>
-//       <ol className="list-decimal ml-5 mt-1 space-y-1 text-sm">
-//         <li>All the fields in the above Form are mandatory.</li>
-//         <li>Please cross check all the fields especially <b>Category, Gender & Mobile Number</b> before submitting the Form, as these fields are not editable afterwards.</li>
-//         <li>As per UGC directives in alignment with NEP 2020, all applicants seeking admission are required to create an Academic Bank of Credits (ABC) account. You will be required to submit this ABC ID at the time of registration to University of Calcutta. <a href="https://www.abc.gov.in/" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Click here to create your ABC ID.</a></li>
-//         <li>For Indian citizens applying for admission, it is mandatory to possess an Aadhar Card. Kindly ensure that you have your Aadhar and related ready to prevent any delays in the admission process.</li>
-//         <li><span className="text-red-600 font-bold">Red dot</span> indicates mandatory field.</li>
-//       </ol>
-//     </div>
-//   ),
-//   2: (
-//     <div>
-//       <b>Academic Information Note:</b> Please ensure all academic details are accurate and match your official documents. Incorrect information may lead to disqualification.
-//     </div>
-//   ),
-//   3: (
-//     <div>
-//       <b>Course Application Note:</b> Select your desired program and specialization carefully. Once submitted, changes may not be allowed.
-//     </div>
-//   ),
-//   4: (
-//     <div>
-//       <b>Additional Information Note:</b> Provide honest and complete information about your extracurriculars and work experience.
-//     </div>
-//   ),
-//   5: (
-//     <div>
-//       <b>Payment Note:</b> Review your payment details before proceeding. Application fees are non-refundable.
-//     </div>
-//   ),
-// };
-
-export default function GeneralInfoStep({ 
-  applicationForm, 
-  stepHeading, 
+export default function GeneralInfoStep({
+  stepHeading,
   stepNotes,
-  generalInfo,
-  setGeneralInfo,
+  onNext,
+  onPrev,
 }: GeneralInfoStepProps) {
+  const { toast } = useToast();
+  const router = useRouter();
+  const { admission, applicationForm, setApplicationForm, login } = useApplicationForm();
   const [nationalities, setNationalities] = useState<Nationality[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [confirmPassword, setConfirmPassword] = useState("");
-  // const [generalInfo, setGeneralInfo] = useState<AdmissionGeneralInfo>({
-  //   applicationFormId: applicationForm?.id ?? 0,
-  //   dateOfBirth: new Date().toISOString().split('T')[0],
-  //   email: "",
-  //   firstName: "",
-  //   middleName: null,
-  //   lastName: "",
-  //   mobileNumber: "",
-  //   password: "",
-  //   categoryId: null,
-  //   degreeLevel: "UNDER_GRADUATE",
-  //   residenceOfKolkata: true,
-  //   gender: "FEMALE",
-  //   isGujarati: false,
-  //   nationalityId: null,
-  //   otherNationality: null,
-  //   religionId: null,
-  //   whatsappNumber: null,    
-  // });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
+  // Handle changes in generalInfo
+  const handleGeneralInfoChange = (field: keyof AdmissionGeneralInfo, value: any) => {
+    if (!applicationForm) return;
+    
+    setApplicationForm({
+      ...applicationForm,
+      generalInfo: {
+        ...applicationForm.generalInfo,
+        [field]: value
+      } as AdmissionGeneralInfo
+    });
+  };
+
+  const generalInfo = applicationForm?.generalInfo || {
+    applicationFormId: 0,
+    dateOfBirth: new Date().toISOString().split('T')[0],
+    email: "",
+    firstName: "",
+    middleName: null,
+    lastName: "",
+    mobileNumber: "",
+    password: "",
+    categoryId: null,
+    degreeLevel: "UNDER_GRADUATE",
+    residenceOfKolkata: true,
+    gender: "FEMALE",
+    isGujarati: false,
+    nationalityId: null,
+    otherNationality: null,
+    religionId: null,
+    whatsappNumber: null,
+  } as AdmissionGeneralInfo;
 
   // Fetch nationalities on component mount
   useEffect(() => {
@@ -174,13 +159,109 @@ export default function GeneralInfoStep({
     void fetchCategories();
   }, []);
 
-  // Handle changes in generalInfo
-  const handleGeneralInfoChange = (field: keyof AdmissionGeneralInfo, value: any) => {
-    setGeneralInfo(prev => ({ ...prev, [field]: value }));
+  // Validation function
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    // Required fields validation
+    if (!generalInfo.firstName?.trim()) errors.firstName = "First name is required";
+    if (!generalInfo.lastName?.trim()) errors.lastName = "Last name is required";
+    if (!generalInfo.email?.trim()) errors.email = "Email is required";
+    if (!generalInfo.mobileNumber?.trim()) errors.mobileNumber = "Mobile number is required";
+    if (!generalInfo.password?.trim()) errors.password = "Password is required";
+    if (!confirmPassword) errors.confirmPassword = "Please confirm your password";
+    if (generalInfo.password !== confirmPassword) errors.confirmPassword = "Passwords do not match";
+    if (!generalInfo.nationalityId && !generalInfo.otherNationality) errors.nationality = "Nationality is required";
+    if (!generalInfo.categoryId) errors.category = "Category is required";
+    if (!generalInfo.gender) errors.gender = "Gender is required";
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (generalInfo.email && !emailRegex.test(generalInfo.email)) {
+      errors.email = "Invalid email format";
+    }
+
+    // Mobile number validation (10 digits)
+    const mobileRegex = /^\d{10}$/;
+    if (generalInfo.mobileNumber && !mobileRegex.test(generalInfo.mobileNumber)) {
+      errors.mobileNumber = "Mobile number must be 10 digits";
+    }
+
+    // WhatsApp number validation (if not same as mobile)
+    if (!sameAsMobile && generalInfo.whatsappNumber && !mobileRegex.test(generalInfo.whatsappNumber)) {
+      errors.whatsappNumber = "WhatsApp number must be 10 digits";
+    }
+
+    // Verification validation
+    if (!emailVerified) errors.email = "Please verify your email";
+    if (!mobileVerified) errors.mobileNumber = "Please verify your mobile number";
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  // Validation state
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  // Handle form submission
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before proceeding",
+        variant: "destructive",
+        onClose: () => {},
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = {
+        form: {
+          admissionId: admission?.id,
+          status: "DRAFT",
+          currentStep: 1,
+        },
+        generalInfo: {
+          ...generalInfo,
+          whatsappNumber: sameAsMobile ? generalInfo.mobileNumber : generalInfo.whatsappNumber,
+        },
+      };
+
+      const response = await fetch("/api/admissions/application-forms", {
+        method: applicationForm ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save form");
+      }
+
+      toast({
+        title: "Success",
+        description: "Form saved successfully",
+        onClose: () => {},
+      });
+
+      if (onNext) {
+        onNext();
+      }
+    } catch (error) {
+      console.error("Error saving form:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save form",
+        variant: "destructive",
+        onClose: () => {},
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // OTP state
   const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [emailOtp, setEmailOtp] = useState("");
@@ -198,6 +279,122 @@ export default function GeneralInfoStep({
 
   // Serial number helper
   let sl = 1;
+
+  // Handle Send Email OTP
+  const handleSendEmailOtp = async () => {
+    if (!generalInfo.email) {
+      alert("Please enter your email address first.");
+      return;
+    }
+    setEmailOtpSent(true);
+    try {
+      const response = await fetch("/api/otp/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "FOR_EMAIL",
+          recipient: generalInfo.email,
+          name: `${generalInfo.firstName} ${generalInfo.lastName || ""}`.trim(),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(`Failed to send email OTP: ${data.message}`);
+      } else {
+        alert("Email OTP sent successfully! Check your inbox.");
+      }
+    } catch (error) {
+      console.error("Error sending email OTP:", error);
+      alert("Error sending email OTP. Please try again.");
+    }
+  };
+
+  // Handle Verify Email OTP
+  const handleVerifyEmailOtp = async () => {
+    try {
+      const response = await fetch("/api/otp/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "FOR_EMAIL",
+          recipient: generalInfo.email,
+          otp: emailOtp,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setEmailVerified(true);
+        alert("Email verified successfully!");
+      } else {
+        alert(`Invalid email OTP: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("Error verifying email OTP:", error);
+      alert("Error verifying email OTP. Please try again.");
+    }
+  };
+
+  // Handle Send Mobile OTP
+  const handleSendMobileOtp = async () => {
+    if (!generalInfo.mobileNumber) {
+      alert("Please enter your mobile number first.");
+      return;
+    }
+    setMobileOtpSent(true);
+    try {
+      const response = await fetch("/api/otp/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "FOR_PHONE",
+          recipient: generalInfo.mobileNumber,
+          name: `${generalInfo.firstName} ${generalInfo.lastName || ""}`.trim(),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(`Failed to send WhatsApp OTP: ${data.message}`);
+      } else {
+        alert("WhatsApp OTP sent successfully! Check your phone.");
+      }
+    } catch (error) {
+      console.error("Error sending WhatsApp OTP:", error);
+      alert("Error sending WhatsApp OTP. Please try again.");
+    }
+  };
+
+  // Handle Verify Mobile OTP
+  const handleVerifyMobileOtp = async () => {
+    try {
+      const response = await fetch("/api/otp/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "FOR_PHONE",
+          recipient: generalInfo.mobileNumber,
+          otp: mobileOtp,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMobileVerified(true);
+        alert("Mobile number verified successfully!");
+      } else {
+        alert(`Invalid mobile OTP: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("Error verifying mobile OTP:", error);
+      alert("Error verifying mobile OTP. Please try again.");
+    }
+  };
 
   // Handle nationality change
   const handleNationalityChange = (value: string) => {
@@ -229,31 +426,31 @@ export default function GeneralInfoStep({
               <div className="flex flex-col sm:flex-row w-full gap-3 mt-2">
                 <div className="w-full sm:w-1/3">
                   <Label className="mb-1 flex items-center text-sm">First Name <RedDot /></Label>
-                  <Input 
-                    value={generalInfo.firstName} 
-                    onChange={e => handleGeneralInfoChange("firstName", e.target.value)} 
-                    required 
-                    placeholder="AS PER CLASS XII BOARD MARKSHEET" 
+                  <Input
+                    value={generalInfo.firstName || ""}
+                    onChange={e => handleGeneralInfoChange("firstName", e.target.value)}
+                    required
+                    placeholder="AS PER CLASS XII BOARD MARKSHEET"
                     className="w-full"
                   />
                 </div>
                 <div className="w-full sm:w-1/3">
                   <Label className="mb-1 flex items-center text-sm">Middle Name</Label>
-                  <Input 
-                    value={generalInfo.middleName || ""} 
-                    onChange={e => handleGeneralInfoChange("middleName", e.target.value)} 
-                    placeholder="AS PER CLASS XII BOARD MARKSHEET" 
+                  <Input
+                    value={generalInfo.middleName || ""}
+                    onChange={e => handleGeneralInfoChange("middleName", e.target.value)}
+                    placeholder="AS PER CLASS XII BOARD MARKSHEET"
                     className="w-full"
                   />
                   <p className="text-red-500 font-semibold text-xs mt-1">(Do not write if not given in Class XII Board Marksheet)</p>
                 </div>
                 <div className="w-full sm:w-1/3">
                   <Label className="mb-1 flex items-center text-sm">Last Name <RedDot /></Label>
-                  <Input 
-                    value={generalInfo.lastName || ""} 
-                    onChange={e => handleGeneralInfoChange("lastName", e.target.value)} 
-                    required 
-                    placeholder="AS PER CLASS XII BOARD MARKSHEET" 
+                  <Input
+                    value={generalInfo.lastName || ""}
+                    onChange={e => handleGeneralInfoChange("lastName", e.target.value)}
+                    required
+                    placeholder="AS PER CLASS XII BOARD MARKSHEET"
                     className="w-full"
                   />
                 </div>
@@ -264,20 +461,52 @@ export default function GeneralInfoStep({
         {/* 2. Email */}
         <div>
           <Label className="flex items-center mb-1">2. Email <RedDot /></Label>
-          <Input 
-            value={generalInfo.email} 
-            onChange={e => handleGeneralInfoChange("email", e.target.value)} 
-            required 
-            placeholder="Email" 
-            disabled={emailVerified} 
-          />
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              value={generalInfo.email || ""}
+              onChange={e => {
+                handleGeneralInfoChange("email", e.target.value);
+                setEmailVerified(false); // Reset verification on email change
+                setEmailOtpSent(false);
+              }}
+              required
+              placeholder="Email"
+              disabled={emailVerified}
+              className="w-full"
+            />
+            <div className="flex flex-col sm:flex-row gap-2">
+              {!emailVerified && !emailOtpSent && (
+                <Button type="button" size="sm" className="w-full sm:w-auto" onClick={handleSendEmailOtp}>Send OTP</Button>
+              )}
+              {emailOtpSent && !emailVerified && (
+                <>
+                  <Input
+                    className="w-full sm:w-32"
+                    value={emailOtp}
+                    onChange={e => setEmailOtp(e.target.value)}
+                    placeholder="Enter OTP"
+                    size={"sm" as any}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleVerifyEmailOtp}
+                    className="w-full sm:w-auto"
+                  >
+                    Verify OTP
+                  </Button>
+                </>
+              )}
+              {emailVerified && <span className="text-green-600 font-semibold text-sm flex items-center">Verified ✅</span>}
+            </div>
+          </div>
         </div>
         {/* 3. Date of Birth (split) */}
         <div>
           <Label className="flex items-center mb-1">3. Date of Birth <RedDot /></Label>
           <div className="flex gap-2">
-            <Select 
-              value={dobDay} 
+            <Select
+              value={dobDay}
               onValueChange={val => {
                 const newDate = new Date(generalInfo.dateOfBirth || new Date());
                 newDate.setDate(Number(val));
@@ -287,8 +516,8 @@ export default function GeneralInfoStep({
               <SelectTrigger className="w-24"><SelectValue placeholder="Select date" /></SelectTrigger>
               <SelectContent>{days.map(day => <SelectItem key={day} value={day.toString()}>{day}</SelectItem>)}</SelectContent>
             </Select>
-            <Select 
-              value={dobMonth} 
+            <Select
+              value={dobMonth}
               onValueChange={val => {
                 const newDate = new Date(generalInfo.dateOfBirth || new Date());
                 newDate.setMonth(Number(val) - 1);
@@ -298,8 +527,8 @@ export default function GeneralInfoStep({
               <SelectTrigger className="w-32"><SelectValue placeholder="Select month" /></SelectTrigger>
               <SelectContent>{months.map((month, idx) => <SelectItem key={month} value={(idx + 1).toString()}>{month}</SelectItem>)}</SelectContent>
             </Select>
-            <Select 
-              value={dobYear} 
+            <Select
+              value={dobYear}
               onValueChange={val => {
                 const newDate = new Date(generalInfo.dateOfBirth || new Date());
                 newDate.setFullYear(Number(val));
@@ -315,8 +544,8 @@ export default function GeneralInfoStep({
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <Label className="flex items-center mb-1">4(a). Nationality <RedDot /></Label>
-            <Select 
-              value={generalInfo.nationalityId?.toString() || "other"} 
+            <Select
+              value={generalInfo.nationalityId?.toString() || "other"}
               onValueChange={handleNationalityChange}
             >
               <SelectTrigger>
@@ -336,10 +565,10 @@ export default function GeneralInfoStep({
           </div>
           <div className="flex-1">
             <Label className="flex items-center mb-1">4(b). Other Nationality</Label>
-            <Input 
-              value={generalInfo.otherNationality || ""} 
-              onChange={e => handleGeneralInfoChange("otherNationality", e.target.value)} 
-              placeholder="Other Nationality" 
+            <Input
+              value={generalInfo.otherNationality || ""}
+              onChange={e => handleGeneralInfoChange("otherNationality", e.target.value)}
+              placeholder="Other Nationality"
               disabled={generalInfo.nationalityId !== null}
             />
           </div>
@@ -347,8 +576,8 @@ export default function GeneralInfoStep({
         {/* 5. Category */}
         <div>
           <Label className="flex items-center mb-1">5. Select Category <RedDot /></Label>
-          <Select 
-            value={generalInfo.categoryId?.toString() || ""} 
+          <Select
+            value={generalInfo.categoryId?.toString() || ""}
             onValueChange={val => handleGeneralInfoChange("categoryId", parseInt(val))}
           >
             <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
@@ -364,8 +593,8 @@ export default function GeneralInfoStep({
         {/* 6. Is either of your parents Gujarati? */}
         <div>
           <Label className="flex items-center mb-1">6. Is either of your parents Gujarati? <RedDot /></Label>
-          <Select 
-            value={generalInfo.isGujarati ? "Yes" : "No"} 
+          <Select
+            value={generalInfo.isGujarati ? "Yes" : "No"}
             onValueChange={val => handleGeneralInfoChange("isGujarati", val === "Yes")}
           >
             <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
@@ -378,8 +607,8 @@ export default function GeneralInfoStep({
         {/* 7. Gender */}
         <div>
           <Label className="flex items-center mb-1">7. Select Your Gender <RedDot /></Label>
-          <Select 
-            value={generalInfo.gender || "FEMALE"} 
+          <Select
+            value={generalInfo.gender || "FEMALE"}
             onValueChange={(val: Gender) => handleGeneralInfoChange("gender", val)}
           >
             <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
@@ -396,64 +625,68 @@ export default function GeneralInfoStep({
           <div className="flex-1">
             <Label className="flex items-center mb-1 text-sm">8(a). Mobile Number <span className="text-blue-700 font-bold text-xs sm:text-sm">(10-digit only.)</span> <RedDot /></Label>
             <div className="flex flex-col sm:flex-row gap-2">
-              <Input 
-                value={generalInfo.mobileNumber} 
-                onChange={e => handleGeneralInfoChange("mobileNumber", e.target.value)} 
-                required 
-                placeholder="All future communication from college will be on this No." 
+              <Input
+                value={generalInfo.mobileNumber || ""}
+                onChange={e => {
+                  handleGeneralInfoChange("mobileNumber", e.target.value);
+                  setMobileVerified(false); // Reset verification on mobile change
+                  setMobileOtpSent(false);
+                }}
+                required
+                placeholder="All future communication from college will be on this No."
                 disabled={mobileVerified}
                 className="w-full"
               />
               <div className="flex flex-col sm:flex-row gap-2">
                 {!mobileVerified && !mobileOtpSent && (
-                  <Button type="button" size="sm" className="w-full sm:w-auto">Send OTP</Button>
+                  <Button type="button" size="sm" className="w-full sm:w-auto" onClick={handleSendMobileOtp}>Send OTP</Button>
                 )}
                 {mobileOtpSent && !mobileVerified && (
                   <>
-                    <Input 
-                      className="w-full sm:w-32" 
-                      value={mobileOtp} 
-                      onChange={e => setMobileOtp(e.target.value)} 
-                      placeholder="Enter OTP" 
-                      size={"sm" as any} 
+                    <Input
+                      className="w-full sm:w-32"
+                      value={mobileOtp}
+                      onChange={e => setMobileOtp(e.target.value)}
+                      placeholder="Enter OTP"
+                      size={"sm" as any}
                     />
-                    <Button 
-                      type="button" 
-                      size="sm" 
-                      onClick={() => { if (mobileOtp === "123456") setMobileVerified(true); }}
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleVerifyMobileOtp}
                       className="w-full sm:w-auto"
                     >
                       Verify OTP
                     </Button>
                   </>
                 )}
-                {mobileVerified && <span className="text-green-600 font-semibold text-sm">Verified</span>}
+                {mobileVerified && <span className="text-green-600 font-semibold text-sm flex items-center">Verified ✅</span>}
               </div>
             </div>
           </div>
-          
+
           {/* 8(b). WhatsApp Number */}
           <div className="flex-1">
             <Label className="flex items-center mb-1 text-sm">8(b). WhatsApp Number <RedDot /></Label>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              <Input 
-                value={sameAsMobile ? generalInfo.mobileNumber : (generalInfo.whatsappNumber || "")} 
-                onChange={e => handleGeneralInfoChange("whatsappNumber", e.target.value)} 
-                required 
-                disabled={sameAsMobile} 
-                placeholder="WhatsApp Number" 
+              <Input
+                value={sameAsMobile ? (generalInfo.mobileNumber || "") : (generalInfo.whatsappNumber || "")}
+                onChange={e => handleGeneralInfoChange("whatsappNumber", e.target.value)}
+                required
+                disabled={sameAsMobile}
+                placeholder="WhatsApp Number"
                 className="w-full"
               />
               <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                <Checkbox 
-                  checked={sameAsMobile} 
+                <Checkbox
+                  checked={sameAsMobile}
                   onCheckedChange={checked => {
                     setSameAsMobile(!!checked);
                     if (checked) {
                       handleGeneralInfoChange("whatsappNumber", generalInfo.mobileNumber);
                     }
-                  }} 
-                  id="sameAsMobile" 
+                  }}
+                  id="sameAsMobile"
                 />
                 <Label htmlFor="sameAsMobile" className="text-xs sm:text-sm">Same As Mobile Number</Label>
               </div>
@@ -463,8 +696,8 @@ export default function GeneralInfoStep({
         {/* 9. Are you a resident of Kolkata? */}
         <div>
           <Label className="flex items-center mb-1">9. Are you a resident of Kolkata? <RedDot /></Label>
-          <Select 
-            value={generalInfo.residenceOfKolkata ? "Yes" : "No"} 
+          <Select
+            value={generalInfo.residenceOfKolkata ? "Yes" : "No"}
             onValueChange={val => {
               handleGeneralInfoChange("residenceOfKolkata", val === "Yes");
             }}
@@ -484,28 +717,28 @@ export default function GeneralInfoStep({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <Label className="flex items-center mb-1">10. Login Id <RedDot /></Label>
-            <Input value={generalInfo.mobileNumber} disabled placeholder="Login Id" />
+            <Input value={generalInfo.mobileNumber || ""} disabled placeholder="Login Id" />
           </div>
           <div>
             <Label className="flex items-center mb-1">11. Password <RedDot /></Label>
-            <Input 
-              type="password" 
-              value={generalInfo.password} 
-              onChange={e => handleGeneralInfoChange("password", e.target.value)} 
-              placeholder="Password (Max 10 Characters)" 
-              maxLength={10} 
-              required 
+            <Input
+              type="password"
+              value={generalInfo.password || ""}
+              onChange={e => handleGeneralInfoChange("password", e.target.value)}
+              placeholder="Password (Max 10 Characters)"
+              maxLength={10}
+              required
             />
           </div>
           <div>
             <Label className="flex items-center mb-1">12. Confirm Password <RedDot /></Label>
-            <Input 
-              type="password" 
-              value={confirmPassword} 
-              onChange={e => setConfirmPassword(e.target.value)} 
-              placeholder="Confirm Password (Max 10 Characters)" 
-              maxLength={10} 
-              required 
+            <Input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="Confirm Password (Max 10 Characters)"
+              maxLength={10}
+              required
             />
           </div>
         </div>
@@ -517,9 +750,10 @@ export default function GeneralInfoStep({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label className="flex items-center mb-1">13. Select Degree <RedDot /></Label>
-            <Select 
-              value={generalInfo.degreeLevel} 
+            <Select
+              value={generalInfo.degreeLevel || "UNDER_GRADUATE"}
               onValueChange={val => handleGeneralInfoChange("degreeLevel", val)}
+              disabled
             >
               <SelectTrigger><SelectValue placeholder="Select Degree" /></SelectTrigger>
               <SelectContent>
@@ -530,6 +764,37 @@ export default function GeneralInfoStep({
           </div>
         </div>
       </Card>
+
+      {/* Add submit button at the bottom */}
+      <div className="flex justify-end gap-4 mt-6">
+        {onPrev && (
+          <Button
+            variant="outline"
+            onClick={onPrev}
+            disabled={isSubmitting}
+          >
+            Previous
+          </Button>
+        )}
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting || !emailVerified || !mobileVerified}
+        >
+          {isSubmitting ? "Saving..." : "Save & Continue"}
+        </Button>
+      </div>
+
+      {/* Display validation errors */}
+      {Object.keys(formErrors).length > 0 && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <h4 className="text-red-800 font-semibold mb-2">Please fix the following errors:</h4>
+          <ul className="list-disc list-inside text-red-700">
+            {Object.entries(formErrors).map(([key, value]) => (
+              <li key={key}>{value}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

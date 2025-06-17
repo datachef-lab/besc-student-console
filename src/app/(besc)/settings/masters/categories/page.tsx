@@ -11,20 +11,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Pencil, Upload, Download, Loader2, FileText, ChevronLeft, ChevronRight } from "lucide-react";
-import { AddCategoryDialog } from './category-dialog';
+import { AddCategoryDialog, DeleteCategoryDialog } from './category-dialog';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { uploadCategoriesFromFile, downloadCategories, fetchCategories as getCategories } from './actions';
-
-// Assuming a type definition for Category exists (adjust import path if needed)
-interface Category { // Placeholder type, replace with actual schema type if available
-    id: string;
-    name: string;
-    createdAt: Date;
-    // Add other fields as per your schema
-}
+import { Category } from "@/db/schema";
 
 // Define the expected return type for the placeholder downloadCategories action
 interface DownloadCategoriesResult {
@@ -37,46 +30,32 @@ interface DownloadCategoriesResult {
 const ITEMS_PER_PAGE = 10;
 
 // Placeholder required headers for category template (adjust as needed)
-const REQUIRED_HEADERS = ['name'];
+const REQUIRED_HEADERS = ['name', 'code', 'documentRequired'];
 
 export default function CategoriesPage() {
-  // Using dummy data for now as requested
-  const [data, setData] = useState<Category[]>([]); // Initialize with empty array
-
+  const [data, setData] = useState<Category[]>([]);
   const [isPendingUpload, startUploadTransition] = useTransition();
   const [isPendingDownload, startDownloadTransition] = useTransition();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [numberOfEntries, setNumberOfEntries] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState(1); // State for current page (placeholder)
-  const [totalCount, setTotalCount] = useState(0); // Placeholder total count
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Placeholder total pages calculation
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  // Calculate total pages
+  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
 
-  // Function to fetch paginated categories from the API
-  const fetchCategories = async (page: number, limit: number) => {
+  // Function to fetch categories
+  const fetchCategories = async () => {
     setLoading(true);
-    const arr = await getCategories()
     try {
-      // Assuming your API endpoint for categories is /api/categories and supports pagination via query params
-      const response = await fetch(`/api/categories?page=${page}&limit=${limit}`);
-      const result = await response.json();
-
-      if (result.success) {
-        setData(result.data ); // Assuming the API returns categories in a 'categories' field
-        setTotalCount(result.totalCount); // Assuming the API returns total count in a 'totalCount' field
-      } else {
-        toast({
-          title: "Failed to fetch categories",
-          description: result.error || "An error occurred while fetching data.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+      const categories = await getCategories();
+      setData(categories);
+      setTotalCount(categories.length);
+    } catch (error: any) {
       console.error("Error fetching categories:", error);
       toast({
         title: "Failed to fetch categories",
@@ -88,10 +67,22 @@ export default function CategoriesPage() {
     }
   };
 
-  // Fetch data on component mount and when currentPage changes
+  // Fetch data on component mount
   useEffect(() => {
-    fetchCategories(currentPage, ITEMS_PER_PAGE);
-  }, [currentPage]); // Dependency on currentPage for pagination
+    fetchCategories();
+  }, []); // Remove currentPage dependency since we're handling pagination client-side
+
+  // Add a refresh function that can be called after adding a new category
+  const refreshData = () => {
+    fetchCategories();
+  };
+
+  // Get paginated data
+  const getPaginatedData = () => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    return data.slice(start, end);
+  };
 
   const downloadTemplate = () => {
     // Create a sample row with empty values
@@ -234,17 +225,13 @@ export default function CategoriesPage() {
           fileInputRef.current.value = '';
         }
         // Refresh data after upload
-        fetchCategories(currentPage, ITEMS_PER_PAGE);
+        fetchCategories();
       }
     });
   };
 
   const handlePageChange = (newPage: number) => {
-    // This is a placeholder. Implement actual pagination fetching here.
-    console.log("Page change requested:", newPage);
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
+    setCurrentPage(newPage);
   };
 
   const handleDownloadClick = () => {
@@ -299,134 +286,131 @@ export default function CategoriesPage() {
 
 
   return (
-    <div className="container mx-auto px-4">
-      <div className="flex flex-col gap-4 mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Categories Management</h1> {/* Updated title */}
-        <div className="flex flex-wrap justify-between items-center gap-3"> {/* Container for both button groups */}
-           
-           {/* Upload/Download Template Group */}
-           <div className="flex items-center gap-2"> {/* Group for upload and template */}
-             {/* Upload Section */}
-             <form onSubmit={handleUploadSubmit} className="flex items-center gap-2"> {/* Changed to onSubmit */}
-              {/* Hidden file input */}
-              <Input
-                id="category-upload"
-                type="file"
-                name="file"
-                accept=".csv, .xlsx"
-                className="hidden"
-                onChange={handleFileSelect} // Added onChange
-                ref={fileInputRef}
-              />
-              {/* Choose File Button */}
-              <Button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-2"
-              >
-                <Upload size={20} />
-                Choose File
-              </Button>
-
-              {/* Display selected file info */}
-              {selectedFile && (
-                <span className="text-sm text-gray-600">
-                  {selectedFile.name} ({numberOfEntries} entries)
-                </span>
-              )}
-              
-              {/* Upload File Button */}
-              <Button type="submit" size="sm" disabled={!selectedFile || isPendingUpload}
-                className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
-              > {/* Disabled if no file or pending */}
-                {isPendingUpload ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload File
-                  </>
-                )}
-              </Button>
-            </form>
-            {/* Download Template Button */}
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={downloadTemplate} // Added onClick
-              className="bg-gray-500 hover:bg-gray-600 text-white flex items-center gap-2"
-            >
-              <FileText size={20} />
-              Download Template
-            </Button>
-           </div>
-
-           {/* Add/Download Categories Group */}
-           <div className="flex items-center gap-2"> {/* Group for add and download, adjusted gap */}
-             {/* Add Category Dialog Trigger */}
-             <AddCategoryDialog />
-             {/* Download Categories Button */}
-             <Button 
-              type="button" // Changed to type button
-              variant="outline" 
-              size="sm" 
-              onClick={handleDownloadClick} // Added onClick
-              disabled={isPendingDownload} // Added disabled state
-              className="bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-2"
-             >
-              {isPendingDownload ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Downloading...
-                </>
-              ) : (
-                <>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Categories {/* Changed text */}
-                </>
-              )}
-            </Button>
-           </div>
+    <div className="container mx-auto pb-10">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Categories</h1>
+      </div>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            className="hidden"
+            accept=".xlsx,.xls"
+          />
+          <Button onClick={() => fileInputRef.current?.click()}>
+            Choose File
+          </Button>
+          <Button
+            onClick={() => {
+              if (selectedFile) {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                startUploadTransition(async () => {
+                  const result = await uploadCategoriesFromFile(formData);
+                  if (result.success) {
+                    toast({
+                      title: "Success",
+                      description: result.message,
+                    });
+                    setSelectedFile(null);
+                    refreshData(); // Refresh after upload
+                  } else {
+                    toast({
+                      title: "Error",
+                      description: result.error || "An error occurred",
+                      variant: "destructive",
+                    });
+                  }
+                });
+              }
+            }}
+            disabled={!selectedFile || isPendingUpload}
+          >
+            {isPendingUpload ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload File
+              </>
+            )}
+          </Button>
+          <Button onClick={downloadTemplate}>
+            <FileText className="mr-2 h-4 w-4" />
+            Download Template
+          </Button>
+        </div>
+        <div className="flex gap-2">
+          <AddCategoryDialog onSuccess={refreshData} />
+          <Button onClick={handleDownloadClick} disabled={isPendingDownload}>
+            {isPendingDownload ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Download Categories
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
-      {/* Table Container matching Courses page style */}
-      <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden"> {/* Adjusted styling */}
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50 hover:bg-gray-50"> {/* Added styling */}
-              <TableHead className="w-[80px] font-semibold text-gray-700">Sr. No</TableHead> {/* Added styling */}
-              <TableHead className="font-semibold text-gray-700">Category Name</TableHead> {/* Added styling */}
-              <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead> {/* Added styling and alignment */}
+            <TableRow>
+              <TableHead>Sr. No</TableHead>
+              <TableHead>Category Name</TableHead>
+              <TableHead>Code</TableHead>
+              <TableHead>Document Required</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* Loading state (placeholder) */}
-            {/* {isLoading ? (
+            {loading ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center">Loading categories...</TableCell>
+                <TableCell colSpan={5} className="text-center">
+                  Loading...
+                </TableCell>
               </TableRow>
-            ) : */ data.length === 0 ? ( // Assuming data is your state for table rows
+            ) : getPaginatedData().length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center">No categories found.</TableCell>
+                <TableCell colSpan={5} className="text-center">
+                  No categories found
+                </TableCell>
               </TableRow>
             ) : (
-              data.map((category, index) => ( // Mapping over data state
-                <TableRow key={`category-${category.id}-${index}`} className="hover:bg-gray-50"> {/* Added styling */}
-                  <TableCell className="font-medium text-gray-600">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell> {/* Added styling and dynamic Sr. No */}
-                  <TableCell className="text-gray-700">{category.name}</TableCell> {/* Added styling */}
-                  <TableCell className="text-right"> {/* Added styling */}
-                    <div className="flex justify-end gap-2"> {/* Added styling */}
-                      {/* Edit Button */}
-                      <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => handleEdit(category)}> {/* Added styling and onClick */}
-                        <Pencil className="h-4 w-4 text-gray-600" /> {/* Added styling */}
-                      </Button>
-                      {/* Delete Button (Placeholder) */}
-                      {/* You would add a delete button here if needed */}
+              getPaginatedData().map((category, index) => (
+                <TableRow key={category.id}>
+                  <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
+                  <TableCell>{category.name}</TableCell>
+                  <TableCell>{category.code}</TableCell>
+                  <TableCell>{category.documentRequired ? "Yes" : "No"}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <AddCategoryDialog
+                        initialData={category}
+                        trigger={
+                          <Button variant="ghost" size="icon">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        }
+                        onSuccess={refreshData}
+                      />
+                      {category.id && (
+                        <DeleteCategoryDialog 
+                          categoryId={category.id.toString()} 
+                          onSuccess={refreshData}
+                        />
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -436,32 +420,29 @@ export default function CategoriesPage() {
         </Table>
       </div>
 
-      {/* Pagination Controls (Placeholder) */}
-      {/* {totalPages > 1 && ( */}
-        <div className="flex justify-end items-center space-x-2 py-4"> {/* Added styling */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1 /* || isLoading */}
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Previous
-          </Button>
-          <span className="text-sm text-gray-700"> {/* Added styling */}
-            Page {currentPage} of {totalPages} {/* Placeholder values */}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages /* || isLoading */}
-          >
-            Next
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Previous
+        </Button>
+        <div className="text-sm">
+          Page {currentPage} of {Math.max(1, totalPages)}
         </div>
-      {/* )} */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+        >
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }

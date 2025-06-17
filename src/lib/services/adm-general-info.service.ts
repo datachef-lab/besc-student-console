@@ -5,8 +5,6 @@ import bcrypt from "bcrypt";
 import { findAdmissionById } from "./admission.service";
 import { findApplicationFormById } from "./application-form.service";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
 export async function createGeneralInfo(generalInfo: Omit<AdmissionGeneralInfo, "id" | "createdAt" | "updatedAt">) {
     const existingEntry = await checkExistingEntry(generalInfo);
     if (existingEntry) {

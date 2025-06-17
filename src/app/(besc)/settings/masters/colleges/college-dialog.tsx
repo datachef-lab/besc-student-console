@@ -14,8 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Colleges } from "@/db/schema";
-import { useState } from "react";
+import { Colleges, Degree } from "@/db/schema";
+import { useState, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CollegeDialogProps {
   mode?: 'add' | 'edit';
@@ -27,7 +28,18 @@ interface CollegeDialogProps {
 export function CollegeDialog({ mode = 'add', college, onSuccess, children }: CollegeDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [degrees, setDegrees] = useState<Degree[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (open) {
+      fetch("/api/degrees")
+        .then(res => res.json())
+        .then(data => setDegrees(data))
+        .catch(() => setDegrees([]));
+    }
+  }, [open]);
+
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -105,7 +117,19 @@ export function CollegeDialog({ mode = 'add', college, onSuccess, children }: Co
               <Input
                 id="code"
                 name="code"
-                defaultValue={college?.code}
+                defaultValue={college?.code ?? ''}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="sequence" className="text-right">
+                Sequence
+              </Label>
+              <Input
+                id="sequence"
+                name="sequence"
+                type="number"
+                defaultValue={college?.sequence ?? ''}
                 className="col-span-3"
               />
             </div>
