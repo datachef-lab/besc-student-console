@@ -91,7 +91,7 @@ export default function GeneralInfoStep({
     whatsappNumber: "",
   });
 
-  const isGeneralInfoLocked = !!(applicationForm?.generalInfo.id && applicationForm.generalInfo.id !== 0);
+  const isGeneralInfoLocked = !!(applicationForm?.generalInfo!.id && applicationForm.generalInfo.id !== 0);
 
   // Handle changes in generalInfo
   const handleGeneralInfoChange = (field: keyof AdmissionGeneralInfo, value: any) => {
