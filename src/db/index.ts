@@ -7,7 +7,7 @@ import * as schema from "./schema"; // Import your schema
 // Load environment variables
 dotenv.config({ path: '.env.local' });
 
-const dbPostgres: PostgresJsDatabase<typeof schema> = drizzlePostgres(process.env.DATABASE_URL!, { schema });
+const dbPostgres: PostgresJsDatabase<typeof schema> = drizzlePostgres(process.env.DATABASE_URL!, { schema, logger: true });
 
 // Connection configuration for MySQL (assuming it's still used elsewhere)
 const dbConfig = {

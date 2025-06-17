@@ -54,16 +54,7 @@ export const ApplicationFormProvider: React.FC<
   const [isLoading, setIsLoading] = useState(true);
   const [displayFlag, setDisplayFlag] = useState(false);
   const [applicationForm, setApplicationForm] =
-    useState<ApplicationFormDto | null>({
-      admissionId: 0,
-      generalInfo: null,
-      academicInfo: null,
-      additonalInfo: null,
-      admissionStep: "GENERAL_INFORMATION",
-      courseApplication: null,
-      formStatus: "DRAFT",
-      paymentInfo: null,
-    });
+    useState<ApplicationFormDto | null>(null);
   const router = useRouter();
   const pathname = usePathname(); // Get the current route
 
@@ -85,6 +76,8 @@ export const ApplicationFormProvider: React.FC<
       });
 
       const data = response.data;
+
+      console.log(data)
 
       if ("accessToken" in data && "user" in data) {
         router.push("/dashboard"); // Fully authenticated student
@@ -126,6 +119,13 @@ export const ApplicationFormProvider: React.FC<
 
   const fetchApplicationFormRefresh =
     useCallback(async (): Promise<ApplicationFormDto | null> => {
+      console.log("fetching refresh applicationForm");
+      if (applicationForm) {
+        console.log("Returning existing applicationFormDto:", applicationForm)
+        setApplicationForm(applicationForm)
+        return applicationForm;
+
+      }
       if (!pathname.startsWith("/admissions")) return null;
 
       try {
@@ -136,6 +136,7 @@ export const ApplicationFormProvider: React.FC<
         console.log("Token refresh response received");
 
         const data = response.data;
+        console.log(data);
 
         // Distinguish between LoginCred and ApplicationForm response
         if ("accessToken" in data && "user" in data) {
@@ -191,8 +192,8 @@ export const ApplicationFormProvider: React.FC<
   }, [applicationForm, pathname, fetchApplicationFormRefresh]);
 
   const contextValue: ApplicationFormContextType = {
-    applicationForm,
-    setApplicationForm,
+    applicationForm: applicationForm!,
+    setApplicationForm: setApplicationForm,
     login,
     admission,
     displayFlag,

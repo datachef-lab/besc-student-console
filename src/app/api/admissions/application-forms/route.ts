@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const { form, generalInfo } = body;
-
+console.log(body);
         if (!form || !generalInfo) {
             return NextResponse.json(
                 { message: "Form and general info are required" },

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Step } from "@/app/(besc)/admissions/[year]/types";
 import {
   ProgressTimeline,
-  NavigationButtons,
   GeneralInfoStep,
   AcademicInfoStep,
   CourseApplicationStep,
@@ -152,7 +151,6 @@ export default function AdmissionForm() {
 
   useEffect(() => {
     if (applicationForm?.admissionStep) {
-      // Map the admissionStep string to the corresponding step number
       const stepMap: Record<string, number> = {
         GENERAL_INFORMATION: 1,
         ACADEMIC_INFORMATION: 2,
@@ -172,74 +170,8 @@ export default function AdmissionForm() {
     { number: 5, title: "Payment" },
   ];
 
-  const handleNext = async () => {
-    if (currentStep === 1) {
-      // Check if it's a new application or existing one
-      const isNewApplication = !applicationForm?.id || !applicationForm?.generalInfo?.id || applicationForm.id === 0 || applicationForm.generalInfo.id === 0;
-
-      try {
-        setIsSubmitting(true);
-        const formData = {
-          form: {
-            admissionId: applicationForm?.admissionId,
-            status: "DRAFT",
-            currentStep: 1,
-            admissionStep: "GENERAL_INFORMATION"
-          },
-          generalInfo: applicationForm?.generalInfo
-        };
-
-        const response = await fetch("/api/admissions/application-forms", {
-          method: isNewApplication ? "POST" : "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to save form");
-        }
-
-        // Update the application form in context
-        setApplicationForm(data);
-
-        toast({
-          title: "Success",
-          description: "Form saved successfully",
-          onClose: () => {},
-        });
-
-        // Proceed to next step
-        setCurrentStep(currentStep + 1);
-      } catch (error) {
-        console.error("Error saving form:", error);
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to save form",
-          variant: "destructive",
-          onClose: () => {},
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
-    } else {
-      // For other steps, just move to next step
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSubmit = () => {
-    console.log("Form submitted:", applicationForm);
-    alert("Application submitted successfully!");
+  const handleStepChange = (step: number) => {
+    setCurrentStep(step);
   };
 
   const renderStepContent = () => {
@@ -250,8 +182,8 @@ export default function AdmissionForm() {
         return (
           <GeneralInfoStep
             stepNotes={stepNotes[currentStep]}
-            onNext={handleNext}
-            onPrev={handlePrevious}
+            onNext={() => handleStepChange(currentStep + 1)}
+            onPrev={() => handleStepChange(currentStep - 1)}
           />
         );
       case 2:
@@ -261,6 +193,8 @@ export default function AdmissionForm() {
             applicationForm={applicationForm}
             academicInfo={academicInfo}
             setAcademicInfo={setAcademicInfo}
+            onNext={() => handleStepChange(currentStep + 1)}
+            onPrev={() => handleStepChange(currentStep - 1)}
           />
         );
       case 3:
@@ -271,6 +205,8 @@ export default function AdmissionForm() {
           <CourseApplicationStep
             stepNotes={stepNotes[currentStep]}
             applicationForm={applicationForm}
+            onNext={() => handleStepChange(currentStep + 1)}
+            onPrev={() => handleStepChange(currentStep - 1)}
           />
         );
       case 4:
@@ -281,7 +217,15 @@ export default function AdmissionForm() {
           <AdditionalInfoStep
             stepNotes={stepNotes[currentStep]}
             applicationForm={applicationForm}
-            generalInfo={applicationForm.generalInfo}
+            generalInfo={{
+              applicationFormId: applicationForm.generalInfo.applicationFormId,
+              firstName: applicationForm.generalInfo.firstName,
+              dateOfBirth: applicationForm.generalInfo.dateOfBirth,
+              password: applicationForm.generalInfo.password,
+              whatsappNumber: applicationForm.generalInfo.whatsappNumber || undefined
+            }}
+            onNext={() => handleStepChange(currentStep + 1)}
+            onPrev={() => handleStepChange(currentStep - 1)}
           />
         );
       case 5:
@@ -293,9 +237,10 @@ export default function AdmissionForm() {
             stepNotes={stepNotes[currentStep]}
             applicationForm={applicationForm}
             onPaymentInfoChange={(paymentInfo) => {
-              // Handle payment info change
               console.log('Payment info changed:', paymentInfo);
             }}
+            onNext={() => handleStepChange(currentStep + 1)}
+            onPrev={() => handleStepChange(currentStep - 1)}
           />
         );
       default:
@@ -317,15 +262,6 @@ export default function AdmissionForm() {
         <div className="flex-1 flex flex-col p-4 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full">
           <div className="flex-1 mx-auto bg-white p-3 rounded-xl shadow-sm w-full">
             {renderStepContent()}
-
-            <NavigationButtons
-              currentStep={currentStep}
-              totalSteps={steps.length}
-              onPrevious={handlePrevious}
-              onNext={handleNext}
-              onSubmit={handleSubmit}
-              nextButtonDisabled={isSubmitting}
-            />
           </div>
 
           {/* Footer - Only visible on mobile */}

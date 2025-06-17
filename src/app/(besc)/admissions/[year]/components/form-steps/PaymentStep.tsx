@@ -1,10 +1,18 @@
 import { ApplicationForm, paymentMode } from "@/db/schema";
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
+import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface PaymentStepProps {
+  stepNotes: React.ReactNode;
   applicationForm: ApplicationForm;
-  stepNotes?: ReactNode;
-  onPaymentInfoChange: (field: keyof ApplicationForm, value: any) => void;
+  onPaymentInfoChange: (paymentInfo: any) => void;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
 let paymentMethods = paymentMode.enumValues
@@ -13,77 +21,147 @@ export default function PaymentStep({
   applicationForm,
   stepNotes,
   onPaymentInfoChange,
+  onNext,
+  onPrev
 }: PaymentStepProps) {
+  const { toast } = useToast();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState({
+    paymentMode: "ONLINE" as paymentMode,
+    transactionId: "",
+    transactionDate: new Date().toISOString().split("T")[0],
+    amount: 500,
+  });
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!paymentInfo.paymentMode) {
+      errors.paymentMode = "Payment method is required";
+    }
+    if (!paymentInfo.transactionId) {
+      errors.transactionId = "Transaction ID is required";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Save payment info
+      onPaymentInfoChange(paymentInfo);
+      
+      // Show success message
+      toast({
+        title: "Success",
+        description: "Payment information saved successfully.",
+      });
+
+      // Navigate to next step
+      onNext();
+    } catch (error) {
+      console.error("Error saving payment info:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save payment information. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      onPrev();
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">Payment Information</h2>
-      {stepNotes && <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-4 text-left text-sm">{stepNotes}</div>}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Payment Method *
-          </label>
-          <select
-            value={''}
-            onChange={(e) => {}
-              // onPaymentInfoChange("paymentMethod", e.target.value)
-            }
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          >
-            <option value="">Select Payment Method...</option>
-            {paymentMethods.map((method) => (
-              <option key={method} value={method}>{method}</option>
-            ))}
-            <option value="financial-aid">Financial Aid</option>
-            <option value="scholarship">Scholarship</option>
-          </select>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="scholarships"
-              checked={ false}
-              onChange={(e) =>
-              {}
-                // onPaymentInfoChange("scholarships", e.target.checked)
-              }
-              className="h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="scholarships" className="ml-2 text-sm">
-              I am interested in scholarship opportunities
-            </label>
-          </div>
-{/* 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="financialAid"
-              checked={applicationForm.financialAid || false}
-              onChange={(e) =>
-                onPaymentInfoChange("financialAid", e.target.checked)
-              }
-              className="h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="financialAid" className="ml-2 text-sm">
-              I would like information about financial aid
-            </label>
-          </div> */}
-        </div>
-
-        <div className="bg-blue-50 p-4 rounded-md">
-          <h3 className="font-medium text-blue-900 mb-2">
-            Application Fee
-          </h3>
-          <p className="text-blue-800 text-sm">
-            A non-refundable application fee of $75 is required to process
-            your application. This fee will be collected after you submit
-            your application.
-          </p>
+    <div className="space-y-6">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold mb-2">{stepHeading || "Step 5 of 5 - Payment"}</h2>
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-4 text-left">
+          {stepNotes}
         </div>
       </div>
+
+      {/* Payment Form */}
+      <div className="space-y-4">
+        <div>
+          <Label className="flex items-center mb-1">Payment Method <span className="text-red-600">*</span></Label>
+          <Select
+            value={paymentInfo.paymentMode}
+            onValueChange={(value) => setPaymentInfo({ ...paymentInfo, paymentMode: value as paymentMode })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select payment method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ONLINE">Online Payment</SelectItem>
+              <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
+              <SelectItem value="CHEQUE">Cheque</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label className="flex items-center mb-1">Transaction ID <span className="text-red-600">*</span></Label>
+          <Input
+            value={paymentInfo.transactionId}
+            onChange={(e) => setPaymentInfo({ ...paymentInfo, transactionId: e.target.value })}
+            placeholder="Enter transaction ID"
+          />
+        </div>
+
+        <div>
+          <Label className="flex items-center mb-1">Amount</Label>
+          <Input
+            type="number"
+            value={paymentInfo.amount}
+            onChange={(e) => setPaymentInfo({ ...paymentInfo, amount: parseFloat(e.target.value) })}
+            placeholder="Enter amount"
+            readOnly
+          />
+        </div>
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-end gap-4 mt-6">
+        {currentStep > 1 && (
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={isLoading}
+          >
+            Previous
+          </Button>
+        )}
+        <Button
+          onClick={handleSubmit}
+          disabled={isLoading}
+        >
+          {isLoading ? "Submitting..." : "Submit Application"}
+        </Button>
+      </div>
+
+      {/* Display validation errors */}
+      {Object.keys(formErrors).length > 0 && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <h4 className="text-red-800 font-semibold mb-2">Please fix the following errors:</h4>
+          <ul className="list-disc list-inside text-red-700">
+            {Object.entries(formErrors).map(([field, error]) => (
+              <li key={field}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

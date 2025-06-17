@@ -1,4 +1,4 @@
-import { useState, useEffect, Dispatch, SetStateAction } from "react";
+import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import {
   Input
 } from "@/components/ui/input";
@@ -13,16 +13,15 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { AdmissionGeneralInfo, ApplicationForm, Category, Nationality, genderType } from "@/db/schema";
+import { AdmissionGeneralInfo, ApplicationForm, Category, Nationality, admissionGeneralInfo, genderType } from "@/db/schema";
 import { useApplicationForm } from "@/hooks/use-application-form";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-
+import {ApplicationFormDto} from "@/types/admissions/index";
 interface GeneralInfoStepProps {
-  stepHeading?: string;
   stepNotes: React.ReactNode;
-  onNext?: () => void;
-  onPrev?: () => void;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
 const STATES = [
@@ -68,7 +67,6 @@ const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 60 }, (_, i) => currentYear - i);
 
 export default function GeneralInfoStep({
-  stepHeading,
   stepNotes,
   onNext,
   onPrev,
@@ -81,6 +79,19 @@ export default function GeneralInfoStep({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState<AdmissionGeneralInfo>({
+    applicationFormId: 0,
+    firstName: "",
+    dateOfBirth: "",
+    password: "",
+    mobileNumber: "",
+    email: "",
+    residenceOfKolkata: false,
+    whatsappNumber: "",
+  });
+
+  const isGeneralInfoLocked = !!(applicationForm?.generalInfo.id && applicationForm.generalInfo.id !== 0);
 
   // Handle changes in generalInfo
   const handleGeneralInfoChange = (field: keyof AdmissionGeneralInfo, value: any) => {
@@ -159,49 +170,52 @@ export default function GeneralInfoStep({
     void fetchCategories();
   }, []);
 
-  // Validation function
   const validateForm = () => {
     const errors: { [key: string]: string } = {};
-
-    // Required fields validation
-    if (!generalInfo.firstName?.trim()) errors.firstName = "First name is required";
-    if (!generalInfo.lastName?.trim()) errors.lastName = "Last name is required";
-    if (!generalInfo.email?.trim()) errors.email = "Email is required";
-    if (!generalInfo.mobileNumber?.trim()) errors.mobileNumber = "Mobile number is required";
-    if (!generalInfo.password?.trim()) errors.password = "Password is required";
-    if (!confirmPassword) errors.confirmPassword = "Please confirm your password";
-    if (generalInfo.password !== confirmPassword) errors.confirmPassword = "Passwords do not match";
-    if (!generalInfo.nationalityId && !generalInfo.otherNationality) errors.nationality = "Nationality is required";
-    if (!generalInfo.categoryId) errors.category = "Category is required";
-    if (!generalInfo.gender) errors.gender = "Gender is required";
-
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (generalInfo.email && !emailRegex.test(generalInfo.email)) {
+    
+    if (!generalInfo.firstName?.trim()) {
+      errors.firstName = "First name is required";
+    }
+    if (!generalInfo.lastName?.trim()) {
+      errors.lastName = "Last name is required";
+    }
+    if (!generalInfo.email?.trim()) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(generalInfo.email)) {
       errors.email = "Invalid email format";
     }
-
-    // Mobile number validation (10 digits)
-    const mobileRegex = /^\d{10}$/;
-    if (generalInfo.mobileNumber && !mobileRegex.test(generalInfo.mobileNumber)) {
+    if (!generalInfo.mobileNumber?.trim()) {
+      errors.mobileNumber = "Mobile number is required";
+    } else if (!/^\d{10}$/.test(generalInfo.mobileNumber)) {
       errors.mobileNumber = "Mobile number must be 10 digits";
     }
-
-    // WhatsApp number validation (if not same as mobile)
-    if (!sameAsMobile && generalInfo.whatsappNumber && !mobileRegex.test(generalInfo.whatsappNumber)) {
-      errors.whatsappNumber = "WhatsApp number must be 10 digits";
+    if (!generalInfo.dateOfBirth) {
+      errors.dateOfBirth = "Date of birth is required";
     }
-
-    // Verification validation
-    if (!emailVerified) errors.email = "Please verify your email";
-    if (!mobileVerified) errors.mobileNumber = "Please verify your mobile number";
+    if (!generalInfo.categoryId) {
+      errors.categoryId = "Category is required";
+    }
+    if (!generalInfo.gender) {
+      errors.gender = "Gender is required";
+    }
+    if (!generalInfo.password?.trim()) {
+      errors.password = "Password is required";
+    } else if (generalInfo.password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+    }
+    if (generalInfo.password !== confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+    if (!generalInfo.nationalityId) {
+      errors.nationalityId = "Nationality is required";
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // Handle form submission
-  const handleSubmit = async () => {
+  const handleNext = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -214,24 +228,56 @@ export default function GeneralInfoStep({
 
     setIsSubmitting(true);
     try {
-      const formData = {
-        form: {
-          admissionId: admission?.id,
-          status: "DRAFT",
-          currentStep: 1,
-        },
-        generalInfo: {
-          ...generalInfo,
-          whatsappNumber: sameAsMobile ? generalInfo.mobileNumber : generalInfo.whatsappNumber,
-        },
-      };
+      const isNewApplication = !applicationForm?.id || applicationForm?.id === 0;
 
-      const response = await fetch("/api/admissions/application-forms", {
-        method: applicationForm ? "PUT" : "POST",
+      let requestBody: {form: ApplicationForm, generalInfo: AdmissionGeneralInfo };
+      let method: string;
+      let url: string;
+      // const {} = applicationForm;
+      if (isNewApplication) {
+        method = "POST";
+        url = "/api/admissions/application-forms";
+        requestBody = {
+          form: {
+            admissionId: admission?.id!,
+            formStatus: "DRAFT",
+            admissionStep: "GENERAL_INFORMATION",
+            
+            // remarks: "", // add if needed
+          },
+          generalInfo: {
+            ...generalInfo,
+            applicationFormId: 0,
+
+            whatsappNumber: sameAsMobile ? generalInfo.mobileNumber : generalInfo.whatsappNumber,
+          },
+        };
+      } else {
+        method = "PUT";
+        url = `/api/admissions/application-forms?id=${applicationForm.id}`;
+        requestBody = {
+          form: {
+            id: applicationForm.id,
+            admissionId: applicationForm.admissionId,
+            formStatus: "DRAFT",
+            admissionStep: "GENERAL_INFORMATION",
+            remarks: applicationForm.remarks,
+            // add any other direct DB columns if needed
+          },
+          generalInfo: {
+            ...applicationForm.generalInfo,
+            ...generalInfo,
+            whatsappNumber: sameAsMobile ? generalInfo.mobileNumber : generalInfo.whatsappNumber,
+          }
+        };
+      }
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -246,9 +292,13 @@ export default function GeneralInfoStep({
         onClose: () => {},
       });
 
-      if (onNext) {
-        onNext();
+      if (method === "POST" && data.applicationForm) {
+        setApplicationForm(data.applicationForm);
+      } else if (method === "PUT" && data) {
+        setApplicationForm(data);
       }
+
+      onNext();
     } catch (error) {
       console.error("Error saving form:", error);
       toast({
@@ -260,6 +310,10 @@ export default function GeneralInfoStep({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePrevious = () => {
+    onPrev();
   };
 
   // OTP state
@@ -409,388 +463,395 @@ export default function GeneralInfoStep({
   };
 
   return (
-    <div className="space-y-8">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold mb-2">{stepHeading || "Step 1 of 5 - General Information (Sr. No. 1 to 13)"}</h2>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-4 text-left">
-          {stepNotes}
-        </div>
+    <div className="space-y-6">
+      <div className="bg-yellow-50 p-4 rounded-lg">
+        <h3 className="text-sm font-medium text-yellow-800">Please Note</h3>
+        {stepNotes}
       </div>
-      {/* General Info Section */}
-      <Card className="p-6 space-y-6">
-        {/* 1. Applicant's Name */}
-        <div>
-          <div className="flex flex-col gap-4">
-            <div className="flex-1">
-              <Label className="mb-1 block text-sm sm:text-base">1. Applicant's Name</Label>
-              <div className="flex flex-col sm:flex-row w-full gap-3 mt-2">
-                <div className="w-full sm:w-1/3">
-                  <Label className="mb-1 flex items-center text-sm">First Name <RedDot /></Label>
-                  <Input
-                    value={generalInfo.firstName || ""}
-                    onChange={e => handleGeneralInfoChange("firstName", e.target.value)}
-                    required
-                    placeholder="AS PER CLASS XII BOARD MARKSHEET"
-                    className="w-full"
-                  />
-                </div>
-                <div className="w-full sm:w-1/3">
-                  <Label className="mb-1 flex items-center text-sm">Middle Name</Label>
-                  <Input
-                    value={generalInfo.middleName || ""}
-                    onChange={e => handleGeneralInfoChange("middleName", e.target.value)}
-                    placeholder="AS PER CLASS XII BOARD MARKSHEET"
-                    className="w-full"
-                  />
-                  <p className="text-red-500 font-semibold text-xs mt-1">(Do not write if not given in Class XII Board Marksheet)</p>
-                </div>
-                <div className="w-full sm:w-1/3">
-                  <Label className="mb-1 flex items-center text-sm">Last Name <RedDot /></Label>
-                  <Input
-                    value={generalInfo.lastName || ""}
-                    onChange={e => handleGeneralInfoChange("lastName", e.target.value)}
-                    required
-                    placeholder="AS PER CLASS XII BOARD MARKSHEET"
-                    className="w-full"
-                  />
+
+      <form onSubmit={handleNext} className="space-y-6">
+        {/* General Info Section */}
+        <Card className="p-6 space-y-6">
+          {/* 1. Applicant's Name */}
+          <div>
+            <div className="flex flex-col gap-4">
+              <div className="flex-1">
+                <Label className="mb-1 block text-sm sm:text-base">1. Applicant's Name</Label>
+                <div className="flex flex-col sm:flex-row w-full gap-3 mt-2">
+                  <div className="w-full sm:w-1/3">
+                    <Label className="mb-1 flex items-center text-sm">First Name <RedDot /></Label>
+                    <Input
+                      value={generalInfo.firstName || ""}
+                      onChange={e => handleGeneralInfoChange("firstName", e.target.value)}
+                      required
+                      placeholder="AS PER CLASS XII BOARD MARKSHEET"
+                      className="w-full"
+                      disabled={isGeneralInfoLocked}
+                    />
+                  </div>
+                  <div className="w-full sm:w-1/3">
+                    <Label className="mb-1 flex items-center text-sm">Middle Name</Label>
+                    <Input
+                      value={generalInfo.middleName || ""}
+                      onChange={e => handleGeneralInfoChange("middleName", e.target.value)}
+                      placeholder="AS PER CLASS XII BOARD MARKSHEET"
+                      className="w-full"
+                      disabled={isGeneralInfoLocked}
+                    />
+                    <p className="text-red-500 font-semibold text-xs mt-1">(Do not write if not given in Class XII Board Marksheet)</p>
+                  </div>
+                  <div className="w-full sm:w-1/3">
+                    <Label className="mb-1 flex items-center text-sm">Last Name <RedDot /></Label>
+                    <Input
+                      value={generalInfo.lastName || ""}
+                      onChange={e => handleGeneralInfoChange("lastName", e.target.value)}
+                      required
+                      placeholder="AS PER CLASS XII BOARD MARKSHEET"
+                      className="w-full"
+                      disabled={isGeneralInfoLocked}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        {/* 2. Email */}
-        <div>
-          <Label className="flex items-center mb-1">2. Email <RedDot /></Label>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              value={generalInfo.email || ""}
-              onChange={e => {
-                handleGeneralInfoChange("email", e.target.value);
-                setEmailVerified(false); // Reset verification on email change
-                setEmailOtpSent(false);
-              }}
-              required
-              placeholder="Email"
-              disabled={emailVerified}
-              className="w-full"
-            />
-            <div className="flex flex-col sm:flex-row gap-2">
-              {!emailVerified && !emailOtpSent && (
-                <Button type="button" size="sm" className="w-full sm:w-auto" onClick={handleSendEmailOtp}>Send OTP</Button>
-              )}
-              {emailOtpSent && !emailVerified && (
-                <>
-                  <Input
-                    className="w-full sm:w-32"
-                    value={emailOtp}
-                    onChange={e => setEmailOtp(e.target.value)}
-                    placeholder="Enter OTP"
-                    size={"sm" as any}
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleVerifyEmailOtp}
-                    className="w-full sm:w-auto"
-                  >
-                    Verify OTP
-                  </Button>
-                </>
-              )}
-              {emailVerified && <span className="text-green-600 font-semibold text-sm flex items-center">Verified ✅</span>}
-            </div>
-          </div>
-        </div>
-        {/* 3. Date of Birth (split) */}
-        <div>
-          <Label className="flex items-center mb-1">3. Date of Birth <RedDot /></Label>
-          <div className="flex gap-2">
-            <Select
-              value={dobDay}
-              onValueChange={val => {
-                const newDate = new Date(generalInfo.dateOfBirth || new Date());
-                newDate.setDate(Number(val));
-                handleGeneralInfoChange("dateOfBirth", newDate.toISOString().split('T')[0]);
-              }}
-            >
-              <SelectTrigger className="w-24"><SelectValue placeholder="Select date" /></SelectTrigger>
-              <SelectContent>{days.map(day => <SelectItem key={day} value={day.toString()}>{day}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select
-              value={dobMonth}
-              onValueChange={val => {
-                const newDate = new Date(generalInfo.dateOfBirth || new Date());
-                newDate.setMonth(Number(val) - 1);
-                handleGeneralInfoChange("dateOfBirth", newDate.toISOString().split('T')[0]);
-              }}
-            >
-              <SelectTrigger className="w-32"><SelectValue placeholder="Select month" /></SelectTrigger>
-              <SelectContent>{months.map((month, idx) => <SelectItem key={month} value={(idx + 1).toString()}>{month}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select
-              value={dobYear}
-              onValueChange={val => {
-                const newDate = new Date(generalInfo.dateOfBirth || new Date());
-                newDate.setFullYear(Number(val));
-                handleGeneralInfoChange("dateOfBirth", newDate.toISOString().split('T')[0]);
-              }}
-            >
-              <SelectTrigger className="w-32"><SelectValue placeholder="Select year" /></SelectTrigger>
-              <SelectContent>{years.map(year => <SelectItem key={year} value={year.toString()}>{year}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-        </div>
-        {/* 4(a) and 4(b) Nationality/Other Nationality on same line */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <Label className="flex items-center mb-1">4(a). Nationality <RedDot /></Label>
-            <Select
-              value={generalInfo.nationalityId?.toString() || "other"}
-              onValueChange={handleNationalityChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Nationality" />
-              </SelectTrigger>
-              <SelectContent>
-                {nationalities.map(nationality => (
-                  nationality.id && (
-                    <SelectItem key={nationality.id} value={nationality.id.toString()}>
-                      {nationality.name}
-                    </SelectItem>
-                  )
-                ))}
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex-1">
-            <Label className="flex items-center mb-1">4(b). Other Nationality</Label>
-            <Input
-              value={generalInfo.otherNationality || ""}
-              onChange={e => handleGeneralInfoChange("otherNationality", e.target.value)}
-              placeholder="Other Nationality"
-              disabled={generalInfo.nationalityId !== null}
-            />
-          </div>
-        </div>
-        {/* 5. Category */}
-        <div>
-          <Label className="flex items-center mb-1">5. Select Category <RedDot /></Label>
-          <Select
-            value={generalInfo.categoryId?.toString() || ""}
-            onValueChange={val => handleGeneralInfoChange("categoryId", parseInt(val))}
-          >
-            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>
-              {categories.map(cat => (
-                cat.id && (
-                  <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
-                )
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {/* 6. Is either of your parents Gujarati? */}
-        <div>
-          <Label className="flex items-center mb-1">6. Is either of your parents Gujarati? <RedDot /></Label>
-          <Select
-            value={generalInfo.isGujarati ? "Yes" : "No"}
-            onValueChange={val => handleGeneralInfoChange("isGujarati", val === "Yes")}
-          >
-            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Yes">Yes</SelectItem>
-              <SelectItem value="No">No</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {/* 7. Gender */}
-        <div>
-          <Label className="flex items-center mb-1">7. Select Your Gender <RedDot /></Label>
-          <Select
-            value={generalInfo.gender || "FEMALE"}
-            onValueChange={(val: Gender) => handleGeneralInfoChange("gender", val)}
-          >
-            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>
-              {GENDERS.map(g => (
-                <SelectItem key={g} value={g}>{g}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {/* 8(a) and 8(b) Mobile/WhatsApp on same line */}
-        <div className="flex flex-col gap-4">
-          {/* 8(a). Mobile Number */}
-          <div className="flex-1">
-            <Label className="flex items-center mb-1 text-sm">8(a). Mobile Number <span className="text-blue-700 font-bold text-xs sm:text-sm">(10-digit only.)</span> <RedDot /></Label>
+          {/* 2. Email */}
+          <div>
+            <Label className="flex items-center mb-1">2. Email <RedDot /></Label>
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
-                value={generalInfo.mobileNumber || ""}
+                value={generalInfo.email || ""}
                 onChange={e => {
-                  handleGeneralInfoChange("mobileNumber", e.target.value);
-                  setMobileVerified(false); // Reset verification on mobile change
-                  setMobileOtpSent(false);
+                  handleGeneralInfoChange("email", e.target.value);
+                  setEmailVerified(false); // Reset verification on email change
+                  setEmailOtpSent(false);
                 }}
                 required
-                placeholder="All future communication from college will be on this No."
-                disabled={mobileVerified}
+                placeholder="Email"
+                disabled={isGeneralInfoLocked || emailVerified}
                 className="w-full"
               />
               <div className="flex flex-col sm:flex-row gap-2">
-                {!mobileVerified && !mobileOtpSent && (
-                  <Button type="button" size="sm" className="w-full sm:w-auto" onClick={handleSendMobileOtp}>Send OTP</Button>
+                {!emailVerified && !emailOtpSent && (
+                  <Button type="button" size="sm" className="w-full sm:w-auto" onClick={handleSendEmailOtp} disabled={isGeneralInfoLocked}>Send OTP</Button>
                 )}
-                {mobileOtpSent && !mobileVerified && (
+                {emailOtpSent && !emailVerified && (
                   <>
                     <Input
                       className="w-full sm:w-32"
-                      value={mobileOtp}
-                      onChange={e => setMobileOtp(e.target.value)}
+                      value={emailOtp}
+                      onChange={e => setEmailOtp(e.target.value)}
                       placeholder="Enter OTP"
                       size={"sm" as any}
                     />
                     <Button
                       type="button"
                       size="sm"
-                      onClick={handleVerifyMobileOtp}
+                      onClick={handleVerifyEmailOtp}
                       className="w-full sm:w-auto"
+                      disabled={isGeneralInfoLocked}
                     >
                       Verify OTP
                     </Button>
                   </>
                 )}
-                {mobileVerified && <span className="text-green-600 font-semibold text-sm flex items-center">Verified ✅</span>}
+                {emailVerified && <span className="text-green-600 font-semibold text-sm flex items-center">Verified ✅</span>}
               </div>
             </div>
           </div>
-
-          {/* 8(b). WhatsApp Number */}
-          <div className="flex-1">
-            <Label className="flex items-center mb-1 text-sm">8(b). WhatsApp Number <RedDot /></Label>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          {/* 3. Date of Birth (split) */}
+          <div>
+            <Label className="flex items-center mb-1">3. Date of Birth <RedDot /></Label>
+            <div className="flex gap-2">
+              <Select
+                value={dobDay}
+                onValueChange={val => {
+                  const newDate = new Date(generalInfo.dateOfBirth || new Date());
+                  newDate.setDate(Number(val));
+                  handleGeneralInfoChange("dateOfBirth", newDate.toISOString().split('T')[0]);
+                }}
+                disabled={isGeneralInfoLocked}
+              >
+                <SelectTrigger className="w-24"><SelectValue placeholder="Select date" /></SelectTrigger>
+                <SelectContent>{days.map(day => <SelectItem key={day} value={day.toString()}>{day}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select
+                value={dobMonth}
+                onValueChange={val => {
+                  const newDate = new Date(generalInfo.dateOfBirth || new Date());
+                  newDate.setMonth(Number(val) - 1);
+                  handleGeneralInfoChange("dateOfBirth", newDate.toISOString().split('T')[0]);
+                }}
+                disabled={isGeneralInfoLocked}
+              >
+                <SelectTrigger className="w-32"><SelectValue placeholder="Select month" /></SelectTrigger>
+                <SelectContent>{months.map((month, idx) => <SelectItem key={month} value={(idx + 1).toString()}>{month}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select
+                value={dobYear}
+                onValueChange={val => {
+                  const newDate = new Date(generalInfo.dateOfBirth || new Date());
+                  newDate.setFullYear(Number(val));
+                  handleGeneralInfoChange("dateOfBirth", newDate.toISOString().split('T')[0]);
+                }}
+                disabled={isGeneralInfoLocked}
+              >
+                <SelectTrigger className="w-32"><SelectValue placeholder="Select year" /></SelectTrigger>
+                <SelectContent>{years.map(year => <SelectItem key={year} value={year.toString()}>{year}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          {/* 4(a) and 4(b) Nationality/Other Nationality on same line */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <Label className="flex items-center mb-1">4(a). Nationality <RedDot /></Label>
+              <Select
+                value={generalInfo.nationalityId?.toString() || "other"}
+                onValueChange={handleNationalityChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Nationality" />
+                </SelectTrigger>
+                <SelectContent>
+                  {nationalities.map(nationality => (
+                    nationality.id && (
+                      <SelectItem key={nationality.id} value={nationality.id.toString()}>
+                        {nationality.name}
+                      </SelectItem>
+                    )
+                  ))}
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1">
+              <Label className="flex items-center mb-1">4(b). Other Nationality</Label>
               <Input
-                value={sameAsMobile ? (generalInfo.mobileNumber || "") : (generalInfo.whatsappNumber || "")}
-                onChange={e => handleGeneralInfoChange("whatsappNumber", e.target.value)}
-                required
-                disabled={sameAsMobile}
-                placeholder="WhatsApp Number"
-                className="w-full"
+                value={generalInfo.otherNationality || ""}
+                onChange={e => handleGeneralInfoChange("otherNationality", e.target.value)}
+                placeholder="Other Nationality"
+                disabled={generalInfo.nationalityId !== null}
               />
-              <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                <Checkbox
-                  checked={sameAsMobile}
-                  onCheckedChange={checked => {
-                    setSameAsMobile(!!checked);
-                    if (checked) {
-                      handleGeneralInfoChange("whatsappNumber", generalInfo.mobileNumber);
-                    }
-                  }}
-                  id="sameAsMobile"
-                />
-                <Label htmlFor="sameAsMobile" className="text-xs sm:text-sm">Same As Mobile Number</Label>
-              </div>
             </div>
           </div>
-        </div>
-        {/* 9. Are you a resident of Kolkata? */}
-        <div>
-          <Label className="flex items-center mb-1">9. Are you a resident of Kolkata? <RedDot /></Label>
-          <Select
-            value={generalInfo.residenceOfKolkata ? "Yes" : "No"}
-            onValueChange={val => {
-              handleGeneralInfoChange("residenceOfKolkata", val === "Yes");
-            }}
-          >
-            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Yes">Yes</SelectItem>
-              <SelectItem value="No">No</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
-      {/* Login Details Section */}
-      <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold mb-2">Login Details</h3>
-        <p className="text-sm text-muted-foreground mb-4">The mobile number entered above in Sr. No. 8 (a) will be your login ID by default in order to access your profile on college website.</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* 5. Category */}
           <div>
-            <Label className="flex items-center mb-1">10. Login Id <RedDot /></Label>
-            <Input value={generalInfo.mobileNumber || ""} disabled placeholder="Login Id" />
-          </div>
-          <div>
-            <Label className="flex items-center mb-1">11. Password <RedDot /></Label>
-            <Input
-              type="password"
-              value={generalInfo.password || ""}
-              onChange={e => handleGeneralInfoChange("password", e.target.value)}
-              placeholder="Password (Max 10 Characters)"
-              maxLength={10}
-              required
-            />
-          </div>
-          <div>
-            <Label className="flex items-center mb-1">12. Confirm Password <RedDot /></Label>
-            <Input
-              type="password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              placeholder="Confirm Password (Max 10 Characters)"
-              maxLength={10}
-              required
-            />
-          </div>
-        </div>
-      </Card>
-      {/* Application To Section */}
-      <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold mb-2">Application To</h3>
-        <p className="text-sm text-muted-foreground mb-4">Since you are applying to B.Com./B.A./B.Sc./BBA course, the selection will remain "Undergraduate".</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label className="flex items-center mb-1">13. Select Degree <RedDot /></Label>
+            <Label className="flex items-center mb-1">5. Select Category <RedDot /></Label>
             <Select
-              value={generalInfo.degreeLevel || "UNDER_GRADUATE"}
-              onValueChange={val => handleGeneralInfoChange("degreeLevel", val)}
-              disabled
+              value={generalInfo.categoryId?.toString() || ""}
+              onValueChange={val => handleGeneralInfoChange("categoryId", parseInt(val))}
             >
-              <SelectTrigger><SelectValue placeholder="Select Degree" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="UNDER_GRADUATE">Under Graduate</SelectItem>
-                <SelectItem value="POST_GRADUATE">Post Graduate</SelectItem>
+                {categories.map(cat => (
+                  cat.id && (
+                    <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                  )
+                ))}
               </SelectContent>
             </Select>
           </div>
-        </div>
-      </Card>
+          {/* 6. Is either of your parents Gujarati? */}
+          <div>
+            <Label className="flex items-center mb-1">6. Is either of your parents Gujarati? <RedDot /></Label>
+            <Select
+              value={generalInfo.isGujarati ? "Yes" : "No"}
+              onValueChange={val => handleGeneralInfoChange("isGujarati", val === "Yes")}
+            >
+              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Yes">Yes</SelectItem>
+                <SelectItem value="No">No</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {/* 7. Gender */}
+          <div>
+            <Label className="flex items-center mb-1">7. Select Your Gender <RedDot /></Label>
+            <Select
+              value={generalInfo.gender || "FEMALE"}
+              onValueChange={(val: Gender) => handleGeneralInfoChange("gender", val)}
+              disabled={isGeneralInfoLocked}
+            >
+              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectContent>
+                {GENDERS.map(g => (
+                  <SelectItem key={g} value={g}>{g}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* 8(a) and 8(b) Mobile/WhatsApp on same line */}
+          <div className="flex flex-col gap-4">
+            {/* 8(a). Mobile Number */}
+            <div className="flex-1">
+              <Label className="flex items-center mb-1 text-sm">8(a). Mobile Number <span className="text-blue-700 font-bold text-xs sm:text-sm">(10-digit only.)</span> <RedDot /></Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  value={generalInfo.mobileNumber || ""}
+                  onChange={e => {
+                    handleGeneralInfoChange("mobileNumber", e.target.value);
+                    setMobileVerified(false); // Reset verification on mobile change
+                    setMobileOtpSent(false);
+                  }}
+                  required
+                  placeholder="All future communication from college will be on this No."
+                  disabled={isGeneralInfoLocked || mobileVerified}
+                  className="w-full"
+                />
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {!mobileVerified && !mobileOtpSent && (
+                    <Button type="button" size="sm" className="w-full sm:w-auto" onClick={handleSendMobileOtp} disabled={isGeneralInfoLocked}>Send OTP</Button>
+                  )}
+                  {mobileOtpSent && !mobileVerified && (
+                    <>
+                      <Input
+                        className="w-full sm:w-32"
+                        value={mobileOtp}
+                        onChange={e => setMobileOtp(e.target.value)}
+                        placeholder="Enter OTP"
+                        size={"sm" as any}
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleVerifyMobileOtp}
+                        className="w-full sm:w-auto"
+                        disabled={isGeneralInfoLocked}
+                      >
+                        Verify OTP
+                      </Button>
+                    </>
+                  )}
+                  {mobileVerified && <span className="text-green-600 font-semibold text-sm flex items-center">Verified ✅</span>}
+                </div>
+              </div>
+            </div>
 
-      {/* Add submit button at the bottom */}
-      <div className="flex justify-end gap-4 mt-6">
-        {onPrev && (
+            {/* 8(b). WhatsApp Number */}
+            <div className="flex-1">
+              <Label className="flex items-center mb-1 text-sm">8(b). WhatsApp Number <RedDot /></Label>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <Input
+                  value={sameAsMobile ? (generalInfo.mobileNumber || "") : (generalInfo.whatsappNumber || "")}
+                  onChange={e => handleGeneralInfoChange("whatsappNumber", e.target.value)}
+                  required
+                  disabled={isGeneralInfoLocked || sameAsMobile}
+                  placeholder="WhatsApp Number"
+                  className="w-full"
+                />
+                <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                  <Checkbox
+                    checked={sameAsMobile}
+                    onCheckedChange={checked => {
+                      setSameAsMobile(!!checked);
+                      if (checked) {
+                        handleGeneralInfoChange("whatsappNumber", generalInfo.mobileNumber);
+                      }
+                    }}
+                    id="sameAsMobile"
+                  />
+                  <Label htmlFor="sameAsMobile" className="text-xs sm:text-sm">Same As Mobile Number</Label>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* 9. Are you a resident of Kolkata? */}
+          <div>
+            <Label className="flex items-center mb-1">9. Are you a resident of Kolkata? <RedDot /></Label>
+            <Select
+              value={generalInfo.residenceOfKolkata ? "Yes" : "No"}
+              onValueChange={val => {
+                handleGeneralInfoChange("residenceOfKolkata", val === "Yes");
+              }}
+            >
+              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Yes">Yes</SelectItem>
+                <SelectItem value="No">No</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </Card>
+        {/* Login Details Section */}
+        <Card className="p-6 space-y-4">
+          <h3 className="text-lg font-semibold mb-2">Login Details</h3>
+          <p className="text-sm text-muted-foreground mb-4">The mobile number entered above in Sr. No. 8 (a) will be your login ID by default in order to access your profile on college website.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <Label className="flex items-center mb-1">10. Login Id <RedDot /></Label>
+              <Input value={generalInfo.mobileNumber || ""} disabled placeholder="Login Id" />
+            </div>
+            <div>
+              <Label className="flex items-center mb-1">11. Password <RedDot /></Label>
+              <Input
+                type="password"
+                value={generalInfo.password || ""}
+                onChange={e => handleGeneralInfoChange("password", e.target.value)}
+                placeholder="Password (Max 10 Characters)"
+                maxLength={10}
+                required
+                disabled={isGeneralInfoLocked}
+              />
+            </div>
+            <div>
+              <Label className="flex items-center mb-1">12. Confirm Password <RedDot /></Label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Confirm Password (Max 10 Characters)"
+                maxLength={10}
+                required
+                disabled={isGeneralInfoLocked}
+              />
+            </div>
+          </div>
+        </Card>
+        {/* Application To Section */}
+        <Card className="p-6 space-y-4">
+          <h3 className="text-lg font-semibold mb-2">Application To</h3>
+          <p className="text-sm text-muted-foreground mb-4">Since you are applying to B.Com./B.A./B.Sc./BBA course, the selection will remain "Undergraduate".</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label className="flex items-center mb-1">13. Select Degree <RedDot /></Label>
+              <Select
+                value={generalInfo.degreeLevel || "UNDER_GRADUATE"}
+                onValueChange={val => handleGeneralInfoChange("degreeLevel", val)}
+                disabled
+              >
+                <SelectTrigger><SelectValue placeholder="Select Degree" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="UNDER_GRADUATE">Under Graduate</SelectItem>
+                  <SelectItem value="POST_GRADUATE">Post Graduate</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
+
+        <div className="flex justify-between pt-4">
           <Button
+            type="button"
             variant="outline"
-            onClick={onPrev}
-            disabled={isSubmitting}
+            onClick={handlePrevious}
+            disabled={isLoading}
           >
             Previous
           </Button>
-        )}
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting || !emailVerified || !mobileVerified}
-        >
-          {isSubmitting ? "Saving..." : "Save & Continue"}
-        </Button>
-      </div>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Next"}
+          </Button>
+        </div>
+      </form>
 
       {/* Display validation errors */}
       {Object.keys(formErrors).length > 0 && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
           <h4 className="text-red-800 font-semibold mb-2">Please fix the following errors:</h4>
           <ul className="list-disc list-inside text-red-700">
-            {Object.entries(formErrors).map(([key, value]) => (
-              <li key={key}>{value}</li>
+            {Object.entries(formErrors).map(([field, error]) => (
+              <li key={field}>{error}</li>
             ))}
           </ul>
         </div>

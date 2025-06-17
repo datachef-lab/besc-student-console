@@ -6,137 +6,170 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ReactNode } from 'react';
 import { getCourses } from "../../action";
+import { toast } from "@/components/ui/use-toast";
 
 interface CourseApplicationStepProps {
-  applicationForm: ApplicationForm,
-  availableCourses?: Course[]; // Make availableCourses optional to prevent the error if not provided initially
-  stepNotes?: ReactNode; // Add stepNotes prop
+  stepNotes: React.ReactNode;
+  applicationForm: ApplicationFormDto;
+  onNext: () => void;
+  onPrev: () => void;
 }
-
-// Remove CourseSelection interface as we will use Course from schema + local state for selection
-// interface CourseSelection {
-//   id: number;
-//   name: string;
-//   selected: boolean;
-// }
 
 interface CourseWithSelection extends Course {
   selected: boolean;
   
 }
 
-export default function CourseApplicationStep({ applicationForm, availableCourses }: CourseApplicationStepProps) {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [courseApplication, setCourseApplication] = useState<AdmissionCourseApplication[]>([]);
+export default function CourseApplicationStep({
+  applicationForm,
+  availableCourses,
+  stepNotes,
+  onNext,
+  onPrev
+}: CourseApplicationStepProps) {
+  const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
-  useEffect(() => {
-    // Populate courses state from availableCourses prop when it becomes available
-    // if (availableCourses && availableCourses.length > 0) {
-    //   setCourses(availableCourses.map(course => ({
-    //     ...course,
-    //     selected: false,
-    //   })));
-    // }
-    fetchCourses();
-  }, []); // Dependency array includes availableCourses
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
 
-  const fetchCourses = async () => {
+    if (selectedCourses.length === 0) {
+      errors.courses = "Please select at least one course";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleNext = async () => {
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before proceeding",
+        variant: "destructive",
+        onClose: () => {},
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      // const response = await fetch("/api/admissions/courses");
-      const data = await getCourses();
-      // console.log("courses:", data)
-      setCourses(data);
+      const formData = {
+        form: {
+          admissionId: applicationForm.admissionId,
+          status: "DRAFT",
+          currentStep: 3,
+          admissionStep: "COURSE_APPLICATION"
+        },
+        courseApplications: selectedCourses.map(courseId => ({
+          applicationFormId: applicationForm.id,
+          courseId: courseId
+        }))
+      };
 
+      const response = await fetch("/api/admissions/application-forms", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save form");
+      }
+
+      toast({
+        title: "Success",
+        description: "Form saved successfully",
+        onClose: () => {},
+      });
+
+      onNext();
     } catch (error) {
-      console.log(error)
+      console.error("Error saving form:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save form",
+        variant: "destructive",
+        onClose: () => {},
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  const handleCourseSelect = (courseId: number, isSelected: boolean) => {
-    if (isSelected) {
-      setCourseApplication((prev) => [...prev, {
-        courseId,
-        applicationFormId: applicationForm.id!,
-      }])
-    }
-    else {
-      setCourseApplication(courseApplication.filter(crs => crs.courseId != courseId));
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      onPrev();
     }
   };
 
   return (
-    <div className="space-y-6 p-2 sm:p-4">
+    <div className="space-y-6">
       <div className="mb-4">
-        <h2 className="text-base sm:text-lg font-semibold mb-2">Step 3 of 5 - Course Selection</h2>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-3 sm:p-4 text-left text-xs sm:text-sm">
-          <p className="font-semibold mb-2">Please Note:</p>
-          <ol className="list-decimal list-inside space-y-1">
-            <li>Course / Session selected here can not be Removed once Saved.</li>
-            <li>Multiple course/sessions can be added later on using the same login details sent via SMS/Email in your registered mobile no or email ID.</li>
-          </ol>
+        <h2 className="text-lg font-semibold mb-2">{stepHeading || "Step 3 of 5 - Course Application"}</h2>
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-4 text-left">
+          {stepNotes}
         </div>
       </div>
 
-      <h3 className="text-base sm:text-lg font-semibold mb-2">18. Course Selection</h3>
-
-      {/* Desktop Table View */}
-      <div className="hidden w-full sm:block rounded-md border max-h-[300px] overflow-y-auto">
-        <table className="min-w-full divide-y divide-gray-200 table-fixed">
-          <thead className="bg-gray-50 sticky top-0 z-10">
-            <tr>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">Sl</th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Select</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-              {courses.map((course, index) => (
-                <tr key={course.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="px-4 py-4 text-sm font-medium text-gray-900">{index + 1}</td>
-                  <td className="px-4 py-4 text-sm text-gray-500">{course.name}</td>
-                  <td className="px-4 py-4 text-sm text-gray-500">
-                    {typeof course.id === 'number' && (
-                      <Checkbox
-                        checked={courseApplication.some(crs => crs.courseId === course.id)}
-                        onCheckedChange={(isChecked: boolean) => handleCourseSelect(course.id as number, isChecked)}
-                      />
-                    )}
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile Card View */}
-      <div className="sm:hidden space-y-3">
-        {courses.map((course, index) => (
-          <div key={course.id} className="bg-white border rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-900">{index + 1}.</span>
-                <span className="text-sm text-gray-500">{course.name}</span>
-              </div>
-              {typeof course.id === 'number' && (
-                <Checkbox
-                  checked={courseApplication.some(crs => crs.courseId === course.id)}
-                  onCheckedChange={(isChecked: boolean) => handleCourseSelect(course.id as number, isChecked)}
-                />
-              )}
+      {/* Course Selection */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Select Your Courses</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {availableCourses?.map((course) => (
+            <div key={course.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`course-${course.id}`}
+                checked={selectedCourses.includes(course.id)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedCourses([...selectedCourses, course.id]);
+                  } else {
+                    setSelectedCourses(selectedCourses.filter(id => id !== course.id));
+                  }
+                }}
+              />
+              <Label htmlFor={`course-${course.id}`}>{course.name}</Label>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex flex-col sm:flex-row items-center justify-end gap-2 mt-6">
-        <Label className="text-sm font-medium">Total Application Fees to be paid:</Label>
-        <div className="flex items-center gap-1">
-          <span className="text-sm">₹</span>
-          <Input type="text" value="" className="w-24 text-right" readOnly />
-          <span className="text-sm">.00</span>
+          ))}
         </div>
       </div>
 
+      {/* Navigation Buttons */}
+      <div className="flex justify-end gap-4 mt-6">
+        {currentStep > 1 && (
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={isSubmitting}
+          >
+            Previous
+          </Button>
+        )}
+        <Button
+          onClick={handleNext}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Saving..." : "Save & Continue"}
+        </Button>
+      </div>
+
+      {/* Display validation errors */}
+      {Object.keys(formErrors).length > 0 && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <h4 className="text-red-800 font-semibold mb-2">Please fix the following errors:</h4>
+          <ul className="list-disc list-inside text-red-700">
+            {Object.entries(formErrors).map(([field, error]) => (
+              <li key={field}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

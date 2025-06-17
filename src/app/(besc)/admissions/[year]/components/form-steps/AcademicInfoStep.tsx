@@ -16,16 +16,18 @@ import { AcademicSubjects, ApplicationForm, boardResultStatusType, BoardUniversi
 import { AdmissionAcademicInfoDto, BoardUniversityDto } from "@/types/admissions";
 import { useParams } from "next/navigation";
 import { getCourses } from "../../action";
+import { toast } from "@/components/ui/use-toast";
 
 // Define a type for Academic Subject for fetching
 interface AcademicSubject { id: number; name: string; }
 
 interface AcademicInfoStepProps {
-  applicationForm: ApplicationForm;
-  stepHeading?: string;
   stepNotes: React.ReactNode;
+  applicationForm: ApplicationFormDto;
   academicInfo: AdmissionAcademicInfoDto;
   setAcademicInfo: React.Dispatch<React.SetStateAction<AdmissionAcademicInfoDto>>;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
 interface SubjectMark {
@@ -53,7 +55,14 @@ interface InstituteDetails {
   otherCollege: string;
 }
 
-export default function AcademicInfoStep({ applicationForm, stepHeading, stepNotes, academicInfo, setAcademicInfo }: AcademicInfoStepProps) {
+export default function AcademicInfoStep({ 
+  applicationForm, 
+  stepNotes, 
+  academicInfo, 
+  setAcademicInfo,
+  onNext,
+  onPrev 
+}: AcademicInfoStepProps) {
   const params = useParams();
   const admissionYear = parseInt(params.year as string);
   
@@ -72,6 +81,9 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
   const [showMarksEntryModal, setShowMarksEntryModal] = useState(false);
   const [showInstituteDetailsModal, setShowInstituteDetailsModal] = useState(false);
   const [enteredInstituteDetails, setEnteredInstituteDetails] = useState<InstituteDetails | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -209,10 +221,102 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
     }));
   };
 
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!academicInfo.boardResultStatus) {
+      errors.boardResultStatus = "Board result status is required";
+    }
+    if (!academicInfo.boardUniversityId) {
+      errors.boardUniversityId = "Board/University is required";
+    }
+    if (!academicInfo.instituteId) {
+      errors.instituteId = "Institute details are required";
+    }
+    if (!academicInfo.languageMediumId) {
+      errors.languageMediumId = "Language medium is required";
+    }
+    if (!academicInfo.yearOfPassing) {
+      errors.yearOfPassing = "Year of passing is required";
+    }
+    if (!academicInfo.streamType) {
+      errors.streamType = "Stream type is required";
+    }
+    if (academicInfo.isRegisteredForUGInCU && !academicInfo.cuRegistrationNumber) {
+      errors.cuRegistrationNumber = "CU registration number is required";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleNext = async () => {
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before proceeding",
+        variant: "destructive",
+        onClose: () => {},
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = {
+        form: {
+          admissionId: applicationForm.admissionId,
+          status: "DRAFT",
+          currentStep: 2,
+          admissionStep: "ACADEMIC_INFORMATION"
+        },
+        academicInfo: academicInfo
+      };
+
+      const response = await fetch("/api/admissions/application-forms", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save form");
+      }
+
+      toast({
+        title: "Success",
+        description: "Form saved successfully",
+        onClose: () => {},
+      });
+
+      onNext();
+    } catch (error) {
+      console.error("Error saving form:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save form",
+        variant: "destructive",
+        onClose: () => {},
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      onPrev();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="mb-4">
-        <h2 className="text-base sm:text-lg font-semibold mb-2">{stepHeading || "Step 2 of 5 - Academic Details (Sr. No. 14 to 17)"}</h2>
+        <h2 className="text-base sm:text-lg font-semibold mb-2">Step 2 of 5 - Academic Details (Sr. No. 14 to 17)</h2>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-3 sm:p-4 text-left text-sm">
           {stepNotes}
         </div>
@@ -369,6 +473,37 @@ export default function AcademicInfoStep({ applicationForm, stepHeading, stepNot
           )}
         </div>
       </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-end gap-4 mt-6">
+        {currentStep > 1 && (
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={isSubmitting}
+          >
+            Previous
+          </Button>
+        )}
+        <Button
+          onClick={handleNext}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Saving..." : "Save & Continue"}
+        </Button>
+      </div>
+
+      {/* Display validation errors */}
+      {Object.keys(formErrors).length > 0 && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <h4 className="text-red-800 font-semibold mb-2">Please fix the following errors:</h4>
+          <ul className="list-disc list-inside text-red-700">
+            {Object.entries(formErrors).map(([field, error]) => (
+              <li key={field}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

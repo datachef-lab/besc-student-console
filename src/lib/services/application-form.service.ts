@@ -17,7 +17,11 @@ export async function createApplicationForm(form: ApplicationForm, generalInfo: 
     // Create a new application form
     const [newApplicationForm] = await dbPostgres
         .insert(applicationForms)
-        .values(form)
+        .values({
+            admissionId: form.admissionId,
+            admissionStep: form.admissionStep,
+            formStatus: form.formStatus,
+        })
         .returning();
 
     // Create a new admission general info entry

@@ -2,7 +2,7 @@ import { dbPostgres } from "@/db";
 import { otps, otpType } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
-const OTP_EXPIRY_MINUTES = 10;
+const OTP_EXPIRY_MINUTES = 15;
 
 export async function generateOtp(type: typeof otpType.enumValues[number], recipient: string) {
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP

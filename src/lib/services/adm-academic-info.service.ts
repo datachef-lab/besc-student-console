@@ -90,7 +90,8 @@ export async function deleteAcademicInfo(id: number) {
     return true;
 }
 
-export async function formatAcademicInfo(academicInfo: AdmissionAcademicInfo): Promise<AdmissionAcademicInfoDto> {
+export async function formatAcademicInfo(academicInfo: AdmissionAcademicInfo): Promise<AdmissionAcademicInfoDto | null> {
+    if (!academicInfo) return null;
     const subjects = await findSubjectsByAcademicInfoId(academicInfo.id!);
 
     return {

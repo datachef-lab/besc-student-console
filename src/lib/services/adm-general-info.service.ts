@@ -14,11 +14,12 @@ export async function createGeneralInfo(generalInfo: Omit<AdmissionGeneralInfo, 
     const hashedPassword = await bcrypt.hash(generalInfo.password, 10);
 
     const [newGeneralInfo] = await dbPostgres
-        .insert({
-            ...admissionGeneralInfo,
-            password: hashedPassword
+        .insert(admissionGeneralInfo)
+        .values({
+            ...generalInfo,
+            password: hashedPassword,
+            residenceOfKolkata: !!generalInfo.residenceOfKolkata
         })
-        .values(generalInfo)
         .returning();
 
     return {
