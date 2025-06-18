@@ -1,8 +1,10 @@
 import {dbPostgres} from "@/db";
-import { Admission, admissions, applicationForms, admissionGeneralInfo, categories, religion, annualIncomes, admissionAdditionalInfo, genderType, admissionFormStatus } from "@/db/schema";
+import { Admission, admissions, applicationForms, admissionGeneralInfo, categories, religion, annualIncomes, admissionAdditionalInfo, genderType, admissionFormStatus, admissionCourses } from "@/db/schema";
 import { count, desc, eq, and, sql, ilike, or, SQL } from "drizzle-orm";
+import { createAdmissionCourse, findAdmissionCoursesByAdmissionId } from "./adm-admision-courses.service";
+import { AdmissionDto } from "@/types/admissions";
 
-export async function createAdmission(admission: Admission) {
+export async function createAdmission(admission: Admission): Promise<AdmissionDto | null> {
     const [foundAdmission] = await dbPostgres
         .select()
         .from(admissions)
@@ -12,13 +14,62 @@ export async function createAdmission(admission: Admission) {
 
     const [newAdmission] = await dbPostgres
         .insert(admissions)
-        .values(admission)
+        .values({
+            ...admission,
+            startDate: admission.startDate,
+            lastDate: admission.lastDate
+        })
         .returning();
 
-    return newAdmission;
+    return await modelToDto(newAdmission);
 }
 
-export async function findAdmissionByYear(year: number) {
+export async function createAdmissionWithCourses(admission: Admission, courseIds: number[]): Promise<AdmissionDto | null> {
+    const [foundAdmission] = await dbPostgres
+        .select()
+        .from(admissions)
+        .where(eq(admissions.year, admission.year));
+
+    if (foundAdmission) return null;
+
+    // Start a transaction
+    const result = await dbPostgres.transaction(async (tx) => {
+        // Create the admission
+        const [newAdmission] = await tx
+            .insert(admissions)
+            .values({
+                ...admission,
+                startDate: admission.startDate,
+                lastDate: admission.lastDate
+            })
+            .returning();
+
+        // Create admission course mappings
+        const admissionCourseMappings = [];
+        for (const courseId of courseIds) {
+            const [mapping] = await tx
+                .insert(admissionCourses)
+                .values({
+                    admissionId: newAdmission.id,
+                    courseId: courseId,
+                    disabled: false,
+                    remarks: null
+                })
+                .returning();
+            admissionCourseMappings.push(mapping);
+        }
+
+        return {
+            admission: newAdmission,
+            courseMappings: admissionCourseMappings
+        };
+    });
+
+    // Convert the result to AdmissionDto
+    return await modelToDto(result.admission);
+}
+
+export async function findAdmissionByYear(year: number): Promise<AdmissionDto | null> {
     const [foundAdmission] = await dbPostgres
         .select()
         .from(admissions)
@@ -26,10 +77,10 @@ export async function findAdmissionByYear(year: number) {
 
     if (!foundAdmission) return null;
 
-    return foundAdmission;
+    return await modelToDto(foundAdmission);
 }
 
-export async function findAdmissionById(id: number) {
+export async function findAdmissionById(id: number): Promise<AdmissionDto | null> {
     const [foundAdmission] = await dbPostgres
         .select()
         .from(admissions)
@@ -37,10 +88,10 @@ export async function findAdmissionById(id: number) {
 
     if (!foundAdmission) return null;
 
-    return foundAdmission;
+    return await modelToDto(foundAdmission);
 }
 
-export async function findAllAdmissions(page: number = 1, size: number = 10, filters?: { isClosed: boolean, isArchived: boolean }) {
+export async function findAllAdmissions(page: number = 1, size: number = 10, filters?: { isClosed: boolean, isArchived: boolean }): Promise<AdmissionDto[]> {
     const query = dbPostgres
         .select()
         .from(admissions)
@@ -57,10 +108,10 @@ export async function findAllAdmissions(page: number = 1, size: number = 10, fil
 
     const admissionsList = await query;
 
-    return admissionsList;
+    return await Promise.all(admissionsList.map(async (adm) => await modelToDto(adm)));
 }
 
-export async function updateAdmission(id: number, admission: Partial<Admission>) {
+export async function updateAdmission(id: number, admission: Partial<Admission>): Promise<AdmissionDto | null> {
     const [foundAdmission] = await dbPostgres
         .select()
         .from(admissions)
@@ -70,7 +121,11 @@ export async function updateAdmission(id: number, admission: Partial<Admission>)
 
     const [updatedAdmission] = await dbPostgres
         .update(admissions)
-        .set(admission)
+        .set({
+            ...admission,
+            startDate: admission.startDate,
+            lastDate: admission.lastDate
+        })
         .where(eq(admissions.id, id));
 
     return updatedAdmission;
@@ -93,6 +148,14 @@ export async function deleteAdmission(id: number) {
         .where(eq(admissions.id, id));
 
     return deletedAdmission;
+}
+
+async function modelToDto(adm: Admission) {
+    const courses = await findAdmissionCoursesByAdmissionId(adm.id!);
+    return {
+        ...adm,
+        courses
+    }
 }
 
 export async function admissionStats() {

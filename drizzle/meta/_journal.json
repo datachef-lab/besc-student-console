@@ -78,6 +78,27 @@
       "when": 1750157554369,
       "tag": "0010_zippy_sentinels",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1750224798521,
+      "tag": "0011_lethal_princess_powerful",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1750228246166,
+      "tag": "0012_sticky_nebula",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1750228751485,
+      "tag": "0013_melodic_stryfe",
+      "breakpoints": true
     }
   ]
 }

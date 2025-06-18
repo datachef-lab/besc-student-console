@@ -1,0 +1,1 @@
+ALTER TABLE "admission_courses" ADD COLUMN "disabled" boolean DEFAULT false;

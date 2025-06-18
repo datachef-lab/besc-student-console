@@ -1,15 +1,24 @@
 import {dbPostgres} from "@/db";
-import { admissionGeneralInfo, AdmissionGeneralInfo } from "@/db/schema";
+import { admissionGeneralInfo, AdmissionGeneralInfo, applicationForms } from "@/db/schema";
 import { and, eq, ilike } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { findAdmissionById } from "./admission.service";
 import { findApplicationFormById } from "./application-form.service";
 
 export async function createGeneralInfo(generalInfo: Omit<AdmissionGeneralInfo, "id" | "createdAt" | "updatedAt">) {
-    const existingEntry = await checkExistingEntry(generalInfo);
+    const applicationForm = await findApplicationFormById(generalInfo.applicationFormId);
+    if (!applicationForm) {
+        return { generalInfo: null, message: "Invalid application id" }
+    }
+    const admission = await findAdmissionById(applicationForm?.admissionId!);
+    if (!admission) {
+        return { generalInfo: null, message: "Invalid admision id" }
+    }
+    const existingEntry = await checkExistingEntry(admission.id!, generalInfo);
     if (existingEntry) {
         return { generalInfo: existingEntry, message: "General info already exists for this student." };
     }
+    
     // Encrypt the password
     const hashedPassword = await bcrypt.hash(generalInfo.password, 10);
 
@@ -92,27 +101,24 @@ export async function updateGeneralInfo(generalInfo: AdmissionGeneralInfo) {
     return updatedGeneralInfo;
 }
 
-export async function checkExistingEntry(generalInfo: AdmissionGeneralInfo) {
+export async function checkExistingEntry(admissionId: number, generalInfo: AdmissionGeneralInfo) {
     const [existingEntry] = await dbPostgres
         .select()
         .from(admissionGeneralInfo)
+        .innerJoin(applicationForms, eq(admissionGeneralInfo.applicationFormId, applicationForms.id))
         .where(
             and(
                 ilike(admissionGeneralInfo.firstName, generalInfo.firstName.trim()),
-                ilike(admissionGeneralInfo.middleName, generalInfo.middleName!.trim()),
-                ilike(admissionGeneralInfo.lastName, generalInfo.lastName!.trim()),
+                ilike(admissionGeneralInfo.middleName, (generalInfo.middleName ?? "").trim()),
+                ilike(admissionGeneralInfo.lastName, generalInfo!.lastName!.trim()),
                 eq(admissionGeneralInfo.dateOfBirth, generalInfo.dateOfBirth!),
                 eq(admissionGeneralInfo.mobileNumber, generalInfo.mobileNumber!),
                 eq(admissionGeneralInfo.gender, generalInfo.gender!),
-                // eq(admissionGeneralInfo.degreeId, generalInfo.degreeId!),
+                eq(applicationForms.admissionId, admissionId)
             )
         );
 
-    if (existingEntry) {
-        return existingEntry;
-    }
-
-    return null;
+    return existingEntry ?? null;
 }
 
 export async function deleteGeneralInfo(id: number) {

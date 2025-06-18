@@ -7,17 +7,10 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Plus,
-  Users,
-  CheckCircle,
-  DollarSign,
-  FileText,
-  IndianRupee,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -25,22 +18,23 @@ import {
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import CreateAdmissionDialog from "./components/create-admission-dialog";
 import AdmissionsStats from "./components/admissions-stats";
-
-interface AdmissionData {
-  id: number;
-  admissionYear: number;
-  totalApplications: number;
-  totalPayments: number;
-  totalDrafts: number;
-  isClosed: boolean;
-}
+import AdmissionConfigureDialog from './components/AdmissionConfigureDialog';
+import { getCourses } from "./action";
+import { Course } from "@/db/schema";
 
 export interface Stats {
   admissionYearCount: number;
+  totalApplications: number;
+  totalPayments: number;
+  totalDrafts: number;
+}
+
+interface AdmissionSummary {
+  id: number;
+  admissionYear: number;
+  isClosed: boolean;
   totalApplications: number;
   totalPayments: number;
   totalDrafts: number;
@@ -52,7 +46,7 @@ export default function AdmissionsPage() {
     document.title = "Admissions Dashboard";
   }, []);
 
-  const [data, setData] = useState<AdmissionData[]>([]);
+  const [data, setData] = useState<AdmissionSummary[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [toggleAdmCloseLoading, setToggleAdmLoading] = useState(false);
@@ -62,7 +56,7 @@ export default function AdmissionsPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{
-    key: keyof AdmissionData;
+    key: keyof AdmissionSummary;
     direction: "asc" | "desc";
   }>({
     key: "admissionYear",
@@ -76,6 +70,10 @@ export default function AdmissionsPage() {
   const [newAdmissionYear, setNewAdmissionYear] = useState<number>(
     new Date().getFullYear()
   );
+
+  const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
+  const [selectedAdmission, setSelectedAdmission] = useState<AdmissionSummary | null>(null);
+  const [allCourses, setAllCourses] = useState<Course[]>([]);
 
   const fetchData = async () => {
     try {
@@ -93,6 +91,9 @@ export default function AdmissionsPage() {
       const processedAdmissions = result.admissions.map((admission: any) => ({
         ...admission,
         isClosed: admission.isClosed === true,
+        totalApplications: Number(admission.totalApplications) || 0,
+        totalPayments: Number(admission.totalPayments) || 0,
+        totalDrafts: Number(admission.totalDrafts) || 0,
       }));
       console.log("Processed admissions data (isClosed as boolean):", processedAdmissions);
       setData(processedAdmissions);
@@ -121,11 +122,23 @@ export default function AdmissionsPage() {
     const sortableItems = [...filteredData];
     if (sortConfig.key) {
       sortableItems.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
-          return sortConfig.direction === "asc" ? 1 : -1;
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+        
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          if (aValue < bValue) {
+            return sortConfig.direction === "asc" ? -1 : 1;
+          }
+          if (aValue > bValue) {
+            return sortConfig.direction === "asc" ? 1 : -1;
+          }
+        } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+          if (aValue < bValue) {
+            return sortConfig.direction === "asc" ? -1 : 1;
+          }
+          if (aValue > bValue) {
+            return sortConfig.direction === "asc" ? 1 : -1;
+          }
         }
         return 0;
       });
@@ -135,7 +148,7 @@ export default function AdmissionsPage() {
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  const handleSort = (key: keyof AdmissionData): void => {
+  const handleSort = (key: keyof AdmissionSummary): void => {
     let direction: "asc" | "desc" = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
@@ -143,7 +156,7 @@ export default function AdmissionsPage() {
     setSortConfig({ key, direction });
   };
 
-  const getSortIcon = (columnName: keyof AdmissionData): JSX.Element => {
+  const getSortIcon = (columnName: keyof AdmissionSummary): JSX.Element => {
     if (sortConfig.key === columnName) {
       return sortConfig.direction === "asc" ? (
         <ChevronUp className="w-4 h-4 ml-1" />
@@ -204,7 +217,7 @@ export default function AdmissionsPage() {
   const confirmCloseAdmission = async () => {
     setToggleAdmLoading(true);
     try {
-      const admission = data.find((a) => a.admissionYear === selectedYear);
+      const admission = data.find((a) => a.admissionYear == selectedYear);
       if (!admission) return;
 
       const response = await fetch(`/api/admissions/close/${admission.id}`, {
@@ -232,28 +245,29 @@ export default function AdmissionsPage() {
     }
   };
 
-  const handleCreateAdmission = async () => {
+  const handleCreateAdmission = async (courseIds: number[], startDate: string, endDate: string) => {
     try {
       const year = newAdmissionYear;
       if (isNaN(year)) {
         toast.error("Please enter a valid year");
         return;
       }
-
       const response = await fetch("/api/admissions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ year }),
+        body: JSON.stringify({ 
+          year,
+          courseIds,
+          startDate,
+          endDate
+        }),
       });
-
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(data.error || "Failed to create admission");
       }
-
       toast.success("Admission created successfully");
       setIsCreateDialogOpen(false);
       setNewAdmissionYear(new Date().getFullYear());
@@ -261,6 +275,19 @@ export default function AdmissionsPage() {
     } catch (error: any) {
       console.error("Error creating admission:", error);
       toast.error(error.message || "Failed to create admission");
+    }
+  };
+
+  const handleConfigureAdmission = async (admission: AdmissionSummary) => {
+    setSelectedAdmission(admission);
+    // Fetch all courses
+    try {
+      const allCoursesRes = await getCourses();
+      setAllCourses(allCoursesRes.courses);
+      setIsConfigDialogOpen(true);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      toast.error("Failed to fetch courses");
     }
   };
 
@@ -368,18 +395,16 @@ export default function AdmissionsPage() {
                       {item.admissionYear}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                      {item.totalApplications.toLocaleString()}
+                      {item.totalApplications}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                       <div className="flex items-center">
-                        {item.totalPayments.toLocaleString()}
+                        {item.totalPayments}
                         <span className="ml-2 text-xs text-gray-500">
                           (
-                          {Number(item.totalApplications) > 0
+                          {item.totalApplications > 0
                             ? Math.round(
-                                (Number(item.totalPayments) /
-                                  Number(item.totalApplications)) *
-                                  100
+                                (item.totalPayments / item.totalApplications) * 100
                               )
                             : "0"}
                           %)
@@ -388,14 +413,12 @@ export default function AdmissionsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                       <div className="flex items-center">
-                        {item.totalDrafts.toLocaleString()}
+                        {item.totalDrafts}
                         <span className="ml-2 text-xs text-gray-500">
                           (
-                          {Number(item.totalApplications) > 0
+                          {item.totalApplications > 0
                             ? Math.round(
-                                (Number(item.totalDrafts) /
-                                  Number(item.totalApplications)) *
-                                  100
+                                (item.totalDrafts / item.totalApplications) * 100
                               )
                             : "0"}
                           %)
@@ -409,57 +432,13 @@ export default function AdmissionsPage() {
                       >
                         View Details
                       </Button>
-
-                      <Dialog
-                        open={
-                          isDialogOpen && selectedYear === item.admissionYear
-                        }
-                        onOpenChange={setIsDialogOpen}
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleConfigureAdmission(item)}
                       >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant={item.isClosed ? "ghost" : "destructive"}
-                            size="sm"
-                            disabled={
-                              new Date().getFullYear() !== item.admissionYear
-                            }
-                            onClick={() =>
-                              handleCloseAdmission(item.admissionYear)
-                            }
-                          >
-                            {item.isClosed ? "Open" : "Close"}
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-md">
-                          <DialogHeader>
-                            <DialogTitle>
-                              {item.isClosed ? "Open" : "Close"} Admission
-                            </DialogTitle>
-                          </DialogHeader>
-                          <div className="px-4 text-sm text-gray-600">
-                            Are you sure you want to{" "}
-                            <span className="font-bold">
-                              {item.isClosed ? "open" : "close"}
-                            </span> admissions for{" "}
-                            <strong>{item.admissionYear}</strong>?
-                          </div>
-                          <DialogFooter>
-                            <Button
-                              disabled={toggleAdmCloseLoading}
-                              variant={"destructive"}
-                              onClick={confirmCloseAdmission}
-                            >
-                              {toggleAdmCloseLoading ? "Please wait..." : "Confirm"}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => setIsDialogOpen(false)}
-                            >
-                              Cancel
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                        Configure
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -573,6 +552,39 @@ export default function AdmissionsPage() {
           )}
         </div>
       </div>
+
+      {/* Confirmation Dialog for Closing Admission */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Action</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>Are you sure you want to {data.find(a => a.admissionYear === selectedYear)?.isClosed ? 'open' : 'close'} the admission for year {selectedYear}?</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={confirmCloseAdmission}
+              disabled={toggleAdmCloseLoading}
+            >
+              {toggleAdmCloseLoading ? 'Processing...' : 'Confirm'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {selectedAdmission && (
+        <AdmissionConfigureDialog
+          open={isConfigDialogOpen}
+          setOpen={setIsConfigDialogOpen}
+          admissionId={selectedAdmission.id}
+          allCourses={allCourses}
+          refetchData={fetchData}
+        />
+      )}
     </div>
   );
 }

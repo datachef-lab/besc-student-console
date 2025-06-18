@@ -172,6 +172,17 @@ export const ApplicationFormProvider: React.FC<
           return data.applicationForm;
         }
 
+        setApplicationForm({
+          generalInfo: null,
+          academicInfo: null,
+          courseApplication: null,
+          additonalInfo: null,
+          admissionId: admission.id!,
+          admissionStep: "GENERAL_INFORMATION",
+          formStatus: "DRAFT",
+          paymentInfo: null
+        });
+
         return null;
       } catch (error) {
         // console.error("Failed to refresh-load applicationForm:", 
@@ -179,6 +190,16 @@ export const ApplicationFormProvider: React.FC<
         // if (axios.isAxiosError(error) && error.response?.status === 401) {
         //   router.push("/admission-form-login"); // Redirect to login page on 401
         // }
+        setApplicationForm({
+          generalInfo: null,
+          academicInfo: null,
+          courseApplication: null,
+          additonalInfo: null,
+          admissionId: admission.id!,
+          admissionStep: "GENERAL_INFORMATION",
+          formStatus: "DRAFT",
+          paymentInfo: null
+        })
         return null;
       } finally {
         setIsLoading(false);
@@ -186,10 +207,10 @@ export const ApplicationFormProvider: React.FC<
     }, [pathname, router]);
 
   useEffect(() => {
-    if (!applicationForm) {
+    if (!applicationForm && admission) {
       fetchApplicationFormRefresh();
     }
-  }, [applicationForm, pathname, fetchApplicationFormRefresh]);
+  }, [applicationForm, admission, pathname, fetchApplicationFormRefresh]);
 
   const contextValue: ApplicationFormContextType = {
     applicationForm: applicationForm!,

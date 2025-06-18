@@ -309,3 +309,17 @@
 .html {
   overflow: hidden;
 }
+
+/* Very thin custom scrollbar for modal scroll areas */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 3px;
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 4px;
+}
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #bdbdbd transparent;
+}

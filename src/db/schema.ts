@@ -134,6 +134,23 @@ export const admissions = pgTable("admissions", {
 export const createAdmissionSchema = createInsertSchema(admissions);
 export type Admission = z.infer<typeof createAdmissionSchema>;
 
+export const admissionCourses = pgTable("admission_courses", {
+    id: serial().primaryKey().notNull(),
+    admissionId: integer("admission_id_fk")
+        .references(() => admissions.id)
+        .notNull(),
+    courseId: integer("course_id_fk")
+        .references(() => courses.id)
+        .notNull(),
+    disabled: boolean().default(false),
+    isClosed: boolean().default(false),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+    remarks: text("remarks"),
+});
+export const createAdmissionCourseSchema = createInsertSchema(admissionCourses);
+export type AdmissionCourse = z.infer<typeof createAdmissionCourseSchema>;
+
 export const applicationForms = pgTable("application_forms", {
     id: serial().primaryKey().notNull(),
     admissionId: integer("admission_id_fk")
@@ -283,8 +300,8 @@ export const admissionCourseApplication = pgTable("admission_course_applications
     applicationFormId: integer("application_form_id_fk")
         .references(() => applicationForms.id)
         .notNull(),
-    courseId: integer("course_id_fk")
-        .references(() => courses.id)
+    admissionCourseId: integer("admission_course_id_fk")
+        .references(() => admissionCourses.id)
         .notNull(),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
@@ -667,6 +684,7 @@ export const courses = pgTable("courses", {
     codePrefix: varchar("code_prefix", { length: 10 }),
     universityCode: varchar("university_code", { length: 10 }),
     disabled: boolean().default(false),
+    amount: integer("amount"),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });

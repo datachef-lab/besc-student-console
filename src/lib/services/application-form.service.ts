@@ -10,7 +10,7 @@ import { deleteAdmissionCourse, findCourseApplicationByApplicationFormId } from 
 
 export async function createApplicationForm(form: ApplicationForm, generalInfo: AdmissionGeneralInfo) {
     // Check if the form already exists for the given admission year for the given student
-    const existingEntry = await checkExistingEntry(generalInfo);
+    const existingEntry = await checkExistingEntry(form.admissionId, generalInfo);
     if (existingEntry) {
         return { applicationForm: null, message: "Application form already exists for this student. Try login to continue." };
     }

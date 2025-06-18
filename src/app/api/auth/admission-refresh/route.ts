@@ -6,6 +6,7 @@ import { findAccessControlByStudentId } from '@/lib/services/access-control.serv
 import { ApplicationForm } from '@/db/schema';
 import { findApplicationFormById } from '@/lib/services/application-form.service';
 import { findStudentByApplicationId } from '@/lib/services/student.service';
+import { findAdmissionById } from '@/lib/services/admission.service';
 
 export async function GET() {
     try {
@@ -35,6 +36,14 @@ export async function GET() {
         applicationForm = await findApplicationFormById(applicationForm.id!);
 
         if (!applicationForm) {
+            return NextResponse.json(
+                { error: 'application-form not found' },
+                { status: 404 }
+            );
+        }
+
+        const admision = await findAdmissionById(applicationForm.admissionId!);
+        if (!admision || admision.isClosed == true) {
             return NextResponse.json(
                 { error: 'application-form not found' },
                 { status: 404 }

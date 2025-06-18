@@ -1,0 +1,1 @@
+ALTER TABLE "admission_courses" ADD COLUMN "isClosed" boolean DEFAULT false;
