@@ -16,7 +16,7 @@ export function ContinueApplicationModal({ isOpen, onClose }: ContinueApplicatio
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login } = useApplicationForm();
+  const { login, applicationForm } = useApplicationForm();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

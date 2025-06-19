@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
-import { AdmissionCourseApplication, ApplicationForm, Course } from "@/db/schema";
+import { AdmissionCourse, AdmissionCourseApplication, ApplicationForm, Course } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ReactNode } from 'react';
-import { getCourses } from "../../action";
+import { getAdmissionCourses, getCourses } from "../../action";
 import { toast } from "@/components/ui/use-toast";
+import { useApplicationForm } from "@/hooks/use-application-form";
 
 interface CourseApplicationStepProps {
   stepNotes: React.ReactNode;
-  applicationForm: ApplicationFormDto;
   onNext: () => void;
   onPrev: () => void;
+  currentStep: number;
 }
 
 interface CourseWithSelection extends Course {
@@ -21,15 +22,41 @@ interface CourseWithSelection extends Course {
 }
 
 export default function CourseApplicationStep({
-  applicationForm,
-  availableCourses,
   stepNotes,
   onNext,
-  onPrev
+  onPrev,
+  currentStep
 }: CourseApplicationStepProps) {
-  const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
+  const {applicationForm} = useApplicationForm();
+  const [allCourses, setAllCourses] = useState<Course[]>([]);
+  const [admissionCourses, setAdmissionCourses] = useState<AdmissionCourse[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
+  const [selectedCourses, setSelectedCourses] = useState<AdmissionCourseApplication[]>(applicationForm?.courseApplication ?? []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    getCourses()
+      .then(data => {
+        setAllCourses(data);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (applicationForm?.admissionId) {
+      getAdmissionCourses(applicationForm.admissionId)
+        .then(data => {
+          setAdmissionCourses(data);
+        });
+    }
+  }, [allCourses, applicationForm?.admissionId]);
+
+  useEffect(() => {
+    if (allCourses.length > 0 && admissionCourses.length > 0) {
+      const tmpCourses = allCourses.filter(ele => admissionCourses.find(admCourse => admCourse.courseId === ele.id));
+      setAvailableCourses(tmpCourses);
+    }
+  }, [allCourses, admissionCourses]);
 
   const validateForm = () => {
     const errors: { [key: string]: string } = {};
@@ -57,18 +84,19 @@ export default function CourseApplicationStep({
     try {
       const formData = {
         form: {
-          admissionId: applicationForm.admissionId,
-          status: "DRAFT",
-          currentStep: 3,
-          admissionStep: "COURSE_APPLICATION"
+          admissionId: applicationForm!.admissionId,
+          formStatus: applicationForm!.formStatus,
+          ...(selectedCourses.length > 0 && applicationForm && 'currentStep' in applicationForm && 'admissionStep' in applicationForm
+            ? { currentStep: (applicationForm as any).currentStep, admissionStep: (applicationForm as any).admissionStep }
+            : { currentStep: 3, admissionStep: "ADDITIONAL_INFORMATION" })
         },
-        courseApplications: selectedCourses.map(courseId => ({
-          applicationFormId: applicationForm.id,
-          courseId: courseId
+        courseApplications: selectedCourses.map(sc => ({
+          applicationFormId: sc.applicationFormId,
+          admissionCourseId: sc.admissionCourseId
         }))
       };
 
-      const response = await fetch("/api/admissions/application-forms", {
+      const response = await fetch(`/api/admissions/application-forms?id=${applicationForm!.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -81,6 +109,17 @@ export default function CourseApplicationStep({
       if (!response.ok) {
         throw new Error(data.message || "Failed to save form");
       }
+
+      // Insert selected courses
+      await Promise.all(
+        selectedCourses.map(sc =>
+          fetch('/api/admissions/course-info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sc),
+          })
+        )
+      );
 
       toast({
         title: "Success",
@@ -108,10 +147,16 @@ export default function CourseApplicationStep({
     }
   };
 
+  const totalAmount = selectedCourses.reduce((sum, sc) => {
+    const admissionCourse = admissionCourses.find(ac => ac.id === sc.admissionCourseId);
+    const course = allCourses.find(c => c.id === admissionCourse?.courseId);
+    return sum + (course ? Number(course.amount) : 0);
+  }, 0);
+
   return (
     <div className="space-y-6">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold mb-2">{stepHeading || "Step 3 of 5 - Course Application"}</h2>
+        <h2 className="text-lg font-semibold mb-2">Step 3 of 5 - Course Application</h2>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-4 text-left">
           {stepNotes}
         </div>
@@ -119,24 +164,76 @@ export default function CourseApplicationStep({
 
       {/* Course Selection */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Select Your Courses</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {availableCourses?.map((course) => (
-            <div key={course.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={`course-${course.id}`}
-                checked={selectedCourses.includes(course.id)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedCourses([...selectedCourses, course.id]);
-                  } else {
-                    setSelectedCourses(selectedCourses.filter(id => id !== course.id));
-                  }
-                }}
-              />
-              <Label htmlFor={`course-${course.id}`}>{course.name}</Label>
-            </div>
-          ))}
+        {/* <h3 className="text-lg font-semibold">Select Your Courses</h3> */}
+        <div className="overflow-x-auto w-full max-h-[350px] border rounded bg-white">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-gray-100 z-10">
+              <tr>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase w-1/12">Select</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase w-8/12">Course</th>
+                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase w-3/12">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {availableCourses?.map((course) => {
+                const admissionCourse = admissionCourses.find(ac => ac.courseId === course.id);
+                const selected = selectedCourses.find(sc => sc.admissionCourseId === admissionCourse?.id);
+                return (
+                  <tr
+                    key={course.id}
+                    className={`hover:bg-purple-200 transition border-b last:border-b-0 ${selected ? 'bg-purple-200' : ''}`}
+                    onClick={() => {
+                      if (!admissionCourse) return;
+                      if (selected) {
+                        setSelectedCourses(selectedCourses.filter(sc => sc.admissionCourseId !== admissionCourse.id));
+                      } else {
+                        setSelectedCourses([
+                          ...selectedCourses,
+                          { admissionCourseId: admissionCourse.id as number, applicationFormId: applicationForm!.id! }
+                        ]);
+                      }
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td className="px-4 py-2 align-middle text-center">
+                      <Checkbox
+                        id={`course-${course.id}`}
+                        checked={!!selected}
+                        onCheckedChange={(checked) => {
+                          if (!admissionCourse) return;
+                          if (checked) {
+                            setSelectedCourses([
+                              ...selectedCourses,
+                              { id: 0, admissionCourseId: admissionCourse.id as number, applicationFormId: applicationForm!.id! }
+                            ]);
+                          } else {
+                            setSelectedCourses(selectedCourses.filter(sc => sc.admissionCourseId !== admissionCourse.id));
+                          }
+                        }}
+                        onClick={e => e.stopPropagation()}
+                        className="mx-auto"
+                      />
+                    </td>
+                    <td className="px-4 py-2 align-middle whitespace-nowrap truncate max-w-xs">
+                      <span className="block font-medium text-gray-800">{course.name}</span>
+                    </td>
+                    <td className="px-4 py-2 align-middle text-right">
+                      <span className="block font-medium text-gray-800">₹ {course.amount}</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {/* Total Amount below the table */}
+        <div className="mt-4 flex justify-between items-center">
+          <div className="text-lg font-semibold bg-blue-50 border border-blue-200 rounded px-8 py-3 shadow-sm">
+            Total Courses Selected: {selectedCourses.length}
+          </div>
+          <div className="text-lg font-semibold bg-blue-50 border border-blue-200 rounded px-8 py-3 w-[230.25px] shadow-sm">
+            Total Amount: <span className="text-blue-700">₹ {totalAmount.toLocaleString()}</span>
+          </div>
         </div>
       </div>
 
@@ -153,7 +250,7 @@ export default function CourseApplicationStep({
         )}
         <Button
           onClick={handleNext}
-          disabled={isSubmitting}
+          disabled={isSubmitting || selectedCourses.length === 0}
         >
           {isSubmitting ? "Saving..." : "Save & Continue"}
         </Button>

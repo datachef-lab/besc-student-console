@@ -172,18 +172,23 @@ export const ApplicationFormProvider: React.FC<
           return data.applicationForm;
         }
 
-        setApplicationForm({
+        const emptyForm: ApplicationFormDto = {
+          id: 0,
           generalInfo: null,
           academicInfo: null,
           courseApplication: null,
-          additonalInfo: null,
+          additionalInfo: null,
           admissionId: admission.id!,
           admissionStep: "GENERAL_INFORMATION",
           formStatus: "DRAFT",
-          paymentInfo: null
-        });
+          paymentInfo: null,
+          currentStep: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-        return null;
+        setApplicationForm(emptyForm);
+        return emptyForm;
       } catch (error) {
         // console.error("Failed to refresh-load applicationForm:", 
         // error);
@@ -191,15 +196,19 @@ export const ApplicationFormProvider: React.FC<
         //   router.push("/admission-form-login"); // Redirect to login page on 401
         // }
         setApplicationForm({
+          id: 0,
           generalInfo: null,
           academicInfo: null,
           courseApplication: null,
-          additonalInfo: null,
+          additionalInfo: null,
           admissionId: admission.id!,
           admissionStep: "GENERAL_INFORMATION",
           formStatus: "DRAFT",
-          paymentInfo: null
-        })
+          paymentInfo: null,
+          currentStep: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
         return null;
       } finally {
         setIsLoading(false);

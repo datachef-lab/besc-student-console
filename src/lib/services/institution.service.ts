@@ -20,12 +20,6 @@ export async function getInstitutionById(id: number) {
 
 export async function createInstitution(name: string, degreeId: number, addressId?: number, sequence?: number): Promise<InstitutionResult> {
   try {
-    const existingInstitution = await dbPostgres.select().from(institutions).where(ilike(institutions.name, name)).limit(1);
-
-    if (existingInstitution.length > 0) {
-      return { success: false, error: "Institution with this name already exists." };
-    }
-
     const [newInstitution] = await dbPostgres.insert(institutions).values({ name, degreeId, addressId, sequence }).returning();
     return { success: true, message: "Institution created successfully.", data: newInstitution };
   } catch (error) {
@@ -36,12 +30,6 @@ export async function createInstitution(name: string, degreeId: number, addressI
 
 export async function updateInstitution(id: number, name: string, degreeId: number, addressId?: number, sequence?: number): Promise<InstitutionResult> {
   try {
-    const existingInstitution = await dbPostgres.select().from(institutions).where(ilike(institutions.name, name)).limit(1);
-
-    if (existingInstitution.length > 0 && existingInstitution[0].id !== id) {
-      return { success: false, error: "Institution with this name already exists." };
-    }
-
     const [updatedInstitution] = await dbPostgres.update(institutions).set({ name, degreeId, addressId, sequence, updatedAt: new Date().toISOString() }).where(eq(institutions.id, id)).returning();
 
     if (!updatedInstitution) {

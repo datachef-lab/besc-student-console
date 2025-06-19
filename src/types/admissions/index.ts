@@ -13,8 +13,9 @@ export interface ApplicationFormDto extends ApplicationForm {
     generalInfo: AdmissionGeneralInfo | null;
     academicInfo: AdmissionAcademicInfoDto | null;
     courseApplication: AdmissionCourseApplication[] | null;
-    additonalInfo: AdmissionAdditionalInfoDto | null;
+    additionalInfo: AdmissionAdditionalInfoDto | null;
     paymentInfo: Payment | null;
+    currentStep: number;
 }
 
 export interface BoardUniversityDto extends BoardUniversity {

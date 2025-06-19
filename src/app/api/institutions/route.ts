@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, degreeId, addressId, sequence } = body;
 
-    if (!name || !degreeId) {
+    if (!name || degreeId === undefined || degreeId === null) {
       return NextResponse.json(
         { success: false, error: "Name and degreeId are required" },
         { status: 400 }
@@ -78,7 +78,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { name, degreeId, addressId, sequence } = body;
 
-    if (!name || !degreeId) {
+    if (!name || degreeId === undefined || degreeId === null) {
       return NextResponse.json(
         { success: false, error: "Name and degreeId are required" },
         { status: 400 }

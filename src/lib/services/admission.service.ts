@@ -1,5 +1,5 @@
 import {dbPostgres} from "@/db";
-import { Admission, admissions, applicationForms, admissionGeneralInfo, categories, religion, annualIncomes, admissionAdditionalInfo, genderType, admissionFormStatus, admissionCourses } from "@/db/schema";
+import { Admission, admissions, applicationForms, admissionGeneralInfo, categories, religion, annualIncomes, admissionAdditionalInfo, genderType, admissionFormStatus, admissionCourses, courses, boardUniversities, admissionAcademicInfo, admissionCourseApplication } from "@/db/schema";
 import { count, desc, eq, and, sql, ilike, or, SQL } from "drizzle-orm";
 import { createAdmissionCourse, findAdmissionCoursesByAdmissionId } from "./adm-admision-courses.service";
 import { AdmissionDto } from "@/types/admissions";
@@ -315,37 +315,40 @@ export async function getApplicationFormsByAdmissionId(
             id: applicationForms.id,
             formStatus: applicationForms.formStatus,
             admissionStep: applicationForms.admissionStep,
-            submittedAt: applicationForms.createdAt, // Assuming createdAt is submission date
+            submittedAt: applicationForms.createdAt,
             name: sql<string>`${admissionGeneralInfo.firstName} || ' ' || ${admissionGeneralInfo.lastName}`.as('name'),
-            category: categories.name, // Joined from categories table
-            religion: religion.name, // Joined from religion table
-            annualIncome: annualIncomes.range, // Joined from annualIncomes table
+            category: categories.name,
+            religion: sql<string>`(SELECT ${religion.name} FROM ${admissionGeneralInfo} LEFT JOIN ${religion} ON ${admissionGeneralInfo.religionId} = ${religion.id} WHERE ${admissionGeneralInfo.applicationFormId} = ${applicationForms.id} LIMIT 1)`.as('religion'),
+            annualIncome: annualIncomes.range,
             gender: admissionGeneralInfo.gender,
             isGujarati: admissionGeneralInfo.isGujarati,
+            course: sql<string>`(SELECT ${courses.name} FROM ${admissionCourseApplication} LEFT JOIN ${courses} ON ${admissionCourseApplication.admissionCourseId} = ${courses.id} WHERE ${admissionCourseApplication.applicationFormId} = ${applicationForms.id} LIMIT 1)`.as('course'),
+            boardUniversity: sql<string>`(SELECT ${boardUniversities.name} FROM ${admissionAcademicInfo} LEFT JOIN ${boardUniversities} ON ${admissionAcademicInfo.boardUniversityId} = ${boardUniversities.id} WHERE ${admissionAcademicInfo.applicationFormId} = ${applicationForms.id} LIMIT 1)`.as('boardUniversity')
         })
         .from(applicationForms)
         .leftJoin(admissionGeneralInfo, eq(applicationForms.id, admissionGeneralInfo.applicationFormId))
         .leftJoin(categories, eq(admissionGeneralInfo.categoryId, categories.id))
-        .leftJoin(religion, eq(admissionGeneralInfo.religionId, religion.id))
         .leftJoin(admissionAdditionalInfo, eq(applicationForms.id, admissionAdditionalInfo.applicationFormId))
         .leftJoin(annualIncomes, eq(admissionAdditionalInfo.annualIncomeId, annualIncomes.id));
 
-    let conditions: (SQL<unknown> | undefined)[] = [eq(applicationForms.admissionId, admissionId)];
+    let conditions: SQL<unknown>[] = [eq(applicationForms.admissionId, admissionId)];
 
     // Apply filters
     if (filters.category) {
         conditions.push(eq(categories.name, filters.category));
     }
     if (filters.religion) {
-        conditions.push(eq(religion.name, filters.religion));
+        conditions.push(
+            sql`(SELECT ${religion.name} FROM ${admissionGeneralInfo} LEFT JOIN ${religion} ON ${admissionGeneralInfo.religionId} = ${religion.id} WHERE ${admissionGeneralInfo.applicationFormId} = ${applicationForms.id} LIMIT 1) = ${filters.religion}`
+        );
     }
     if (filters.annualIncome) {
         conditions.push(eq(annualIncomes.range, filters.annualIncome));
     }
-    if (filters.gender) {
+    if (typeof filters.gender !== 'undefined') {
         conditions.push(eq(admissionGeneralInfo.gender, filters.gender as typeof genderType.enumValues[number]));
     }
-    if (filters.isGujarati !== undefined) {
+    if (typeof filters.isGujarati === 'boolean') {
         conditions.push(eq(admissionGeneralInfo.isGujarati, filters.isGujarati));
     }
     if (filters.formStatus) {
@@ -353,40 +356,43 @@ export async function getApplicationFormsByAdmissionId(
     }
 
     // Apply search
-    if (filters.search) {
+    if (filters.search && filters.search.trim() !== '') {
         const searchTerm = `%${filters.search.toLowerCase()}%`;
-        conditions.push(or(
+        const searchConditions = [
             ilike(admissionGeneralInfo.firstName, searchTerm),
             ilike(admissionGeneralInfo.lastName, searchTerm),
-            ilike(sql`${applicationForms.id}::text`, searchTerm)
-        ));
+            ilike(sql`${applicationForms.id}::text`, searchTerm),
+        ].filter((cond): cond is SQL<unknown> => cond !== undefined);
+
+        if (searchConditions.length > 0) {
+            conditions.push(or(...searchConditions) as SQL<unknown>);
+        }
     }
 
-    // Explicitly filter out undefined/null conditions before passing to `and`
-    const finalConditions = conditions.filter((c): c is SQL<unknown> => c !== undefined && c !== null);
+    // Main query with conditions
+    let query = baseQuery.where(and(...conditions));
 
-    // Apply all conditions to the main query
-    let query = baseQuery.where(and(...finalConditions));
-
-    // Apply all conditions to the total count query
+    // Count query with same conditions
     let totalCountQuery = dbPostgres
         .select({ count: count() })
         .from(applicationForms)
         .leftJoin(admissionGeneralInfo, eq(applicationForms.id, admissionGeneralInfo.applicationFormId))
         .leftJoin(categories, eq(admissionGeneralInfo.categoryId, categories.id))
-        .leftJoin(religion, eq(admissionGeneralInfo.religionId, religion.id))
         .leftJoin(admissionAdditionalInfo, eq(applicationForms.id, admissionAdditionalInfo.applicationFormId))
-        .leftJoin(annualIncomes, eq(admissionAdditionalInfo.annualIncomeId, annualIncomes.id));
-
-    totalCountQuery.where(and(...finalConditions));
+        .leftJoin(annualIncomes, eq(admissionAdditionalInfo.annualIncomeId, annualIncomes.id))
+        .where(and(...conditions));
 
     const [totalCountResult] = await totalCountQuery;
     const totalItems = totalCountResult ? totalCountResult.count : 0;
 
-    const applicationFormsList = await query.limit(size).offset(offset).orderBy(desc(applicationForms.createdAt));
+    const applicationFormsList = await query
+        .limit(size)
+        .offset(offset)
+        .orderBy(desc(applicationForms.createdAt));
 
     return {
-        applicationForms: applicationFormsList,
+        applications: applicationFormsList,
         totalItems,
     };
 }
+

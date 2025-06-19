@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/
 import SubjectMarksModal from "./SubjectMarksModal";
 import InstituteDetailsModal from "./InstituteDetailsModal";
 import { AcademicSubjects, ApplicationForm, boardResultStatusType, BoardUniversity, Colleges, Institution, LanguageMedium, StudentAcademicSubjects, Course } from "@/db/schema";
-import { AdmissionAcademicInfoDto, BoardUniversityDto } from "@/types/admissions";
+import { AdmissionAcademicInfoDto, ApplicationFormDto, BoardUniversityDto } from "@/types/admissions";
 import { useParams } from "next/navigation";
 import { getCourses } from "../../action";
 import { toast } from "@/components/ui/use-toast";
@@ -28,6 +28,7 @@ interface AcademicInfoStepProps {
   setAcademicInfo: React.Dispatch<React.SetStateAction<AdmissionAcademicInfoDto>>;
   onNext: () => void;
   onPrev: () => void;
+  currentStep: number;
 }
 
 interface SubjectMark {
@@ -61,7 +62,8 @@ export default function AcademicInfoStep({
   academicInfo, 
   setAcademicInfo,
   onNext,
-  onPrev 
+  onPrev,
+  currentStep
 }: AcademicInfoStepProps) {
   const params = useParams();
   const admissionYear = parseInt(params.year as string);
@@ -75,6 +77,7 @@ export default function AcademicInfoStep({
   const [colleges, setColleges] = useState<Colleges[]>([]);
   const [academicSubjects, setAcademicSubjects] = useState<AcademicSubject[]>([]); // New state for academic subjects
   const [courses, setCourses] = useState<Course[]>([]); // New state for courses
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
 
   console.log('academicSubjects in AcademicInfoStep:', academicSubjects);
 
@@ -84,15 +87,19 @@ export default function AcademicInfoStep({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         // Fetch board universities
         const boardUniversitiesResponse = await fetch('/api/board-universities');
         if (boardUniversitiesResponse.ok) {
           const data = await boardUniversitiesResponse.json();
           setBoardUniversities(data);
+        } else {
+          console.error('Failed to fetch board universities:', boardUniversitiesResponse.status);
         }
 
         // Fetch language mediums
@@ -100,6 +107,17 @@ export default function AcademicInfoStep({
         if (languageMediumsResponse.ok) {
           const {data} = await languageMediumsResponse.json();
           setLanguageMediums(data);
+        } else {
+          console.error('Failed to fetch language mediums:', languageMediumsResponse.status);
+        }
+
+        // Fetch institutions
+        const institutionsResponse = await fetch('/api/institutions');
+        if (institutionsResponse.ok) {
+          const {data} = await institutionsResponse.json();
+          setInstitutions(data);
+        } else {
+          console.error('Failed to fetch language mediums:', languageMediumsResponse.status);
         }
 
         // Fetch colleges
@@ -107,14 +125,17 @@ export default function AcademicInfoStep({
         if (collegesResponse.ok) {
           const data = await collegesResponse.json();
           setColleges(data.colleges);
+        } else {
+          console.error('Failed to fetch colleges:', collegesResponse.status);
         }
 
         // Fetch courses
+        try {
         const coursesResponse = await getCourses();
-        // const data = await coursesResponse.json();
-        // console.log("courses:", data);
         setCourses(coursesResponse);
-
+        } catch (error) {
+          console.error('Failed to fetch courses:', error);
+        }
 
         // Fetch academic subjects
         const academicSubjectsResponse = await fetch('/api/academic-subjects');
@@ -131,13 +152,66 @@ export default function AcademicInfoStep({
           setAcademicSubjects([]);
         }
 
+        // Load existing academic info if available
+        if (applicationForm.id) {
+          try {
+            const existingAcademicInfoResponse = await fetch(`/api/admissions/academic-info?applicationFormId=${applicationForm.id}`);
+            if (existingAcademicInfoResponse.ok) {
+              const existingData = await existingAcademicInfoResponse.json();
+              if (existingData) {
+                setAcademicInfo(prev => ({
+                  ...prev,
+                  ...existingData
+                }));
+                
+                // If there are institute details, populate the enteredInstituteDetails state
+                if (existingData.rollNumber || existingData.instituteId) {
+                  const institute = colleges.find(c => c.id === existingData.instituteId);
+                  const medium = languageMediums.find(m => m.id === existingData.languageMediumId);
+                  const previousCollege = colleges.find(c => c.id === existingData.previousCollegeId);
+                  
+                  setEnteredInstituteDetails({
+                    rollNo: existingData.rollNumber || '',
+                    schoolNo: existingData.schoolNumber || '',
+                    centerNo: existingData.centerNumber || '',
+                    admitCardId: existingData.admitCardId || '',
+                    institute: institute?.name || '',
+                    otherInstitute: existingData.otherInstitute || '',
+                    medium: medium?.name || '',
+                    yearOfPassing: existingData.yearOfPassing?.toString() || '',
+                    stream: existingData.streamType || '',
+                    calcuttaUniversityRegistered: existingData.isRegisteredForUGInCU ? 'Yes' : 'No',
+                    calcuttaUniversityRegistrationNo: existingData.cuRegistrationNumber || '',
+                    previouslyRegisteredCourse: '',
+                    otherCourse: existingData.otherPreviouslyRegisteredCourse || '',
+                    previousCollege: previousCollege?.name || '',
+                    otherCollege: existingData.otherCollege || ''
+                  });
+                }
+              }
+            } else {
+              console.error('Failed to fetch existing academic info:', existingAcademicInfoResponse.status);
+            }
+          } catch (error) {
+            console.error('Error fetching existing academic info:', error);
+          }
+        }
+
       } catch (error) {
         console.error('Error fetching data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load form data. Please refresh the page.",
+          variant: "destructive",
+          onClose: () => {},
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
     void fetchData();
-  }, []);
+  }, [applicationForm.id]);
 
   // Helper to find subject name by ID
   const getSubjectName = (id: number) => {
@@ -206,7 +280,10 @@ export default function AcademicInfoStep({
     // Update academicInfo with institute details
     setAcademicInfo(prev => ({
       ...prev,
-      indexNumber: details.rollNo,
+      rollNumber: details.rollNo,
+      schoolNumber: details.schoolNo,
+      centerNumber: details.centerNo,
+      admitCardId: details.admitCardId,
       instituteId: (colleges || []).find(i => i.name === details.institute)?.id ?? 0,
       otherInstitute: details.institute === 'Other Institute' ? details.otherInstitute : null,
       languageMediumId: languageMediums.find(m => m.name === details.medium)?.id ?? 0,
@@ -245,9 +322,69 @@ export default function AcademicInfoStep({
     if (academicInfo.isRegisteredForUGInCU && !academicInfo.cuRegistrationNumber) {
       errors.cuRegistrationNumber = "CU registration number is required";
     }
+    
+    // Validate subjects
+    if (academicInfo.subjects.length === 0) {
+      errors.subjects = "At least one subject is required";
+    } else {
+      for (let i = 0; i < academicInfo.subjects.length; i++) {
+        const subject = academicInfo.subjects[i];
+        if (!subject.academicSubjectId || subject.academicSubjectId === 0) {
+          errors[`subject_${i}`] = `Subject ${i + 1} is required`;
+        }
+        if (!subject.fullMarks || subject.fullMarks === '0') {
+          errors[`fullMarks_${i}`] = `Total marks for subject ${i + 1} is required`;
+        }
+        if (!subject.totalMarks || subject.totalMarks === '0') {
+          errors[`totalMarks_${i}`] = `Marks obtained for subject ${i + 1} is required`;
+        }
+      }
+    }
+
+    // Validate institute details
+    if (!academicInfo.rollNumber) {
+      errors.rollNumber = "Roll number is required";
+    }
+    if (!academicInfo.schoolNumber) {
+      errors.schoolNumber = "School number is required";
+    }
+    if (!academicInfo.centerNumber) {
+      errors.centerNumber = "Center number is required";
+    }
+    if (!academicInfo.admitCardId) {
+      errors.admitCardId = "Admit card ID is required";
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  // Helper to check if all subject rows are valid
+  const areSubjectsValid = (subjects: StudentAcademicSubjects[]) => {
+    if (!subjects || subjects.length === 0) return false;
+    const seenSubjects = new Set();
+    for (const subject of subjects) {
+      if (!subject.academicSubjectId || subject.academicSubjectId === 0) return false;
+      if (!subject.fullMarks || subject.fullMarks === '' || subject.fullMarks === '0') return false;
+      if (!subject.totalMarks || subject.totalMarks === '' || subject.totalMarks === '0') return false;
+      if (seenSubjects.has(subject.academicSubjectId)) return false;
+      seenSubjects.add(subject.academicSubjectId);
+    }
+    return true;
+  };
+
+  // Helper to check if all required institute details are filled
+  const areInstituteDetailsValid = (info: AdmissionAcademicInfoDto) => {
+    return (
+      !!info.rollNumber &&
+      !!info.schoolNumber &&
+      !!info.centerNumber &&
+      !!info.admitCardId &&
+      !!info.instituteId &&
+      !!info.languageMediumId &&
+      !!info.yearOfPassing &&
+      !!info.streamType
+    );
   };
 
   const handleNext = async () => {
@@ -263,17 +400,96 @@ export default function AcademicInfoStep({
 
     setIsSubmitting(true);
     try {
+      // First, save the academic info
+      const { createdAt, updatedAt, ...academicInfoData } = {
+        ...academicInfo,
+        applicationFormId: applicationForm.id
+      };
+
+      let academicInfoResponse;
+      if (academicInfo.id && academicInfo.id !== 0) {
+        // Update existing academic info
+        academicInfoResponse = await fetch(`/api/admissions/academic-info?id=${academicInfo.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(academicInfoData),
+        });
+      } else {
+        // Create new academic info
+        academicInfoResponse = await fetch("/api/admissions/academic-info", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(academicInfoData),
+        });
+      }
+
+      if (!academicInfoResponse.ok) {
+        const errorData = await academicInfoResponse.json();
+        throw new Error(errorData.message || "Failed to save academic info");
+      }
+
+      const savedAcademicInfo = await academicInfoResponse.json();
+
+      // Update the academic info with the saved data (including the ID)
+      setAcademicInfo(prev => ({
+        ...prev,
+        id: savedAcademicInfo.id,
+        subjects: savedAcademicInfo.subjects || prev.subjects
+      }));
+
+      // Save subjects if they exist
+      if (academicInfo.subjects.length > 0) {
+        for (const subject of academicInfo.subjects) {
+          const subjectData = {
+            ...subject,
+            admissionAcademicInfoId: savedAcademicInfo.id,
+            applicationFormId: applicationForm.id
+          };
+          delete subjectData.createdAt;
+          delete subjectData.updatedAt;
+
+          let subjectResponse;
+          if (subject.id) {
+            // Update existing subject
+            subjectResponse = await fetch(`/api/admissions/academic-info/subjects?id=${subject.id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(subjectData),
+            });
+          } else {
+            // Create new subject
+            subjectResponse = await fetch("/api/admissions/academic-info/subjects", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(subjectData),
+            });
+          }
+
+          if (!subjectResponse.ok) {
+            const errorData = await subjectResponse.json();
+            throw new Error(errorData.message || "Failed to save subject");
+          }
+        }
+      }
+
+      // Update the application form
       const formData = {
         form: {
           admissionId: applicationForm.admissionId,
-          status: "DRAFT",
-          currentStep: 2,
-          admissionStep: "ACADEMIC_INFORMATION"
-        },
-        academicInfo: academicInfo
-      };
+          admissionStep: academicInfo.id == 0 ? "COURSE_APPLICATION" : applicationForm.admissionStep,
+          formStatus: applicationForm.formStatus
+        }
+      } as { form: ApplicationForm};
 
-      const response = await fetch("/api/admissions/application-forms", {
+      const formResponse = await fetch(`/api/admissions/application-forms?id=${applicationForm.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -281,24 +497,23 @@ export default function AcademicInfoStep({
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to save form");
+      if (!formResponse.ok) {
+        const errorData = await formResponse.json();
+        throw new Error(errorData.message || "Failed to update form");
       }
 
       toast({
         title: "Success",
-        description: "Form saved successfully",
+        description: "Academic information saved successfully",
         onClose: () => {},
       });
 
       onNext();
     } catch (error) {
-      console.error("Error saving form:", error);
+      console.error("Error saving academic info:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save form",
+        description: error instanceof Error ? error.message : "Failed to save academic information",
         variant: "destructive",
         onClose: () => {},
       });
@@ -313,8 +528,116 @@ export default function AcademicInfoStep({
     }
   };
 
+  const handleSaveDraft = async () => {
+    setIsSubmitting(true);
+    try {
+      // Save academic info without validation
+      const { createdAt: createdAtDraft, updatedAt: updatedAtDraft, ...academicInfoDataDraft } = {
+        ...academicInfo,
+        applicationFormId: applicationForm.id
+      };
+
+      let academicInfoResponse;
+      if (academicInfo.id && academicInfo.id !== 0) {
+        academicInfoResponse = await fetch(`/api/admissions/academic-info?id=${academicInfo.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(academicInfoDataDraft),
+        });
+      } else {
+        academicInfoResponse = await fetch("/api/admissions/academic-info", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(academicInfoDataDraft),
+        });
+      }
+
+      if (!academicInfoResponse.ok) {
+        const errorData = await academicInfoResponse.json();
+        throw new Error(errorData.message || "Failed to save academic info");
+      }
+
+      const savedAcademicInfo = await academicInfoResponse.json();
+
+      // Update the academic info with the saved data
+      setAcademicInfo(prev => ({
+        ...prev,
+        id: savedAcademicInfo.id,
+        subjects: savedAcademicInfo.subjects || prev.subjects
+      }));
+
+      // Save subjects if they exist
+      if (academicInfo.subjects.length > 0) {
+        for (const subject of academicInfo.subjects) {
+          const subjectData = {
+            ...subject,
+            admissionAcademicInfoId: savedAcademicInfo.id,
+            applicationFormId: applicationForm.id
+          };
+          delete subjectData.createdAt;
+          delete subjectData.updatedAt;
+
+          let subjectResponse;
+          if (subject.id) {
+            subjectResponse = await fetch(`/api/admissions/academic-info/subjects?id=${subject.id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(subjectData),
+            });
+          } else {
+            subjectResponse = await fetch("/api/admissions/academic-info/subjects", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(subjectData),
+            });
+          }
+
+          if (!subjectResponse.ok) {
+            const errorData = await subjectResponse.json();
+            throw new Error(errorData.message || "Failed to save subject");
+          }
+        }
+      }
+
+      toast({
+        title: "Draft Saved",
+        description: "Your progress has been saved as a draft",
+        onClose: () => {},
+      });
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save draft",
+        variant: "destructive",
+        onClose: () => {},
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {isLoading && (
+        <div className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading form data...</p>
+          </div>
+        </div>
+      )}
+      
+      {!isLoading && (
+        <>
       <div className="mb-4">
         <h2 className="text-base sm:text-lg font-semibold mb-2">Step 2 of 5 - Academic Details (Sr. No. 14 to 17)</h2>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-3 sm:p-4 text-left text-sm">
@@ -430,13 +753,13 @@ export default function AcademicInfoStep({
             <DialogContent className="sm:max-w-screen-lg max-h-[95vh] p-4 sm:p-6">
               <DialogTitle>Institute Details</DialogTitle>
               <InstituteDetailsModal 
+              institutions={institutions}
                 colleges={colleges}
                 languageMediums={languageMediums}
                 onChange={handleAcademicInfoChange} 
                 onClose={handleCloseInstituteDetails} 
                 academicInfo={academicInfo}
                 registeredCourses={courses}
-                
               />
             </DialogContent>
           </Dialog>
@@ -487,7 +810,13 @@ export default function AcademicInfoStep({
         )}
         <Button
           onClick={handleNext}
-          disabled={isSubmitting}
+              disabled={
+                isSubmitting ||
+                Object.keys(formErrors).length > 0 ||
+                academicInfo.boardResultStatus !== "PASS" ||
+                !areSubjectsValid(academicInfo.subjects) ||
+                !areInstituteDetailsValid(academicInfo)
+              }
         >
           {isSubmitting ? "Saving..." : "Save & Continue"}
         </Button>
@@ -503,6 +832,8 @@ export default function AcademicInfoStep({
             ))}
           </ul>
         </div>
+          )}
+        </>
       )}
     </div>
   );

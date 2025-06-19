@@ -1,8 +1,10 @@
 import {dbPostgres} from "@/db";
 import { admissionAdditionalInfo, AdmissionAdditionalInfo } from "@/db/schema";
+import { AdmissionAdditionalInfoDto } from "@/types/admissions";
 import { and, eq } from "drizzle-orm";
+import { createSportsInfo } from "./adm-sports-info.service";
 
-export async function createAdmissionAdditionalInfo(givenAdditionalInfo: AdmissionAdditionalInfo) {
+export async function createAdmissionAdditionalInfo(givenAdditionalInfo: AdmissionAdditionalInfoDto) {
     // Check if the additional info already exists for the application form
     const [existingEntry] = await dbPostgres
         .select()
@@ -11,17 +13,30 @@ export async function createAdmissionAdditionalInfo(givenAdditionalInfo: Admissi
             and(
                 eq(admissionAdditionalInfo.applicationFormId, givenAdditionalInfo.applicationFormId),
             )
-        )
+        );
 
     if (existingEntry) {
         return { additionalInfo: existingEntry, message: "Additional info already exists for this application." };
     }
 
+    // Extract sports info before inserting
+    const { sportsInfo, ...additionalInfoData } = givenAdditionalInfo;
+
     // Insert new additional info
     const [newAdditionalInfo] = await dbPostgres
         .insert(admissionAdditionalInfo)
-        .values(givenAdditionalInfo)
+        .values(additionalInfoData)
         .returning();
+
+    // Create sports info entries if any
+    if (sportsInfo && sportsInfo.length > 0) {
+        for (const sportInfo of sportsInfo) {
+            await createSportsInfo({
+                ...sportInfo,
+                additionalInfoId: newAdditionalInfo.id!,
+            });
+        }
+    }
 
     return {
         additionalInfo: newAdditionalInfo,

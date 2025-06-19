@@ -134,6 +134,21 @@ export function CourseDialog({ mode, course, children }: CourseDialogProps) {
                 required
               />
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="amount" className="text-right">
+                Amount
+              </Label>
+              <Input
+                id="amount"
+                name="amount"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={course?.amount ?? ""}
+                className="col-span-3"
+                required
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending}>

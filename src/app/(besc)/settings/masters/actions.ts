@@ -11,6 +11,7 @@ export async function handleCourseSubmit(formData: FormData) {
     shortName: formData.get('shortName') as string,
     codePrefix: formData.get('codePrefix') as string,
     universityCode: formData.get('universityCode') as string,
+    amount: formData.get('amount') ? Number(formData.get('amount')) : 0,
   };
 
   try {
@@ -45,6 +46,9 @@ export async function uploadCoursesFromFile(formData: FormData) {
     const coursesData = XLSX.utils.sheet_to_json(worksheet);
 
     for (const course of coursesData) {
+      if (course.amount !== undefined) {
+        course.amount = Number(course.amount);
+      }
       await createCourseService(course as any);
     }
 

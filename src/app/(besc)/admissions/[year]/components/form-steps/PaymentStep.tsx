@@ -13,6 +13,7 @@ interface PaymentStepProps {
   onPaymentInfoChange: (paymentInfo: any) => void;
   onNext: () => void;
   onPrev: () => void;
+  currentStep: number;
 }
 
 let paymentMethods = paymentMode.enumValues
@@ -22,13 +23,14 @@ export default function PaymentStep({
   stepNotes,
   onPaymentInfoChange,
   onNext,
-  onPrev
+  onPrev,
+  currentStep
 }: PaymentStepProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [paymentInfo, setPaymentInfo] = useState({
-    paymentMode: "ONLINE" as paymentMode,
+    paymentMode: "ONLINE" as typeof paymentMode.enumValues[number],
     transactionId: "",
     transactionDate: new Date().toISOString().split("T")[0],
     amount: 500,
@@ -61,6 +63,7 @@ export default function PaymentStep({
       toast({
         title: "Success",
         description: "Payment information saved successfully.",
+        onClose: () => {}
       });
 
       // Navigate to next step
@@ -71,6 +74,7 @@ export default function PaymentStep({
         title: "Error",
         description: "Failed to save payment information. Please try again.",
         variant: "destructive",
+        onClose: () => {}
       });
     } finally {
       setIsLoading(false);
@@ -86,7 +90,7 @@ export default function PaymentStep({
   return (
     <div className="space-y-6">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold mb-2">{stepHeading || "Step 5 of 5 - Payment"}</h2>
+        <h2 className="text-lg font-semibold mb-2">Step 5 of 5 - Payment</h2>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-4 text-left">
           {stepNotes}
         </div>
@@ -98,7 +102,7 @@ export default function PaymentStep({
           <Label className="flex items-center mb-1">Payment Method <span className="text-red-600">*</span></Label>
           <Select
             value={paymentInfo.paymentMode}
-            onValueChange={(value) => setPaymentInfo({ ...paymentInfo, paymentMode: value as paymentMode })}
+            onValueChange={(value) => setPaymentInfo({ ...paymentInfo, paymentMode: value as typeof paymentMode.enumValues[number] })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select payment method" />

@@ -101,7 +101,8 @@ export async function PUT(req: NextRequest) {
         }
 
         const body = await req.json();
-        const updatedForm = await updateApplicationForm(parseInt(id), body);
+        console.log("in application form update api:", body);
+        const updatedForm = await updateApplicationForm(parseInt(id), body.form);
 
         if (!updatedForm) {
             return NextResponse.json(

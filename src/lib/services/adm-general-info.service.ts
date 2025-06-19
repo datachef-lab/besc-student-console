@@ -86,12 +86,12 @@ export async function findGeneralInfoByApplicationFormId(applicationFormId: numb
     return generalInfo;
 }
 
-export async function updateGeneralInfo(generalInfo: AdmissionGeneralInfo) {
+export async function updateGeneralInfo(generalInfo: Omit<AdmissionGeneralInfo, "password">) {
     const foundGeneralInfo = await findGeneralInfoById(generalInfo.id!);
     if (!foundGeneralInfo) {
         return null;
-
     }
+
     const [updatedGeneralInfo] = await dbPostgres
         .update(admissionGeneralInfo)
         .set(generalInfo)
@@ -108,12 +108,7 @@ export async function checkExistingEntry(admissionId: number, generalInfo: Admis
         .innerJoin(applicationForms, eq(admissionGeneralInfo.applicationFormId, applicationForms.id))
         .where(
             and(
-                ilike(admissionGeneralInfo.firstName, generalInfo.firstName.trim()),
-                ilike(admissionGeneralInfo.middleName, (generalInfo.middleName ?? "").trim()),
-                ilike(admissionGeneralInfo.lastName, generalInfo!.lastName!.trim()),
-                eq(admissionGeneralInfo.dateOfBirth, generalInfo.dateOfBirth!),
                 eq(admissionGeneralInfo.mobileNumber, generalInfo.mobileNumber!),
-                eq(admissionGeneralInfo.gender, generalInfo.gender!),
                 eq(applicationForms.admissionId, admissionId)
             )
         );

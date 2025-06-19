@@ -76,10 +76,17 @@ export async function PUT(req: NextRequest) {
         }
 
         const body = await req.json();
+        console.log("in academic-info, update, body:", body);
+        console.log({
+            ...body,
+            id: parseInt(id)
+        })
         const updatedAcademicInfo = await updateAcademicInfo({
             ...body,
             id: parseInt(id)
         } as AdmissionAcademicInfoDto);
+
+
 
         if (!updatedAcademicInfo) {
             return NextResponse.json(

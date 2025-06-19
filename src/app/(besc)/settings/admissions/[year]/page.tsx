@@ -1,16 +1,13 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Search,
   Users,
   CheckCircle,
-  DollarSign,
   FileText,
   XCircle,
-  Clock,
   CreditCard,
-  Wallet,
   ChevronLeft,
   ChevronRight,
   Trash2,
@@ -27,15 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationPrevious,
-  PaginationLink,
-  PaginationNext,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -59,17 +47,7 @@ import {
 } from "@/components/ui/select";
 import AdmissionForm from "@/components/admissions/AdmissionForm";
 import { ApplicationFormProvider } from "@/providers/adm-application-form-provider";
-import Image from "next/image";
-
-interface AdmissionDetails {
-  id: number;
-  year: number;
-  isClosed: boolean;
-  isArchived: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  remarks: string | null;
-}
+import { AdmissionDto } from "@/types/admissions";
 
 interface ApplicationFormStats {
   totalApplications: number;
@@ -81,31 +59,12 @@ interface ApplicationFormStats {
   paymentDue: number;
 }
 
-interface ApplicationForm {
-  id: number;
-  formStatus: string;
-  admissionStep: string;
-  submittedAt: string;
-  name: string;
-  category: string;
-  religion: string;
-  annualIncome: string;
-  gender: "MALE" | "FEMALE" | "TRANSGENDER";
-  isGujarati: boolean;
-  course: string;
-  boardUniversity: string;
-}
-
-interface PageParams {
-  year: string;
-}
-
 export default function AdmissionDetailsPage() {
   const params = useParams();
   const year = params.year as string;
-  const [admission, setAdmission] = useState<AdmissionDetails | null>(null);
+  const [admission, setAdmission] = useState<AdmissionDto | null>(null);
   const [stats, setStats] = useState<ApplicationFormStats | null>(null);
-  const [applications, setApplications] = useState<ApplicationForm[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -153,7 +112,6 @@ export default function AdmissionDetailsPage() {
       if (!response.ok) {
         throw new Error(result.error || "Failed to fetch admission details");
       }
-
       setAdmission(result.admission);
       setStats(result.stats);
       setApplications(result.applications);
@@ -334,7 +292,6 @@ export default function AdmissionDetailsPage() {
               </DialogTrigger>
               <DialogContent className="w-screen h-screen max-w-none p-0">
                 <div className="flex flex-col h-full">
-                  
                   <div className="flex-1 overflow-auto">
                     {isLoading ? (
                       <div className="flex items-center justify-center h-full">
@@ -610,7 +567,7 @@ export default function AdmissionDetailsPage() {
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                       </TableCell>
-                      <TableCell className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                         {app.id}
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
@@ -630,28 +587,28 @@ export default function AdmissionDetailsPage() {
                         </span>
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {new Date(app.submittedAt).toLocaleDateString()}
+                        {app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : "-"}
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {app.category}
+                        {app.category || "-"}
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {app.religion}
+                        {app.religion || "-"}
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {app.annualIncome}
+                        {app.annualIncome || "-"}
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {app.gender}
+                        {app.gender || "-"}
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                         {app.isGujarati ? "Yes" : "No"}
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {app.course}
+                        {app.course || "-"}
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {app.boardUniversity}
+                        {app.boardUniversity || "-"}
                       </TableCell>
                     </TableRow>
                   ))

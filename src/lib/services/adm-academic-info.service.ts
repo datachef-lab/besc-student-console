@@ -1,11 +1,11 @@
 import {dbPostgres} from "@/db";
 import { AdmissionAcademicInfo, admissionAcademicInfo } from "@/db/schema";
 import { AdmissionAcademicInfoDto } from "@/types/admissions";
-import { and, eq, ilike } from "drizzle-orm";
+import { and, eq, ilike, isNull } from "drizzle-orm";
 import { createSubject, deleteSubject, findSubjectsByAcademicInfoId } from "./adm-student-subject.service";
 
 export async function createAcademicInfo(givenDto: AdmissionAcademicInfoDto) {
-    const { subjects, ...base } = givenDto;
+    const { subjects, createdAt, updatedAt, ...base } = givenDto;
 
     let existingEntry = await checkExistingEntry(givenDto);
     if (!existingEntry) { // Create a new academic info entry
@@ -19,7 +19,8 @@ export async function createAcademicInfo(givenDto: AdmissionAcademicInfoDto) {
     // Add the subjects to the academic info entry
     for (const subject of subjects) {
         subject.admissionAcademicInfoId = existingEntry.id;
-        await createSubject(subject);
+        const { createdAt, updatedAt, ...subjectBase } = subject;
+        await createSubject(subjectBase);
     }
 
     const dto = await formatAcademicInfo(existingEntry);
@@ -53,22 +54,31 @@ export async function findAcademicInfoByApplicationFormId(applicationFormId: num
     return dto;
 }
 
-export async function updateAcademicInfo(givenDto: AdmissionAcademicInfoDto) {
+export async function updateAcademicInfo(givenDto: Omit<AdmissionAcademicInfoDto, "createdAt" | "updatedAt">) {
     const foundAcademicInfo = await findAcademicInfoById(givenDto.id!);
     if (!foundAcademicInfo) {
         return null;
     }
-    const { subjects, ...base } = givenDto;
+    const { subjects, id, ...base } = givenDto
+    
     const [updatedAcademicInfo] = await dbPostgres
         .update(admissionAcademicInfo)
         .set(base)
         .where(eq(admissionAcademicInfo.id, givenDto.id!))
         .returning();
-    // Update the subjects for the academic info entry
+    
+    // Delete existing subjects and create new ones
+    for (const subject of foundAcademicInfo.subjects) {
+        await deleteSubject(subject.id!);
+    }
+    
+    // Create new subjects
     for (const subject of subjects) {
         subject.admissionAcademicInfoId = updatedAcademicInfo.id;
-        await createSubject(subject);
+        const { createdAt, updatedAt, ...subjectBase } = subject;
+        await createSubject(subjectBase);
     }
+    
     const dto = await formatAcademicInfo(updatedAcademicInfo);
     return dto;
 }
@@ -101,19 +111,34 @@ export async function formatAcademicInfo(academicInfo: AdmissionAcademicInfo): P
 }
 
 export async function checkExistingEntry(givenDto: AdmissionAcademicInfoDto) {
+    const whereCondtions = [
+        eq(admissionAcademicInfo.applicationFormId, givenDto.applicationFormId),
+        eq(admissionAcademicInfo.boardUniversityId, givenDto.boardUniversityId),
+        eq(admissionAcademicInfo.boardResultStatus, givenDto.boardResultStatus),
+    ];
+
+    if (typeof givenDto.cuRegistrationNumber === 'string' && givenDto.cuRegistrationNumber.trim() !== '') {
+        whereCondtions.push(
+            ilike(
+                admissionAcademicInfo.cuRegistrationNumber,
+                givenDto.cuRegistrationNumber.trim()
+            )
+        );
+    }
+
+    // if (typeof givenDto.streamType === 'string' && givenDto.streamType.trim() !== '') {
+    //     whereCondtions.push(
+    //         ilike(
+    //             admissionAcademicInfo.streamType,
+    //             givenDto.streamType.trim()
+    //         )
+    //     );
+    // }
+
     const [existingEntry] = await dbPostgres
         .select()
         .from(admissionAcademicInfo)
-        .where(
-            and(
-                eq(admissionAcademicInfo.applicationFormId, givenDto.applicationFormId),
-                eq(admissionAcademicInfo.boardUniversityId, givenDto.boardUniversityId),
-                eq(admissionAcademicInfo.boardResultStatus, givenDto.boardResultStatus),
-                ilike(admissionAcademicInfo.cuRegistrationNumber, givenDto.cuRegistrationNumber!.trim()),
-
-                ilike(admissionAcademicInfo.streamType, givenDto.streamType!.trim()),
-            )
-        );
+        .where(and(...whereCondtions));
 
     return existingEntry;
 }

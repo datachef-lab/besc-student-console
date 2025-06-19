@@ -295,10 +295,7 @@
 
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { ContinueApplicationModal } from "@/components/admissions/ContinueApplicationModal";
+import { AlertCircle } from "lucide-react";
 import AdmissionForm from "@/components/admissions/AdmissionForm";
 import { Admission } from "@/db/schema";
 import { ApplicationFormProvider } from "@/providers/adm-application-form-provider";
@@ -309,7 +306,6 @@ export default function AdmissionFormPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [admission, setAdmisson] = useState<Admission | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchAdmission = useCallback(async () => {
     setIsLoading(true);
@@ -347,12 +343,10 @@ export default function AdmissionFormPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-        <div className="flex flex-col items-center text-gray-600">
-          <Loader2 className="h-10 w-10 animate-spin text-purple-600" />
-          <p className="mt-4 text-lg font-medium">
-            Loading admission details...
-          </p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admission details...</p>
         </div>
       </div>
     );
@@ -360,11 +354,11 @@ export default function AdmissionFormPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-lg shadow-md flex flex-col items-center">
-          <AlertCircle className="h-10 w-10 mb-4" />
-          <p className="text-lg font-semibold">Error Loading Admission</p>
-          <p className="mt-2 text-center text-sm">{error}</p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
+          <p className="text-gray-600">{error}</p>
         </div>
       </div>
     );
@@ -372,106 +366,34 @@ export default function AdmissionFormPage() {
 
   if (!admission) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 p-6 rounded-lg shadow-md flex flex-col items-center">
-          <AlertCircle className="h-10 w-10 mb-4" />
-          <p className="text-lg font-semibold">Admission Not Found</p>
-          <p className="mt-2 text-center text-sm">
-            The admission details for year {year} could not be found.
-          </p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Admission Found</h2>
+          <p className="text-gray-600">No admission details found for the selected year.</p>
         </div>
       </div>
     );
   }
-
 
   return (
     <>
       {(admission.isClosed !== undefined && !admission.isClosed) ? (
         <ApplicationFormProvider admission={admission}>
           <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-            <div className="h-screen flex flex-col lg:flex-row">
-              {/* Add Continue Application Button */}
-              <div className="absolute top-4 right-4 z-50">
-                <Button
-                  variant="outline"
-                  className="bg-white hover:bg-purple-600 hover:text-white"
-                  onClick={() => setIsModalOpen(true)}
-                >
-                  Continue Application
-                </Button>
-              </div>
-              
-              {/* AdmissionForm will manage its own layout within this div */}
-              <AdmissionForm />
-            </div>
+            <AdmissionForm />
           </div>
-          <ContinueApplicationModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-          />
         </ApplicationFormProvider>
       ) : (
-        <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-purple-50 overflow-hidden">
-          <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl">
-            {/* Header Section */}
-            <div className="bg-purple-600 p-5 text-center">
-              <Image
-                src="/besc-logo.jpeg"
-                alt="BESC Logo"
-                width={70}
-                height={70}
-                className="mx-auto mb-3 rounded-full border-3 border-white shadow-lg"
-              />
-              <h1 className="text-xl font-bold text-white mb-1">The Bhawanipur Education Society College</h1>
-              <p className="text-purple-100 text-sm">Admission Portal</p>
-            </div>
-
-            {/* Main Content */}
-            <div className="p-6 text-center">
-              <div className="mb-4">
-                <Image
-                  src="/admission-close-besc.png"
-                  alt="Admission Closed"
-                  width={130}
-                  height={130}
-                  className="mx-auto animate-pulse"
-                />
-              </div>
-
-              <h2 className="text-2xl font-bold text-gray-800 mb-3">
-                Admission Closed for {year}
-              </h2>
-
-              <div className="space-y-3 text-gray-600 text-sm">
-                <p>
-                  We regret to inform you that the admission process for the academic year {year} has been closed.
-                </p>
-
-                <div className="bg-purple-50 rounded-lg p-3 mt-4">
-                  <h3 className="font-semibold text-purple-800 mb-1">Need Assistance?</h3>
-                  <div className="mt-1 space-y-0.5">
-                    <p>📞 Phone: +91-XXXXXXXXXX</p>
-                    <p>✉️ Email: admissions@besc.edu.in</p>
-                    <p>🏢 Office Hours: Mon - Fri, 10 AM - 4 PM</p>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <a
-                    href="/"
-                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200 text-sm"
-                  >
-                    Return to Home
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="bg-gray-50 p-2 text-center text-xs text-gray-500 border-t">
-              © {new Date().getFullYear()} BESC. All rights reserved.
-            </div>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+          <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Admission Closed
+            </h2>
+            <p className="text-gray-600">
+              The admission process for this year is currently closed.
+            </p>
           </div>
         </div>
       )}

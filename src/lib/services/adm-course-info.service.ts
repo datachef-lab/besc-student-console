@@ -9,7 +9,7 @@ export async function createAdmissionCourse(givenCourse: AdmissionCourseApplicat
         .where(
             and(
                 eq(admissionCourseApplication.applicationFormId, givenCourse.applicationFormId),
-                eq(admissionCourseApplication.courseId, givenCourse.courseId),
+                eq(admissionCourseApplication.admissionCourseId, givenCourse.admissionCourseId),
             )
         );
 

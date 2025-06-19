@@ -13,8 +13,10 @@ const mastersLinks = [
     { label: "Board / universities", href: "/settings/masters/board-universities" },
     { label: "Degrees", href: "/settings/masters/degrees" },
     { label: "Courses", href: "/settings/masters" },
+    { label: "Institutions", href: "/settings/masters/institutions" },
     { label: "Colleges", href: "/settings/masters/colleges" },
     { label: "Language Medium", href: "/settings/masters/language-medium" },
+    { label: "Sports Category", href: "/settings/masters/sports-categories" },
 ];
 export default function MastersLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

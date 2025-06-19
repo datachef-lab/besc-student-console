@@ -25,7 +25,7 @@ interface CourseListProps {
   limit: number;
 }
 
-const REQUIRED_HEADERS = ['name', 'shortName', 'codePrefix', 'universityCode'];
+const REQUIRED_HEADERS = ['name', 'shortName', 'codePrefix', 'universityCode', 'amount'];
 const ITEMS_PER_PAGE = 10; // Define items per page
 
 export function CourseList({ initialCourses, totalCount, limit }: CourseListProps) {
@@ -51,8 +51,8 @@ export function CourseList({ initialCourses, totalCount, limit }: CourseListProp
     // Create a sample row with empty values
     const sampleData = [
       REQUIRED_HEADERS,
-      ['', '', '', ''], // Empty row for example
-      ['Bachelor of Computer Science', 'BCS', 'CS', 'UNI001'], // Example row
+      ['', '', '', '', ''], // Empty row for example
+      ['Bachelor of Computer Science', 'BCS', 'CS', 'UNI001', 10000], // Example row
     ];
 
     // Create a new workbook and worksheet
@@ -342,17 +342,18 @@ export function CourseList({ initialCourses, totalCount, limit }: CourseListProp
               <TableHead className="font-semibold text-gray-700">Short Name</TableHead>
               <TableHead className="font-semibold text-gray-700">Code Prefix</TableHead>
               <TableHead className="font-semibold text-gray-700">University Code</TableHead>
+              <TableHead className="font-semibold text-gray-700">Amount</TableHead>
               <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">Loading courses...</TableCell>
+                <TableCell colSpan={7} className="text-center">Loading courses...</TableCell>
               </TableRow>
             ) : courses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">No courses found.</TableCell>
+                <TableCell colSpan={7} className="text-center">No courses found.</TableCell>
               </TableRow>
             ) : (
               courses.map((course, index) => (
@@ -362,6 +363,7 @@ export function CourseList({ initialCourses, totalCount, limit }: CourseListProp
                   <TableCell className="text-gray-700">{course.shortName}</TableCell>
                   <TableCell className="text-gray-700">{course.codePrefix}</TableCell>
                   <TableCell className="text-gray-700">{course.universityCode}</TableCell>
+                  <TableCell className="text-gray-700">{course.amount}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <CourseDialog mode="edit" course={course}>

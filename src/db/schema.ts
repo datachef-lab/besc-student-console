@@ -374,7 +374,7 @@ export const sportsCategories = pgTable("sports_categories", {
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 });
 export const createSportsCategorySchema = createInsertSchema(sportsCategories);
-export type sportsCategory = z.infer<typeof createSportsCategorySchema>;
+export type SportsCategory = z.infer<typeof createSportsCategorySchema>;
 
 
 

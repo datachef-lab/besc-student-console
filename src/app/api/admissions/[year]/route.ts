@@ -28,9 +28,9 @@ export async function GET(
             );
         }
 
-        const admissionId = admission.id;
+        const admissionId = admission.id!;
 
-        const [stats, { applicationForms: applications, totalItems }] = await Promise.all([
+        const [stats, { applications, totalItems }] = await Promise.all([
             getApplicationFormStats(admissionId),
             getApplicationFormsByAdmissionId(admissionId, page, size, {
                 search,

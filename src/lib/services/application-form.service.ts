@@ -7,6 +7,7 @@ import { deleteAcademicInfo, findAcademicInfoByApplicationFormId } from "./adm-a
 import { deleteAdmissionAdditionalInfo, findAdditionalInfoByApplicationFormId } from "./adm-additional-info.service";
 import { deletePayment, findPaymentInfoByApplicationFormId } from "./adm-payment.service";
 import { deleteAdmissionCourse, findCourseApplicationByApplicationFormId } from "./adm-course-info.service";
+import { getSportsInfoByAdditionalInfoId } from "./adm-sports-info.service";
 
 export async function createApplicationForm(form: ApplicationForm, generalInfo: AdmissionGeneralInfo) {
     // Check if the form already exists for the given admission year for the given student
@@ -107,10 +108,12 @@ export async function deleteApplicationForm(id: number) {
 
     }
 
-    // Delete the additional info
-    const additionalInfoDeleted = await deleteAdmissionAdditionalInfo(foundForm.additonalInfo!.id!);
-    if (additionalInfoDeleted !== null && !additionalInfoDeleted) {
-        return { success: false, message: "Failed to delete addtional info." };
+    // Delete additional info if exists
+    if (foundForm.additionalInfo) {
+        const additionalInfoDeleted = await deleteAdmissionAdditionalInfo(foundForm.additionalInfo!.id!);
+        if (!additionalInfoDeleted) {
+            throw new Error("Failed to delete additional info");
+        }
     }
 
     // Delete the payment info
@@ -134,22 +137,29 @@ export async function formatAppform(form: ApplicationForm): Promise<ApplicationF
         ...form,
         generalInfo: null,
         academicInfo: null,
-        additonalInfo: null,
         courseApplication: null,
-        paymentInfo: null
+        additionalInfo: null,
+        paymentInfo: null,
+        currentStep: 0,
     };
 
     dto.generalInfo = await findGeneralInfoByApplicationFormId(form.id!);
 
     dto.academicInfo = await findAcademicInfoByApplicationFormId(form.id!);
 
-    dto.additonalInfo = { ...(await findAdditionalInfoByApplicationFormId(form.id!)), sportsInfo: [] };
+    const additionalInfo = await findAdditionalInfoByApplicationFormId(form.id!);
+    if (additionalInfo) {
+        const sportsInfo = await getSportsInfoByAdditionalInfoId(additionalInfo.id!);
+        dto.additionalInfo = {
+            ...additionalInfo,
+            sportsInfo: sportsInfo || [],
+        };
+    }
 
     dto.courseApplication = await findCourseApplicationByApplicationFormId(form.id!);
 
     dto.paymentInfo = await findPaymentInfoByApplicationFormId(form.id!);
 
     return dto;
-
 }
 

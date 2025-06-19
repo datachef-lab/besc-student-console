@@ -68,7 +68,7 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
     setSubjects([...subjects, {
       academicSubjectId: 0, // Default or placeholder - needs actual ID
       fullMarks: '',
-      totalMarks: '',
+      totalMarks: '100',
       resultStatus: "PASS", // Default status
       admissionAcademicInfoId: 0, // Placeholder - should be set in parent
       // Add other required fields from StudentAcademicSubjects with default values if necessary
@@ -109,6 +109,20 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
   const getSubjectName = (id: number) => {
     const subject = (academicSubjects || []).find(sub => sub.id === id);
     return subject ? subject.name : 'Unknown Subject';
+  };
+
+  // Helper to check if all subject rows are valid
+  const isAllSubjectsValid = () => {
+    // All fields must be filled and no duplicate subjects
+    const seenSubjects = new Set();
+    for (const subject of subjects) {
+      if (!subject.academicSubjectId || subject.academicSubjectId === 0) return false;
+      if (!subject.fullMarks || subject.fullMarks === '' || subject.fullMarks === '0') return false;
+      if (!subject.totalMarks || subject.totalMarks === '' || subject.totalMarks === '0') return false;
+      if (seenSubjects.has(subject.academicSubjectId)) return false;
+      seenSubjects.add(subject.academicSubjectId);
+    }
+    return true;
   };
 
   return (
@@ -261,6 +275,7 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
         <Button 
           onClick={handleSave} 
           className="w-auto min-w-[100px] h-10 bg-blue-600 hover:bg-blue-700 text-white"
+          disabled={!isAllSubjectsValid()}
         >
           Done
         </Button>

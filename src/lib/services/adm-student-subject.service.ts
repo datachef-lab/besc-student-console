@@ -2,7 +2,11 @@ import {dbPostgres} from "@/db"
 import { studentAcademicSubjects, StudentAcademicSubjects } from "@/db/schema"
 import { and, eq } from "drizzle-orm"
 
-export async function createSubject(subject: StudentAcademicSubjects) {
+export async function createSubject(subject: Omit<StudentAcademicSubjects, "id" | "createdAt" | "updatedAt">) {
+    // Remove any createdAt/updatedAt fields and set updatedAt to now
+    // delete (subject as any).createdAt;
+    // delete (subject as any).updatedAt;
+    // (subject as any).updatedAt = new Date().toISOString();
     const [existingEntry] = await dbPostgres
         .select()
         .from(studentAcademicSubjects)
@@ -14,7 +18,17 @@ export async function createSubject(subject: StudentAcademicSubjects) {
         );
 
     if (existingEntry) {
-        return { subject: existingEntry, message: "Subject already exists for this academic info." };
+        // Update existing subject
+        const [updatedSubject] = await dbPostgres
+            .update(studentAcademicSubjects)
+            .set(subject)
+            .where(eq(studentAcademicSubjects.id, existingEntry.id))
+            .returning();
+        
+        return {
+            subject: updatedSubject,
+            message: "Subject updated successfully!"
+        };
     }
 
     const [newSubject] = await dbPostgres
@@ -47,7 +61,7 @@ export async function findSubjectsByAcademicInfoId(admissionAcademicInfoId: numb
     return subjects;
 }
 
-export async function updateSubject(subject: StudentAcademicSubjects) {
+export async function updateSubject(subject: Omit<StudentAcademicSubjects, "createdAt" | "updatedAt">) {
     if (!subject.id) throw new Error("Subject ID is required for update.");
 
     const [updated] = await dbPostgres
@@ -61,9 +75,10 @@ export async function updateSubject(subject: StudentAcademicSubjects) {
 
 // Delete
 export async function deleteSubject(id: number) {
-    const deleted = await dbPostgres
+    const [deleted] = await dbPostgres
         .delete(studentAcademicSubjects)
-        .where(eq(studentAcademicSubjects.id, id));
+        .where(eq(studentAcademicSubjects.id, id))
+        .returning();
 
-    return deleted.length > 0;
+    return deleted !== undefined;
 }

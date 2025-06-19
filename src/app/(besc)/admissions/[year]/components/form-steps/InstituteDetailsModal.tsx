@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { AdmissionAcademicInfo, BoardUniversity, Colleges, Course, LanguageMedium, streamType } from "@/db/schema"; // Import necessary types
+import { AdmissionAcademicInfo, BoardUniversity, Colleges, Course, LanguageMedium, streamType, Institution } from "@/db/schema"; // Import necessary types
+import { Combobox } from "@/components/ui/combobox";
+// import { Combobox } from "@/components/ui/combobox";
 
 interface InstituteDetailsModalProps {
   onChange: (field: keyof AdmissionAcademicInfo, value: any) => void;
@@ -18,6 +20,7 @@ interface InstituteDetailsModalProps {
   academicInfo: AdmissionAcademicInfo;
   languageMediums: LanguageMedium[]; // Add languageMediums prop
   colleges: Colleges[]; // Add colleges prop - will be used for institutes too
+  institutions: Institution[];
   // If previously registered courses need dynamic options, add a similar prop
   // previouslyRegisteredCourses: Course[];
   registeredCourses: Course[];
@@ -30,6 +33,7 @@ export default function InstituteDetailsModal({
   languageMediums,
   registeredCourses,
   colleges,
+  institutions = [],
 }: InstituteDetailsModalProps) {
   console.log('Colleges in InstituteDetailsModal:', colleges);
   const params = useParams();
@@ -39,6 +43,8 @@ export default function InstituteDetailsModal({
   const yearOptions = Array.from({ length: 4 }, (_, i) => admissionYear - i);
 
   const handleSave = () => {
+    // The onChange function is already being called for each field change
+    // So we just need to close the modal
     onClose();
   };
 
@@ -54,7 +60,7 @@ export default function InstituteDetailsModal({
 
   return (
     <div className="flex flex-col h-full">
-      {JSON.stringify(registeredCourses)}
+      {/* {JSON.stringify(registeredCourses)} */}
       <div className="space-y-4 p-2 sm:p-4 flex-shrink-0">
         <h3 className="text-lg sm:text-xl font-semibold">Institute Details Entry</h3>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg shadow p-3 sm:p-4 text-left text-xs sm:text-sm mb-4">
@@ -89,21 +95,35 @@ export default function InstituteDetailsModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <Label className="flex items-center mb-1 text-xs sm:text-sm">b(i). Select Institute <span className="text-red-600">*</span></Label>
-              <Select value={academicInfo.instituteId === 0 ? "0" : academicInfo.instituteId?.toString() || ''} onValueChange={(val) => onChange('instituteId', parseInt(val))}>
-                <SelectTrigger className="w-full h-8 text-xs sm:text-sm"><SelectValue placeholder="Select Institute" /></SelectTrigger>
-                <SelectContent>
-                   <SelectItem value="0">Select Institute</SelectItem>
-                   {(colleges || []).map((coll) => (
-                    coll.id && (
-                     <SelectItem key={coll.id} value={coll.id.toString()} className="text-xs sm:text-sm">
-                       {coll.name}
-                     </SelectItem>
-                    )
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                dataArr={[
+                  ...institutions.filter(ele => ele.id !== undefined).map(ele => ({ value: ele.id!.toString(), label: ele.name })),
+                  { value: "OTHER", label: "Other Institute" }
+                ]}
+                value={
+                  academicInfo.instituteId === null
+                    ? "OTHER"
+                    : typeof academicInfo.instituteId === 'number'
+                    ? String(academicInfo.instituteId)
+                    : ""
+                }
+                onChange={val => {
+                  if (val === "OTHER") {
+                    onChange('instituteId', null);
+                    onChange('otherInstitute', '');
+                  } else if (!val || val === "0") {
+                    onChange('instituteId', null);
+                    onChange('otherInstitute', null);
+                  } else if (!isNaN(Number(val))) {
+                    onChange('instituteId', Number(val));
+                    onChange('otherInstitute', null);
+                  }
+                }}
+                placeholder="Select Institute"
+                className="w-full h-8 text-xs sm:text-sm"
+              />
             </div>
-            {academicInfo.instituteId === otherInstituteId && (
+            {academicInfo.instituteId === null && (
               <div>
                 <Label className="flex items-center mb-1 text-xs sm:text-sm">b(ii). Other Institute</Label>
                 <Input value={academicInfo.otherInstitute || ''} onChange={(e) => onChange('otherInstitute', e.target.value)} className="w-full h-8 text-xs sm:text-sm" />
@@ -129,7 +149,10 @@ export default function InstituteDetailsModal({
             </div>
             <div>
               <Label className="flex items-center mb-1 text-xs sm:text-sm">Select Year Of Passing <span className="text-red-600">*</span></Label>
-              <Select value={academicInfo.yearOfPassing === admissionYear ? "0" : academicInfo.yearOfPassing?.toString() || ''} onValueChange={(val) => onChange('yearOfPassing', parseInt(val))}>
+              <Select 
+                value={academicInfo.yearOfPassing ? academicInfo.yearOfPassing.toString() : ''}
+                onValueChange={(val) => onChange('yearOfPassing', val === '0' ? null : parseInt(val))}
+              >
                 <SelectTrigger className="w-full h-8 text-xs sm:text-sm"><SelectValue placeholder="Select Year Of Passing" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="0">Select Year Of Passing</SelectItem>
@@ -184,61 +207,77 @@ export default function InstituteDetailsModal({
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <Label className="flex items-center mb-1 text-xs sm:text-sm">h(i). Previously Registered Course</Label>
-              <Select value={academicInfo.previouslyRegisteredCourseId?.toString() || (academicInfo.otherPreviouslyRegisteredCourse !== null && academicInfo.previouslyRegisteredCourseId === null ? 'OTHER' : '')} onValueChange={(val) => {
-                if (val === 'OTHER') {
-                  onChange('previouslyRegisteredCourseId', null);
-                  onChange('otherPreviouslyRegisteredCourse', '');
-                } else {
-                  onChange('previouslyRegisteredCourseId', parseInt(val));
-                  onChange('otherPreviouslyRegisteredCourse', null);
+              <Combobox
+                dataArr={[
+                  ...registeredCourses.filter(course => course.id !== undefined).map((course) => ({ value: course.id!.toString(), label: course.name })),
+                  { value: "OTHER", label: "Other Course" }
+                ]}
+                value={
+                  academicInfo.previouslyRegisteredCourseId === null
+                    ? "OTHER"
+                    : typeof academicInfo.previouslyRegisteredCourseId === 'number'
+                    ? String(academicInfo.previouslyRegisteredCourseId)
+                    : ""
                 }
-              }}>
-                <SelectTrigger className="w-full h-8 text-xs sm:text-sm"><SelectValue placeholder="Select Previous Registered Course" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Select Previous Registered Course</SelectItem>
-                  {registeredCourses.map((course) => (
-                    
-                      <SelectItem key={course.id} value={course.id!.toString()} className="text-xs sm:text-sm">
-                        {course.name}
-                      </SelectItem>
-                    
-                  ))}
-                  <SelectItem value="OTHER" className="text-xs sm:text-sm">Other Course</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={val => {
+                  if (val === "OTHER") {
+                    onChange('previouslyRegisteredCourseId', null);
+                    onChange('otherPreviouslyRegisteredCourse', '');
+                  } else if (!val || val === "0") {
+                    onChange('previouslyRegisteredCourseId', null);
+                    onChange('otherPreviouslyRegisteredCourse', null);
+                  } else if (!isNaN(Number(val))) {
+                    onChange('previouslyRegisteredCourseId', Number(val));
+                    onChange('otherPreviouslyRegisteredCourse', null);
+                  }
+                }}
+                placeholder="Select Previous Registered Course"
+                className="w-full h-8 text-xs sm:text-sm"
+                disabled={academicInfo.yearOfPassing === admissionYear}
+              />
             </div>
-             {academicInfo.previouslyRegisteredCourseId === null && (
+            {academicInfo.previouslyRegisteredCourseId === null && (
               <div>
                 <Label className="flex items-center mb-1 text-xs sm:text-sm">h(ii). Other Course</Label>
-                <Input value={academicInfo.otherPreviouslyRegisteredCourse || ''} onChange={(e) => onChange('otherPreviouslyRegisteredCourse', e.target.value)} className="w-full h-8 text-xs sm:text-sm" />
+                <Input 
+                  value={academicInfo.otherPreviouslyRegisteredCourse || ''} 
+                  onChange={(e) => onChange('otherPreviouslyRegisteredCourse', e.target.value)} 
+                  className="w-full h-8 text-xs sm:text-sm"
+                  disabled={academicInfo.yearOfPassing === admissionYear}
+                />
               </div>
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <Label className="flex items-center mb-1 text-xs sm:text-sm">i. Previous College</Label>
-              <Select value={academicInfo.previousCollegeId === 0 ? "0" : academicInfo.previousCollegeId?.toString() || (academicInfo.otherCollege !== null && academicInfo.previousCollegeId === null ? 'OTHER_COLLEGE' : '')} onValueChange={(val) => {
-                if (val === 'OTHER_COLLEGE') {
-                  onChange('previousCollegeId', null);
-                  onChange('otherCollege', '');
-                } else {
-                  onChange('previousCollegeId', parseInt(val));
-                  onChange('otherCollege', null);
+              <Combobox
+                dataArr={[
+                  ...colleges.filter(coll => coll.id !== undefined).map((coll) => ({ value: coll.id!.toString(), label: coll.name })),
+                  { value: "OTHER", label: "Other College" }
+                ]}
+                value={
+                  academicInfo.previousCollegeId === null
+                    ? "OTHER"
+                    : typeof academicInfo.previousCollegeId === 'number'
+                    ? String(academicInfo.previousCollegeId)
+                    : ""
                 }
-              }}>
-                <SelectTrigger className="w-full h-8 text-xs sm:text-sm"><SelectValue placeholder="Select Previous College" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Select Previous College</SelectItem>
-                  {colleges.map((college) => (
-                    college.id && (
-                      <SelectItem key={college.id} value={college.id.toString()} className="text-xs sm:text-sm">
-                        {college.name}
-                      </SelectItem>
-                    )
-                  ))}
-                  <SelectItem value="OTHER_COLLEGE" className="text-xs sm:text-sm">Other college</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={val => {
+                  if (val === "OTHER") {
+                    onChange('previousCollegeId', null);
+                    onChange('otherCollege', '');
+                  } else if (!val || val === "0") {
+                    onChange('previousCollegeId', null);
+                    onChange('otherCollege', null);
+                  } else if (!isNaN(Number(val))) {
+                    onChange('previousCollegeId', Number(val));
+                    onChange('otherCollege', null);
+                  }
+                }}
+                placeholder="Select Previous College"
+                className="w-full h-8 text-xs sm:text-sm"
+              />
             </div>
             {academicInfo.previousCollegeId === null && (
               <div>

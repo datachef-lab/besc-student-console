@@ -52,7 +52,7 @@ type Gender = typeof GENDERS[number];
 // const DEGREES = ["Under Graduate", "Post Graduate"];
 
 // Simple static red dot for required fields
-const RedDot = () => (
+export const RedDot = () => (
   <span className="ml-1 inline-block align-middle">
     <span className="inline-block h-2 w-2 rounded-full bg-red-600"></span>
   </span>
@@ -91,7 +91,7 @@ export default function GeneralInfoStep({
     whatsappNumber: "",
   });
 
-  const isGeneralInfoLocked = !!(applicationForm?.generalInfo!.id && applicationForm.generalInfo.id !== 0);
+  const isGeneralInfoLocked = !!(applicationForm?.generalInfo && applicationForm.generalInfo.id && applicationForm.generalInfo.id !== 0);
 
   // Handle changes in generalInfo
   const handleGeneralInfoChange = (field: keyof AdmissionGeneralInfo, value: any) => {
@@ -198,24 +198,34 @@ export default function GeneralInfoStep({
     if (!generalInfo.gender) {
       errors.gender = "Gender is required";
     }
-    if (!generalInfo.password?.trim()) {
-      errors.password = "Password is required";
-    } else if (generalInfo.password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
-    }
-    if (generalInfo.password !== confirmPassword) {
-      errors.confirmPassword = "Passwords do not match";
-    }
     if (!generalInfo.nationalityId) {
       errors.nationalityId = "Nationality is required";
     }
-
+    // Only validate password fields if not locked
+    if (!isGeneralInfoLocked) {
+      if (!generalInfo.password?.trim()) {
+        errors.password = "Password is required";
+      } else if (generalInfo.password.length < 6) {
+        errors.password = "Password must be at least 6 characters";
+      }
+      if (generalInfo.password !== confirmPassword) {
+        errors.confirmPassword = "Passwords do not match";
+      }
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleNext = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // If info is locked, just proceed to next step without API calls
+    if (isGeneralInfoLocked) {
+      onNext();
+      return;
+    }
+    
+    // If info is locked, skip password validation
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -225,7 +235,6 @@ export default function GeneralInfoStep({
       });
       return;
     }
-
     setIsSubmitting(true);
     try {
       const isNewApplication = !applicationForm?.id || applicationForm?.id === 0;
@@ -241,7 +250,7 @@ export default function GeneralInfoStep({
           form: {
             admissionId: admission?.id!,
             formStatus: "DRAFT",
-            admissionStep: "GENERAL_INFORMATION",
+            admissionStep: "ACADEMIC_INFORMATION",
             
             // remarks: "", // add if needed
           },
@@ -259,8 +268,8 @@ export default function GeneralInfoStep({
           form: {
             id: applicationForm.id,
             admissionId: applicationForm.admissionId,
-            formStatus: "DRAFT",
-            admissionStep: "GENERAL_INFORMATION",
+            formStatus: applicationForm.formStatus,
+            admissionStep: applicationForm.admissionStep,
             remarks: applicationForm.remarks,
             // add any other direct DB columns if needed
           },

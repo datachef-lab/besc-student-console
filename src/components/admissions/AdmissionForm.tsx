@@ -16,6 +16,8 @@ import { AdmissionAcademicInfoDto, BoardUniversityDto } from "@/types/admissions
 import { AcademicSubjects, BoardUniversity, Payment, SportsInfo, StudentAcademicSubjects } from "@/db/schema";
 import { useApplicationForm } from "@/hooks/use-application-form";
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { ContinueApplicationModal } from "@/components/admissions/ContinueApplicationModal";
 
 // Notes for each step
 const stepNotes: Record<number, React.ReactNode> = {
@@ -148,6 +150,7 @@ export default function AdmissionForm() {
     isRegisteredForUGInCU: false,
     subjects: []
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (applicationForm?.admissionStep) {
@@ -156,7 +159,7 @@ export default function AdmissionForm() {
         ACADEMIC_INFORMATION: 2,
         COURSE_APPLICATION: 3,
         ADDITIONAL_INFORMATION: 4,
-        PAYMENT_INFORMATION: 5,
+        PAYMENT: 5,
       };
       setCurrentStep(stepMap[applicationForm.admissionStep] || 1);
     }
@@ -175,6 +178,7 @@ export default function AdmissionForm() {
   };
 
   const renderStepContent = () => {
+    console.log("application form in step content:", applicationForm)
     if (!applicationForm) return null;
 
     switch (currentStep) {
@@ -195,6 +199,7 @@ export default function AdmissionForm() {
             setAcademicInfo={setAcademicInfo}
             onNext={() => handleStepChange(currentStep + 1)}
             onPrev={() => handleStepChange(currentStep - 1)}
+            currentStep={currentStep}
           />
         );
       case 3:
@@ -204,9 +209,9 @@ export default function AdmissionForm() {
         return (
           <CourseApplicationStep
             stepNotes={stepNotes[currentStep]}
-            applicationForm={applicationForm}
             onNext={() => handleStepChange(currentStep + 1)}
             onPrev={() => handleStepChange(currentStep - 1)}
+            currentStep={currentStep}
           />
         );
       case 4:
@@ -216,7 +221,6 @@ export default function AdmissionForm() {
         return (
           <AdditionalInfoStep
             stepNotes={stepNotes[currentStep]}
-            applicationForm={applicationForm}
             generalInfo={{
               applicationFormId: applicationForm.generalInfo.applicationFormId,
               firstName: applicationForm.generalInfo.firstName,
@@ -226,6 +230,7 @@ export default function AdmissionForm() {
             }}
             onNext={() => handleStepChange(currentStep + 1)}
             onPrev={() => handleStepChange(currentStep - 1)}
+            currentStep={currentStep}
           />
         );
       case 5:
@@ -238,9 +243,16 @@ export default function AdmissionForm() {
             applicationForm={applicationForm}
             onPaymentInfoChange={(paymentInfo) => {
               console.log('Payment info changed:', paymentInfo);
+              if (setApplicationForm) {
+                setApplicationForm({
+                  ...applicationForm,
+                  paymentInfo
+                });
+              }
             }}
             onNext={() => handleStepChange(currentStep + 1)}
             onPrev={() => handleStepChange(currentStep - 1)}
+            currentStep={currentStep}
           />
         );
       default:
@@ -249,7 +261,20 @@ export default function AdmissionForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+    <>
+      {/* Add Continue Application Button */}
+      <div className="absolute top-4 right-4 z-50">
+        {(!applicationForm?.id || applicationForm.id === 0) && (
+          <Button
+            variant="outline"
+            className="bg-white hover:bg-purple-600 hover:text-white"
+            onClick={() => setIsModalOpen(true)}
+          >
+            Continue Application
+          </Button>
+        )}
+      </div>
+
       <div className="h-screen flex flex-col lg:flex-row">
         {/* Progress Timeline - Now responsive */}
         <div className="w-full lg:w-[280px] lg:flex-shrink-0 lg:h-full">
@@ -275,7 +300,7 @@ export default function AdmissionForm() {
           <div
             className="h-full bg-white p-0 shadow-sm overflow-hidden relative"
             style={{
-              backgroundImage: "url('/illustrations/admission-form.png')",
+              backgroundImage: `url(${applicationForm?.generalInfo?.gender === "FEMALE" ? '/illustrations/admission-female.png' : '/illustrations/admission-form.png'})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -283,6 +308,12 @@ export default function AdmissionForm() {
           ></div>
         </div>
       </div>
-    </div>
+
+      {/* Continue Application Modal */}
+      <ContinueApplicationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </>
   );
 }
