@@ -1,252 +1,229 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import React from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
-export default function SignInPage() {
-  const [uid, setUid] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-  const { login } = useAuth();
-  const [mounted, setMounted] = useState(false);
+const COLLEGE_NAME = "BESC College";
+const COLLEGE_TAGLINE = "Empowering Students for a Brighter Future";
+const COLLEGE_MISSION = "Your one-stop portal for admissions, profiles, notifications, and all student services.";
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+const features = [
+  {
+    title: "Study Materials",
+    description: "Access and download study materials and resources anytime.",
+    illustration: "/illustrations/notifications/class.svg",
+  },
+  {
+    title: "Exam Notifications",
+    description: "Get real-time updates on upcoming exams and results.",
+    illustration: "/illustrations/notifications/assignment.svg",
+  },
+  {
+    title: "Library Management",
+    description: "Search, borrow, and track library books easily.",
+    illustration: "/illustrations/profile/academic.svg",
+  },
+  {
+    title: "Attendance Tracking",
+    description: "Track your attendance and mark presence digitally.",
+    illustration: "/illustrations/profile/address.svg",
+  },
+];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
+const steps = [
+  {
+    icon: "/illustrations/notifications/class.svg",
+    title: "Register",
+    desc: "Create your student account in a few easy steps.",
+  },
+  {
+    icon: "/illustrations/profile/background.svg",
+    title: "Apply",
+    desc: "Fill out your admission form and upload documents.",
+  },
+  {
+    icon: "/illustrations/notifications/assignment.svg",
+    title: "Track",
+    desc: "Get updates on your application and student journey.",
+  },
+];
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ uid, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed");
-      }
-
-      login(data.accessToken, data.user);
-      router.push(data.redirectTo || "/dashboard");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Login failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (!mounted) {
-    return null;
-  }
-
+export default function Page() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-indigo-950 to-indigo-900">
-      {/* Background pattern */}
-      <div className="absolute inset-0 z-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMyMDIwNDAiIGZpbGwtb3BhY2l0eT0iMC4zIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIgMS44LTQgNC00czQgMS44IDQgNC0xLjggNC00IDQtNC0xLjgtNC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
-
-      {/* Floating card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 flex w-full max-w-5xl overflow-hidden rounded-2xl shadow-2xl"
-      >
-        {/* Left section */}
-        <div className="w-full bg-white p-8 md:w-1/2 md:p-12">
-          <div className="mb-8 flex items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-md bg-indigo-600 text-white">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="h-7 w-7"
-              >
-                <path d="M11.7 2.805a.75.75 0 01.6 0A60.65 60.65 0 0122.83 8.72a.75.75 0 01-.231 1.337 49.949 49.949 0 00-9.902 3.912l-.003.002-.34.18a.75.75 0 01-.707 0A50.009 50.009 0 007.5 12.174v-.224c0-.131.067-.248.172-.311a54.614 54.614 0 014.653-2.52.75.75 0 00-.65-1.352 56.129 56.129 0 00-4.78 2.589 1.858 1.858 0 00-.859 1.228 49.803 49.803 0 00-4.634-1.527.75.75 0 01-.231-1.337A60.653 60.653 0 0111.7 2.805z" />
-                <path d="M13.06 15.473a48.45 48.45 0 017.666-3.282c.134 1.414.22 2.843.255 4.285a.75.75 0 01-.46.71 47.878 47.878 0 00-8.105 4.342.75.75 0 01-.832 0 47.877 47.877 0 00-8.104-4.342.75.75 0 01-.461-.71c.035-1.442.121-2.87.255-4.286A48.4 48.4 0 016 13.18v1.27a1.5 1.5 0 00-.14 2.508c-.09.38-.222.753-.397 1.11.452.213.901.434 1.346.661a6.729 6.729 0 00.551-1.608 1.5 1.5 0 00.14-2.67v-.645a48.549 48.549 0 013.44 1.668 2.25 2.25 0 002.12 0z" />
-                <path d="M4.462 19.462c.42-.419.753-.89 1-1.394.453.213.902.434 1.347.661a6.743 6.743 0 01-1.286 1.794.75.75 0 11-1.06-1.06z" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h1 className="text-2xl font-bold text-gray-800">
-                BESC <span className="text-indigo-600">Student</span>
-              </h1>
-              <p className="text-xs font-medium text-gray-500">CONSOLE</p>
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900">
-              Sign in to your account
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Enter your credentials below to access the portal
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className="space-y-4">
-              <div>
-                <Label
-                  htmlFor="uid"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  UID
-                </Label>
-                <div className="relative mt-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </span>
-                  <Input
-                    id="uid"
-                    placeholder="Enter your UID"
-                    value={uid}
-                    onChange={(e) => setUid(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 pl-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between">
-                  <Label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Password
-                  </Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative mt-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </span>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 pl-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              disabled={isLoading}
-              className="w-full rounded-md bg-indigo-600 py-3 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  <span className="ml-2">Signing in...</span>
-                </div>
-              ) : (
-                <span>Sign in</span>
-              )}
-            </motion.button>
-          </form>
-
-          <p className="mt-4 text-center text-sm text-gray-600">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/contact"
-              className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
-            >
-              Contact administration
-            </Link>
-          </p>
-        </div>
-
-        {/* Right section */}
-        <div className="hidden w-1/2 bg-indigo-600 md:block">
-          <div className="relative h-full w-full">
+    <div className="w-full flex flex-col min-h-screen bg-gradient-to-b from-purple-100 via-white to-purple-50 font-sans h-screen overflow-auto">
+      {/* Navbar/Header */}
+      <header className="fixed top-0 left-0 w-full z-30 bg-white/70 backdrop-blur border-b border-gray-200 transition-all">
+        <nav className="max-w-6xl mx-auto flex items-center justify-between py-3 px-6">
+          <div className="flex items-center gap-3">
             <img
-              src="/hero-image.jpeg"
-              alt="Descriptive alt text"
-              className="object-cover w-full h-full"
+              src="/besc-logo.jpeg"
+              alt={COLLEGE_NAME}
+              className="w-9 h-9 rounded-full border-2 border-purple-400 bg-white shadow"
+            />
+            <span className="text-xl font-bold text-purple-800 tracking-tight">{COLLEGE_NAME}</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <Link href="#features" className="text-gray-700 font-medium hover:text-purple-700 transition">Features</Link>
+            <Link href="#how" className="text-gray-700 font-medium hover:text-purple-700 transition">How it works</Link>
+            <Link href="/admissions" className="text-gray-700 font-medium hover:text-purple-700 transition">Admissions</Link>
+            <Link
+              href="/login"
+              className="ml-2 px-5 py-1.5 rounded-full border-2 border-purple-500 text-purple-700 font-semibold bg-white shadow hover:bg-purple-50 hover:text-purple-900 transition"
+            >
+              Login
+            </Link>
+          </div>
+        </nav>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative w-full flex flex-col items-center justify-center pt-36 pb-24 px-4 min-h-[80vh] bg-gradient-to-br from-purple-400/30 via-white to-purple-200 overflow-hidden">
+        {/* Floating shapes */}
+        <div className="absolute top-10 left-10 w-32 h-32 bg-purple-200 rounded-full blur-2xl opacity-40 animate-pulse-slow" />
+        <div className="absolute bottom-10 right-10 w-40 h-40 bg-purple-300 rounded-full blur-3xl opacity-30 animate-pulse-slow" />
+        {/* Glassy Card */}
+        <div className="relative z-10 max-w-4xl w-full mx-auto rounded-3xl bg-white/60 backdrop-blur-lg shadow-2xl px-10 py-12 flex flex-col md:flex-row items-center gap-10 border border-purple-100">
+          <div className="flex-1 flex flex-col items-start justify-center">
+            <h1 className="text-5xl md:text-6xl font-extrabold mb-4 text-gray-900 leading-tight">
+              <span>BESC </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-purple-700">College</span>
+            </h1>
+            <h2 className="text-2xl font-semibold text-purple-600 mb-3">{COLLEGE_TAGLINE}</h2>
+            <p className="text-lg text-gray-700 mb-8 max-w-xl">{COLLEGE_MISSION}</p>
+            <div className="flex gap-4">
+              <Link
+                href="/admissions"
+                className="inline-block bg-gradient-to-r from-purple-500 to-purple-700 text-white font-bold px-8 py-3 rounded-full shadow-lg text-lg hover:scale-105 hover:from-purple-600 hover:to-purple-800 transition"
+              >
+                Apply for Admission
+              </Link>
+              <Link
+                href="/login"
+                className="inline-block bg-white border-2 border-purple-200 text-purple-700 font-bold px-8 py-3 rounded-full shadow hover:bg-purple-50 hover:text-purple-900 transition"
+              >
+                Login
+              </Link>
+            </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <img
+              src="/illustrations/landing-page-illustration.png"
+              alt="Students Illustration"
+              className="w-full max-w-md drop-shadow-2xl animate-float rounded-md"
+              style={{ minHeight: 260 }}
             />
           </div>
         </div>
-      </motion.div>
+        {/* Scroll Down Indicator */}
+        <div className="absolute left-1/2 bottom-6 -translate-x-1/2 flex flex-col items-center z-20">
+          <span className="text-purple-400 text-xs mb-1">Scroll</span>
+          <div className="w-6 h-6 rounded-full border-2 border-purple-300 flex items-center justify-center animate-bounce">
+            <div className="w-2 h-2 rounded-full bg-purple-400" />
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-24 px-4 w-full flex flex-col items-center bg-gradient-to-b from-white via-purple-50 to-purple-100">
+        <div className="max-w-6xl w-full mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-14 text-gray-900">Features</h2>
+          <div className="grid md:grid-cols-4 gap-8 w-full">
+            {features.map((feature, idx) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.12, duration: 0.6, type: "spring" }}
+                viewport={{ once: true }}
+                whileHover={{ scale: 1.06, boxShadow: "0 8px 32px 0 rgba(168,85,247,0.18)" }}
+                className="bg-white/70 backdrop-blur-lg rounded-2xl p-8 shadow-lg flex flex-col items-center text-center transition-transform duration-300 border border-purple-100 hover:bg-purple-100"
+              >
+                <img src={feature.illustration} alt={feature.title} className="w-16 h-16 mb-4" />
+                <h3 className="text-lg font-bold text-purple-700 mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works Section */}
+      <section id="how" className="py-20 px-4 w-full flex flex-col items-center bg-gradient-to-b from-purple-100 via-white to-purple-50">
+        <div className="max-w-5xl w-full mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-purple-700">How it works</h2>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 w-full relative">
+            {/* Timeline line */}
+            <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-purple-200 z-0" style={{ transform: 'translateY(-50%)' }} />
+            {steps.map((step, idx) => (
+              <motion.div
+                key={step.title}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.15, duration: 0.6, type: "spring" }}
+                viewport={{ once: true }}
+                className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 shadow flex flex-col items-center text-center border border-purple-100 relative z-10"
+              >
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-200 via-purple-100 to-purple-300 flex items-center justify-center mb-4 shadow-md">
+                  <img src={step.icon} alt={step.title} className="w-10 h-10" />
+                </div>
+                <h3 className="text-lg font-bold text-purple-700 mb-2">{step.title}</h3>
+                <p className="text-gray-600">{step.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="w-full bg-gradient-to-r from-purple-800 to-purple-900 border-t border-purple-900 py-4">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2 px-6">
+          <div className="flex items-center gap-3">
+            <img src="/besc-logo.jpeg" alt={COLLEGE_NAME} className="w-7 h-7 rounded-full border border-purple-300 bg-white shadow" />
+            <span className="text-base font-semibold text-white">{COLLEGE_NAME}</span>
+            <div className="flex gap-2 ml-2">
+              {/* Facebook SVG */}
+              <a href="#" className="text-purple-300 hover:text-white" aria-label="Facebook">
+                <svg fill="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path d="M22.675 0h-21.35C.595 0 0 .592 0 1.326v21.348C0 23.406.595 24 1.325 24h11.495v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.797.143v3.24l-1.918.001c-1.504 0-1.797.715-1.797 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.406 24 24 23.406 24 22.674V1.326C24 .592 23.406 0 22.675 0"/></svg>
+              </a>
+              {/* Twitter SVG */}
+              <a href="#" className="text-purple-300 hover:text-white" aria-label="Twitter">
+                <svg fill="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path d="M24 4.557a9.83 9.83 0 0 1-2.828.775 4.932 4.932 0 0 0 2.165-2.724c-.951.564-2.005.974-3.127 1.195a4.916 4.916 0 0 0-8.38 4.482C7.691 8.095 4.066 6.13 1.64 3.161c-.542.938-.856 2.021-.857 3.17 0 2.188 1.115 4.116 2.823 5.247a4.904 4.904 0 0 1-2.229-.616c-.054 2.281 1.581 4.415 3.949 4.89a4.936 4.936 0 0 1-2.224.084c.627 1.956 2.444 3.377 4.6 3.417A9.867 9.867 0 0 1 0 21.543a13.94 13.94 0 0 0 7.548 2.209c9.142 0 14.307-7.721 13.995-14.646A9.936 9.936 0 0 0 24 4.557z"/></svg>
+              </a>
+              {/* LinkedIn SVG */}
+              <a href="#" className="text-purple-300 hover:text-white" aria-label="LinkedIn">
+                <svg fill="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11.75 20h-3v-10h3v10zm-1.5-11.268c-.966 0-1.75-.784-1.75-1.75s.784-1.75 1.75-1.75 1.75.784 1.75 1.75-.784 1.75-1.75 1.75zm15.25 11.268h-3v-5.604c0-1.337-.025-3.063-1.868-3.063-1.868 0-2.154 1.459-2.154 2.967v5.7h-3v-10h2.881v1.367h.041c.401-.761 1.381-1.563 2.841-1.563 3.039 0 3.6 2.001 3.6 4.599v5.597z"/></svg>
+              </a>
+            </div>
+          </div>
+          <div className="flex flex-col md:items-end items-center gap-1">
+            <div className="flex items-center gap-1 text-purple-200 text-sm">
+              <span>Powered by</span>
+              <img src="/datachef-logo.svg" alt="DataChef" className="w-6 h-6 rounded-full bg-white border border-purple-300" />
+              <span className="font-bold text-white">DataChef</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+      <style>{`
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-16px); }
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 6s cubic-bezier(0.4,0,0.6,1) infinite;
+        }
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.7; }
+        }
+        .transition-transform {
+          transition: transform 0.3s cubic-bezier(0.4,0,0.6,1);
+        }
+      `}</style>
     </div>
   );
 }

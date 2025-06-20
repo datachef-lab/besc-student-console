@@ -101,7 +101,7 @@ export async function updateGeneralInfo(generalInfo: Omit<AdmissionGeneralInfo, 
     return updatedGeneralInfo;
 }
 
-export async function checkExistingEntry(admissionId: number, generalInfo: AdmissionGeneralInfo) {
+export async function checkExistingEntry(admissionId: number, generalInfo: Partial<AdmissionGeneralInfo>) {
     const [existingEntry] = await dbPostgres
         .select()
         .from(admissionGeneralInfo)

@@ -5,7 +5,8 @@ import {
     findGeneralInfoById,
     findGeneralInfoByApplicationFormId,
     updateGeneralInfo,
-    findByLoginIdAndPassword
+    findByLoginIdAndPassword,
+    checkExistingEntry
 } from "@/lib/services/adm-general-info.service";
 import { AdmissionGeneralInfo } from "@/db/schema";
 
@@ -62,6 +63,17 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get("id");
         const applicationFormId = searchParams.get("applicationFormId");
+        const admissionId = searchParams.get("admissionId");
+        const mobileNumber = searchParams.get("mobileNumber");
+
+        if (admissionId && mobileNumber) {
+            const entry = await checkExistingEntry(Number(admissionId), { mobileNumber: String(mobileNumber) });
+            if (entry) {
+                return NextResponse.json(entry, { status: 200 });
+            } else {
+                return NextResponse.json({ message: "No existing entry found" }, { status: 404 });
+            }
+        }
 
         if (id) {
             const generalInfo = await findGeneralInfoById(parseInt(id));
@@ -86,7 +98,7 @@ export async function GET(req: NextRequest) {
         }
 
         return NextResponse.json(
-            { message: "Either id or applicationFormId is required" },
+            { message: "Either id, applicationFormId, or (admissionId and mobileNumber) is required" },
             { status: 400 }
         );
     } catch (error) {

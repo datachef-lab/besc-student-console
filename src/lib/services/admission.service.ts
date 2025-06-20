@@ -77,6 +77,16 @@ export async function findAdmissionByYear(year: number): Promise<AdmissionDto | 
 
     if (!foundAdmission) return null;
 
+    // Auto-close if end date is past
+    const now = new Date();
+    const endDate = new Date(foundAdmission.lastDate!);
+    if (!foundAdmission.isClosed && endDate < now) {
+        await dbPostgres.update(admissions)
+            .set({ isClosed: true })
+            .where(eq(admissions.id, foundAdmission.id));
+        foundAdmission.isClosed = true;
+    }
+
     return await modelToDto(foundAdmission);
 }
 
@@ -87,6 +97,16 @@ export async function findAdmissionById(id: number): Promise<AdmissionDto | null
         .where(eq(admissions.id, id));
 
     if (!foundAdmission) return null;
+
+    // Auto-close if end date is past
+    const now = new Date();
+    const endDate = new Date(foundAdmission.lastDate!);
+    if (!foundAdmission.isClosed && endDate < now) {
+        await dbPostgres.update(admissions)
+            .set({ isClosed: true })
+            .where(eq(admissions.id, foundAdmission.id));
+        foundAdmission.isClosed = true;
+    }
 
     return await modelToDto(foundAdmission);
 }
@@ -300,6 +320,8 @@ interface GetApplicationFormsFilters {
     search?: string;
     formStatus?: string;
     paymentStatus?: string;
+    course?: string;
+    boardUniversity?: string;
 }
 
 export async function getApplicationFormsByAdmissionId(
@@ -318,7 +340,7 @@ export async function getApplicationFormsByAdmissionId(
             submittedAt: applicationForms.createdAt,
             name: sql<string>`${admissionGeneralInfo.firstName} || ' ' || ${admissionGeneralInfo.lastName}`.as('name'),
             category: categories.name,
-            religion: sql<string>`(SELECT ${religion.name} FROM ${admissionGeneralInfo} LEFT JOIN ${religion} ON ${admissionGeneralInfo.religionId} = ${religion.id} WHERE ${admissionGeneralInfo.applicationFormId} = ${applicationForms.id} LIMIT 1)`.as('religion'),
+            religion: sql<string>`COALESCE((SELECT ${religion.name} FROM ${admissionGeneralInfo} LEFT JOIN ${religion} ON ${admissionGeneralInfo.religionId} = ${religion.id} WHERE ${admissionGeneralInfo.applicationFormId} = ${applicationForms.id} LIMIT 1), (SELECT ${religion.name} FROM ${admissionAdditionalInfo} LEFT JOIN ${religion} ON ${admissionAdditionalInfo.religionId} = ${religion.id} WHERE ${admissionAdditionalInfo.applicationFormId} = ${applicationForms.id} LIMIT 1))`.as('religion'),
             annualIncome: annualIncomes.range,
             gender: admissionGeneralInfo.gender,
             isGujarati: admissionGeneralInfo.isGujarati,
@@ -353,6 +375,19 @@ export async function getApplicationFormsByAdmissionId(
     }
     if (filters.formStatus) {
         conditions.push(eq(applicationForms.formStatus, filters.formStatus as typeof admissionFormStatus.enumValues[number]));
+    }
+
+    // Add course filter
+    if (filters.course) {
+        conditions.push(
+            sql`(SELECT ${courses.name} FROM ${admissionCourseApplication} LEFT JOIN ${courses} ON ${admissionCourseApplication.admissionCourseId} = ${courses.id} WHERE ${admissionCourseApplication.applicationFormId} = ${applicationForms.id} LIMIT 1) = ${filters.course}`
+        );
+    }
+    // Add boardUniversity filter
+    if (filters.boardUniversity) {
+        conditions.push(
+            sql`(SELECT ${boardUniversities.name} FROM ${admissionAcademicInfo} LEFT JOIN ${boardUniversities} ON ${admissionAcademicInfo.boardUniversityId} = ${boardUniversities.id} WHERE ${admissionAcademicInfo.applicationFormId} = ${applicationForms.id} LIMIT 1) = ${filters.boardUniversity}`
+        );
     }
 
     // Apply search
