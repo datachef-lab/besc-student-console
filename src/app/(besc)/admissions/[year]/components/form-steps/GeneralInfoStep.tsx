@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
+import React, { useState, useEffect, Dispatch, SetStateAction, useRef } from "react";
 import {
   Input
 } from "@/components/ui/input";
@@ -333,6 +333,8 @@ export default function GeneralInfoStep({
   const [mobileOtp, setMobileOtp] = useState("");
   const [mobileVerified, setMobileVerified] = useState(false);
   const [sameAsMobile, setSameAsMobile] = useState(true);
+  const [mobileExists, setMobileExists] = useState(false);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Helper for DOB
   const dob = generalInfo.dateOfBirth ? new Date(generalInfo.dateOfBirth) : new Date();
@@ -470,6 +472,31 @@ export default function GeneralInfoStep({
       }
     }
   };
+
+  // Debounced check for existing mobile number
+  useEffect(() => {
+    if (!generalInfo.mobileNumber || !admission?.id) {
+      setMobileExists(false);
+      return;
+    }
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admissions/general-info?admissionId=${admission.id}&mobileNumber=${generalInfo.mobileNumber}`);
+        if (res.ok) {
+          setMobileExists(true);
+        } else {
+          setMobileExists(false);
+        }
+      } catch {
+        setMobileExists(false);
+      }
+    }, 500);
+    // Cleanup on unmount
+    return () => {
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    };
+  }, [generalInfo.mobileNumber, admission?.id]);
 
   return (
     <div className="space-y-6">
@@ -708,9 +735,12 @@ export default function GeneralInfoStep({
                   disabled={isGeneralInfoLocked || mobileVerified}
                   className="w-full"
                 />
+                {mobileExists && (
+                  <span className="text-red-600 text-xs mt-1">This mobile number is already registered for this admission year.</span>
+                )}
                 <div className="flex flex-col sm:flex-row gap-2">
                   {!mobileVerified && !mobileOtpSent && (
-                    <Button type="button" size="sm" className="w-full sm:w-auto" onClick={handleSendMobileOtp} disabled={isGeneralInfoLocked}>Send OTP</Button>
+                    <Button type="button" size="sm" className="w-full sm:w-auto" onClick={handleSendMobileOtp} disabled={isGeneralInfoLocked || mobileExists}>Send OTP</Button>
                   )}
                   {mobileOtpSent && !mobileVerified && (
                     <>
