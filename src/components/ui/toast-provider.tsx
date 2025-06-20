@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Toast } from "./toast";
 import { useToast } from "@/hooks/use-toast";
+import { ToastTitle, ToastDescription, ToastClose } from "./toast";
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const { toasts, removeToast } = useToast();
@@ -14,11 +15,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((toast) => (
           <Toast
             key={toast.id}
-            title={toast.title}
-            description={toast.description}
             variant={toast.variant}
-            onClose={() => typeof toast.id === 'number' && removeToast(toast.id)}
-          />
+          >
+            <ToastTitle>{toast.title}</ToastTitle>
+            {toast.description && <ToastDescription>{toast.description}</ToastDescription>}
+            <ToastClose onClick={() => typeof toast.id === 'number' && removeToast(toast.id)} />
+          </Toast>
         ))}
       </div>
     </>

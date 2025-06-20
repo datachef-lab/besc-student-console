@@ -85,7 +85,7 @@ export const admissionCourseApplicationRelations = relations(admissionCourseAppl
         references: [applicationForms.id]
     }),
     course: one(courses, {
-        fields: [admissionCourseApplication.courseId],
+        fields: [admissionCourseApplication.admissionCourseId!],
         references: [courses.id]
     }),
 }));

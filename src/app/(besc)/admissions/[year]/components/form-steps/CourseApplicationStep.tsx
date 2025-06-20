@@ -75,7 +75,7 @@ export default function CourseApplicationStep({
         title: "Validation Error",
         description: "Please fix the errors before proceeding",
         variant: "destructive",
-        onClose: () => {},
+        // onClose: () => {},
       });
       return;
     }
@@ -124,7 +124,7 @@ export default function CourseApplicationStep({
       toast({
         title: "Success",
         description: "Form saved successfully",
-        onClose: () => {},
+        // onClose: () => {},
       });
 
       onNext();
@@ -134,7 +134,7 @@ export default function CourseApplicationStep({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save form",
         variant: "destructive",
-        onClose: () => {},
+        // onClose: () => {},
       });
     } finally {
       setIsSubmitting(false);

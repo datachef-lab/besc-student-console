@@ -63,7 +63,7 @@ export default function PaymentStep({
       toast({
         title: "Success",
         description: "Payment information saved successfully.",
-        onClose: () => {}
+        // onClose: () => {}
       });
 
       // Navigate to next step
@@ -74,7 +74,7 @@ export default function PaymentStep({
         title: "Error",
         description: "Failed to save payment information. Please try again.",
         variant: "destructive",
-        onClose: () => {}
+        // onClose: () => {}
       });
     } finally {
       setIsLoading(false);

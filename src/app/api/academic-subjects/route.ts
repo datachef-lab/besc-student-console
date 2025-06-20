@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { dbPostgres } from "@/db";
 import { academicSubjects } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { createSubject, updateSubject, toggleSubjectStatus, getAllSubjects, getAllAcademicSubjects } from "@/lib/services/academic-subject.service";
+import { createSubject, updateSubject, toggleSubjectStatus, getAllSubjects } from "@/lib/services/academic-subject.service";
 
 export async function GET() {
   try {

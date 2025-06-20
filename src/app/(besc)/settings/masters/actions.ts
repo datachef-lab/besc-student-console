@@ -1,5 +1,6 @@
 "use server";
 
+import { Course } from "@/db/schema";
 import { createCourse as createCourseService, findAllDbCourses, updateCourse as updateCourseService } from "@/lib/services/course.service";
 
 import { revalidatePath } from "next/cache";
@@ -43,7 +44,7 @@ export async function uploadCoursesFromFile(formData: FormData) {
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
-    const coursesData = XLSX.utils.sheet_to_json(worksheet);
+    const coursesData = XLSX.utils.sheet_to_json(worksheet) as Course[];
 
     for (const course of coursesData) {
       if (course.amount !== undefined) {

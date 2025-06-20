@@ -231,7 +231,7 @@ export default function GeneralInfoStep({
         title: "Validation Error",
         description: "Please fix the errors before proceeding",
         variant: "destructive",
-        onClose: () => {},
+        // onClose: () => {},
       });
       return;
     }
@@ -298,7 +298,7 @@ export default function GeneralInfoStep({
       toast({
         title: "Success",
         description: "Form saved successfully",
-        onClose: () => {},
+        // onClose: () => {},
       });
 
       if (method === "POST" && data.applicationForm) {
@@ -314,7 +314,7 @@ export default function GeneralInfoStep({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save form",
         variant: "destructive",
-        onClose: () => {},
+        // onClose: () => {},
       });
     } finally {
       setIsSubmitting(false);

@@ -6,13 +6,6 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface ToastProps extends React.HTMLAttributes<HTMLDivElement> {
-  title: string;
-  description?: string;
-  variant?: 'default' | 'destructive';
-  onClose: () => void;
-}
-
 const ToastProvider = ToastPrimitives.Provider;
 
 const ToastViewport = React.forwardRef<

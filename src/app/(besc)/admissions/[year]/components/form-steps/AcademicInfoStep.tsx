@@ -203,7 +203,7 @@ export default function AcademicInfoStep({
           title: "Error",
           description: "Failed to load form data. Please refresh the page.",
           variant: "destructive",
-          onClose: () => {},
+          // onClose: () => {},
         });
       } finally {
         setIsLoading(false);
@@ -393,7 +393,7 @@ export default function AcademicInfoStep({
         title: "Validation Error",
         description: "Please fix the errors before proceeding",
         variant: "destructive",
-        onClose: () => {},
+        // onClose: () => {},
       });
       return;
     }
@@ -505,7 +505,7 @@ export default function AcademicInfoStep({
       toast({
         title: "Success",
         description: "Academic information saved successfully",
-        onClose: () => {},
+        // onClose: () => {},
       });
 
       onNext();
@@ -515,7 +515,7 @@ export default function AcademicInfoStep({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save academic information",
         variant: "destructive",
-        onClose: () => {},
+        // onClose: () => {},
       });
     } finally {
       setIsSubmitting(false);
@@ -610,7 +610,7 @@ export default function AcademicInfoStep({
       toast({
         title: "Draft Saved",
         description: "Your progress has been saved as a draft",
-        onClose: () => {},
+        // onClose: () => {},
       });
     } catch (error) {
       console.error("Error saving draft:", error);
@@ -618,7 +618,7 @@ export default function AcademicInfoStep({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save draft",
         variant: "destructive",
-        onClose: () => {},
+        // onClose: () => {},
       });
     } finally {
       setIsSubmitting(false);

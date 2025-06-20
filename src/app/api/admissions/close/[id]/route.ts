@@ -5,10 +5,10 @@ import { eq } from "drizzle-orm";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id, 10);
+    const id = parseInt((await params).id, 10);
     const body = await request.json();
     const { isClosed } = body as { isClosed: boolean };
 

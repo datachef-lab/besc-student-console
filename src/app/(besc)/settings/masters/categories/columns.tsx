@@ -70,7 +70,7 @@ export const columns: ColumnDef<Category>[] = [
       return (
         <div className="flex items-center gap-2">
           <AddCategoryDialog 
-            initialData={{ id: category.id, name: category.name }}
+            initialData={{ id: parseInt(category.id)  as number, name: category.name, code: "" }}
             trigger={
               <Button variant="ghost" size="icon">
                 <Pencil className="h-4 w-4" />
