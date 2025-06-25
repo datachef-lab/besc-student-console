@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -50,6 +50,7 @@ const steps = [
 ];
 
 export default function Page() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
     <div className="w-full flex flex-col min-h-screen bg-gradient-to-b from-purple-100 via-white to-purple-50 font-sans h-screen overflow-auto">
       {/* Navbar/Header */}
@@ -63,7 +64,8 @@ export default function Page() {
             />
             <span className="text-xl font-bold text-purple-800 tracking-tight">{COLLEGE_NAME}</span>
           </div>
-          <div className="flex items-center gap-6">
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-6">
             <Link href="#features" className="text-gray-700 font-medium hover:text-purple-700 transition">Features</Link>
             <Link href="#how" className="text-gray-700 font-medium hover:text-purple-700 transition">How it works</Link>
             <Link href="/admissions" className="text-gray-700 font-medium hover:text-purple-700 transition">Admissions</Link>
@@ -74,44 +76,69 @@ export default function Page() {
               Login
             </Link>
           </div>
+          {/* Hamburger for mobile */}
+          <button
+            className="md:hidden flex items-center justify-center p-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-400"
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            aria-label="Open menu"
+          >
+            <svg className="w-7 h-7 text-purple-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
         </nav>
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white/95 backdrop-blur border-b border-purple-100 shadow-lg px-6 py-4 flex flex-col gap-4 animate-fade-in z-40">
+            <Link href="#features" className="text-gray-700 font-medium hover:text-purple-700 transition" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+            <Link href="#how" className="text-gray-700 font-medium hover:text-purple-700 transition" onClick={() => setMobileMenuOpen(false)}>How it works</Link>
+            <Link href="/admissions" className="text-gray-700 font-medium hover:text-purple-700 transition" onClick={() => setMobileMenuOpen(false)}>Admissions</Link>
+            <Link
+              href="/login"
+              className="px-5 py-2 rounded-full border-2 border-purple-500 text-purple-700 font-semibold bg-white shadow hover:bg-purple-50 hover:text-purple-900 transition"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Login
+            </Link>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
-      <section className="relative w-full flex flex-col items-center justify-center pt-36 pb-24 px-4 min-h-[80vh] bg-gradient-to-br from-purple-400/30 via-white to-purple-200 overflow-hidden">
+      <section className="relative w-full flex flex-col items-center justify-center pt-[72px] md:pt-24 pb-10 px-1 min-h-[70vh] bg-gradient-to-br from-purple-400/30 via-white to-purple-200 overflow-hidden">
         {/* Floating shapes */}
         <div className="absolute top-10 left-10 w-32 h-32 bg-purple-200 rounded-full blur-2xl opacity-40 animate-pulse-slow" />
         <div className="absolute bottom-10 right-10 w-40 h-40 bg-purple-300 rounded-full blur-3xl opacity-30 animate-pulse-slow" />
         {/* Glassy Card */}
-        <div className="relative z-10 max-w-4xl w-full mx-auto rounded-3xl bg-white/60 backdrop-blur-lg shadow-2xl px-10 py-12 flex flex-col md:flex-row items-center gap-10 border border-purple-100">
-          <div className="flex-1 flex flex-col items-start justify-center">
-            <h1 className="text-5xl md:text-6xl font-extrabold mb-4 text-gray-900 leading-tight">
+        <div className="relative z-10 w-full max-w-4xl mx-auto rounded-3xl bg-white/60 backdrop-blur-lg shadow-2xl px-2 sm:px-4 md:px-10 md:py-12 flex flex-col md:flex-row items-center gap-6 md:gap-10 border border-purple-100">
+          <div className="flex-1 flex flex-col items-center md:items-start justify-center text-center md:text-left gap-3 w-full break-words">
+            <h1 className="w-full text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-extrabold mb-1 text-gray-900 leading-tight break-words">
               <span>BESC </span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-purple-700">College</span>
             </h1>
-            <h2 className="text-2xl font-semibold text-purple-600 mb-3">{COLLEGE_TAGLINE}</h2>
-            <p className="text-lg text-gray-700 mb-8 max-w-xl">{COLLEGE_MISSION}</p>
-            <div className="flex gap-4">
+            <h2 className="w-full text-base xs:text-lg sm:text-xl md:text-2xl font-semibold text-purple-600 mb-1 break-words">{COLLEGE_TAGLINE}</h2>
+            <p className="w-full text-sm xs:text-base sm:text-lg text-gray-700 mb-3 max-w-xl break-words">{COLLEGE_MISSION}</p>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-center md:justify-start">
               <Link
                 href="/admissions"
-                className="inline-block bg-gradient-to-r from-purple-500 to-purple-700 text-white font-bold px-8 py-3 rounded-full shadow-lg text-lg hover:scale-105 hover:from-purple-600 hover:to-purple-800 transition"
+                className="inline-block bg-gradient-to-r from-purple-500 to-purple-700 text-white font-bold px-6 py-3 rounded-full shadow-lg text-base sm:text-lg hover:scale-105 hover:from-purple-600 hover:to-purple-800 transition text-center w-full sm:w-auto"
               >
                 Apply for Admission
               </Link>
               <Link
                 href="/login"
-                className="inline-block bg-white border-2 border-purple-200 text-purple-700 font-bold px-8 py-3 rounded-full shadow hover:bg-purple-50 hover:text-purple-900 transition"
+                className="inline-block bg-white border-2 border-purple-200 text-purple-700 font-bold px-6 py-3 rounded-full shadow hover:bg-purple-50 hover:text-purple-900 transition text-center w-full sm:w-auto"
               >
                 Login
               </Link>
             </div>
           </div>
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center w-full md:w-auto mt-4 md:mt-0">
             <img
               src="/illustrations/landing-page-illustration.png"
               alt="Students Illustration"
-              className="w-full max-w-md drop-shadow-2xl animate-float rounded-md"
-              style={{ minHeight: 260 }}
+              className="max-w-full h-auto w-40 xs:w-48 sm:w-64 md:w-full max-w-[220px] sm:max-w-xs md:max-w-md drop-shadow-2xl animate-float rounded-md mx-auto"
+              style={{ minHeight: 120, maxHeight: 220, objectFit: 'contain' }}
             />
           </div>
         </div>
@@ -177,7 +204,7 @@ export default function Page() {
 
       {/* Footer */}
       <footer className="w-full bg-gradient-to-r from-purple-800 to-purple-900 border-t border-purple-900 py-4">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-center gap-2 px-6">
           <div className="flex items-center gap-3">
             <img src="/besc-logo.jpeg" alt={COLLEGE_NAME} className="w-7 h-7 rounded-full border border-purple-300 bg-white shadow" />
             <span className="text-base font-semibold text-white">{COLLEGE_NAME}</span>
@@ -196,13 +223,13 @@ export default function Page() {
               </a>
             </div>
           </div>
-          <div className="flex flex-col md:items-end items-center gap-1">
+          {/* <div className="flex flex-col md:items-end items-center gap-1">
             <div className="flex items-center gap-1 text-purple-200 text-sm">
               <span>Powered by</span>
               <img src="/datachef-logo.svg" alt="DataChef" className="w-6 h-6 rounded-full bg-white border border-purple-300" />
               <span className="font-bold text-white">DataChef</span>
             </div>
-          </div>
+          </div> */}
         </div>
       </footer>
       <style>{`
@@ -222,6 +249,13 @@ export default function Page() {
         }
         .transition-transform {
           transition: transform 0.3s cubic-bezier(0.4,0,0.6,1);
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.2s ease-in;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

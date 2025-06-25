@@ -114,7 +114,7 @@ export default function AdmissionsPage() {
   const isClosed = admission.isClosed;
 
   return (
-    <div className={"max-h-screen flex flex-col relative min-h-screen " + fontClass} style={{height: '100vh'}}>
+    <div className={"max-h-screen overflow-y-auto overflow-x-hidden flex flex-col relative min-h-screen " + fontClass} style={{height: '100vh'}}>
       {animatedBg}
       {floatingShapes}
       {/* Main Content Wrapper: flex column, center, shrink hero/table */}
@@ -155,38 +155,36 @@ export default function AdmissionsPage() {
           <section className="w-full max-w-xl mx-auto mt-4 px-1 md:px-0 relative z-10">
             <div className="mb-2 flex items-center">
               {accentBar}
-              <h2 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Courses Available</h2>
+              <h2 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Admission Details</h2>
             </div>
-            <div className="overflow-x-auto rounded-xl shadow bg-white/80 backdrop-blur border border-white/40 max-h-48 md:max-h-56 overflow-y-auto">
-              <table className="min-w-full text-xs md:text-sm rounded-xl overflow-hidden">
-                <thead className="bg-white/90">
-                  <tr>
-                    <th className="py-2 px-3 text-left font-semibold text-gray-700">Sr. No.</th>
-                    <th className="py-2 px-3 text-left font-semibold text-gray-700">Course</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {safeCourses.filter((c: any) => c && c.course && !c.disabled && !c.isClosed && !c.course.disabled).length === 0 ? (
-                    <tr>
-                      <td colSpan={2} className="py-3 text-center text-gray-500">No courses available for this admission.</td>
-                    </tr>
-                  ) : (
-                    safeCourses.filter((c: any) => c && c.course && !c.disabled && !c.isClosed && !c.course.disabled).map((c: any, idx: number) => (
-                      <tr key={c.id} className={"transition hover:bg-purple-50/40 " + (idx % 2 === 0 ? "bg-white/60" : "bg-white/40") }>
-                        <td className="py-2 px-3 text-gray-900 whitespace-nowrap font-semibold">{idx + 1}</td>
-                        <td className="py-2 px-3 text-gray-800 whitespace-nowrap font-medium">{c.course?.name || "Unnamed Course"}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div className="rounded-xl shadow bg-white/80 backdrop-blur border border-white/40 p-6 flex flex-col gap-4">
+              {/* Placeholder content for now */}
+              <div className="flex flex-col gap-2">
+                <div>
+                  <span className="font-semibold text-gray-700">Criteria:</span>
+                  <span className="ml-2 text-gray-600">Minimum 50% marks in 12th standard from a recognized board. Applicants must have English as a compulsory subject.</span>
+                </div>
+                {/* <div>
+                  <span className="font-semibold text-gray-700">Fees:</span>
+                  <span className="ml-2 text-gray-600">INR 25,000 per semester (includes tuition, library, and exam fees).</span>
+                </div> */}
+                <div>
+                  <span className="font-semibold text-gray-700">Eligible Boards:</span>
+                  <span className="ml-2 text-gray-600">CBSE, ISC, State Boards, and other recognized national/international boards.</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700">Other Information:</span>
+                  <span className="ml-2 text-gray-600">Scholarships available for meritorious students. Hostel facilities available on request. For detailed brochure, contact the admissions office.</span>
+                </div>
+              </div>
+              <div className="text-xs text-gray-400 italic">* These details will vary by institute and admission year.</div>
             </div>
           </section>
         )}
       </main>
       {/* Footer */}
       <footer className="w-full border-t border-transparent pt-3 pb-2 bg-transparent relative z-10 mt-auto">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2 px-4 text-xs text-gray-500">
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-center gap-2 px-4 text-xs text-gray-500">
           <div className="flex items-center gap-2">
             <Image src="/besc-logo.jpeg" alt="BESC Logo" width={20} height={20} className="rounded-full border border-purple-200" />
             <span className="font-semibold text-gray-700">The Bhawanipur Education Society College</span>
@@ -196,10 +194,7 @@ export default function AdmissionsPage() {
               <a href="#" className="text-purple-400 hover:text-purple-700" aria-label="LinkedIn"><svg fill="currentColor" viewBox="0 0 24 24" className="w-3 h-3"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11.75 20h-3v-10h3v10zm-1.5-11.268c-.966 0-1.75-.784-1.75-1.75s.784-1.75 1.75-1.75 1.75.784 1.75 1.75-.784 1.75-1.75 1.75zm15.25 11.268h-3v-5.604c0-1.337-.025-3.063-1.868-3.063-1.868 0-2.154 1.459-2.154 2.967v5.7h-3v-10h2.881v1.367h.041c.401-.761 1.381-1.563 2.841-1.563 3.039 0 3.6 2.001 3.6 4.599v5.597z"/></svg></a>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Image src="/datachef-logo.svg" alt="DataChef" width={16} height={16} className="rounded-full border border-purple-200 bg-white" />
-            <span className="font-bold text-gray-700">DataChef</span>
-          </div>
+          
         </div>
       </footer>
     </div>
