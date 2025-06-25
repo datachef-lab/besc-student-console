@@ -59,6 +59,10 @@ interface ApplicationFormStats {
   paymentDue: number;
 }
 
+interface Application {
+  id: number;
+}
+
 export default function AdmissionDetailsPage() {
   const params = useParams();
   const year = params.year as string;
@@ -97,16 +101,20 @@ export default function AdmissionDetailsPage() {
       });
 
       if (searchTerm) queryParams.append("search", searchTerm);
-      if (filters.category && filters.category !== "all") queryParams.append("category", filters.category);
-      if (filters.religion && filters.religion !== "all") queryParams.append("religion", filters.religion);
-      if (filters.annualIncome && filters.annualIncome !== "all") queryParams.append("annualIncome", filters.annualIncome);
-      if (filters.gender && filters.gender !== "all") queryParams.append("gender", filters.gender);
-      if (filters.isGujarati && filters.isGujarati !== "all") queryParams.append("isGujarati", filters.isGujarati);
-      if (filters.formStatus && filters.formStatus !== "all") queryParams.append("formStatus", filters.formStatus);
-      if (filters.course && filters.course !== "all") queryParams.append("course", filters.course);
-      if (filters.boardUniversity && filters.boardUniversity !== "all") queryParams.append("boardUniversity", filters.boardUniversity);
-
+      if (filters.category && filters.category !== "all" && filters.category !== "All") queryParams.append("category", filters.category);
+      if (filters.religion && filters.religion !== "all" && filters.religion !== "All") queryParams.append("religion", filters.religion);
+      if (filters.annualIncome && filters.annualIncome !== "all" && filters.annualIncome !== "All") queryParams.append("annualIncome", filters.annualIncome);
+      if (filters.gender && filters.gender !== "all" && filters.gender !== "All") queryParams.append("gender", filters.gender);
+      if (filters.isGujarati === "true" || filters.isGujarati === "false") {
+        queryParams.append("isGujarati", filters.isGujarati);
+      }
+      if (filters.formStatus && filters.formStatus !== "all" && filters.formStatus !== "All") queryParams.append("formStatus", filters.formStatus);
+      if (filters.course && filters.course !== "all" && filters.course !== "All") queryParams.append("course", filters.course);
+      if (filters.boardUniversity && filters.boardUniversity !== "all" && filters.boardUniversity !== "All") queryParams.append("boardUniversity", filters.boardUniversity);
+console.log('Frontend filters:', filters, tempFilters);
+console.log(`/api/admissions/${year}?${queryParams.toString()}`);
       const response = await fetch(`/api/admissions/${year}?${queryParams.toString()}`);
+
       const result = await response.json();
 
       if (!response.ok) {
@@ -114,6 +122,7 @@ export default function AdmissionDetailsPage() {
       }
       setAdmission(result.admission);
       setStats(result.stats);
+      console.log(result)
       setApplications(result.applications);
       setTotalItems(result.totalItems);
     } catch (error: any) {
@@ -130,6 +139,7 @@ export default function AdmissionDetailsPage() {
 
   const handleFilterChange = (field: string, value: string) => {
     setTempFilters((prev) => ({ ...prev, [field]: value === "all" ? "" : value }));
+    setFilters((prev) => ({ ...prev, [field]: value === "all" ? "" : value }));
   };
 
   const applyFilters = () => {
@@ -153,7 +163,7 @@ export default function AdmissionDetailsPage() {
     setTempFilters(emptyFilters);
     setFilters(emptyFilters);
     setCurrentPage(1);
-    fetchData();
+    setTimeout(() => fetchData(), 0);
   };
 
   const handlePageChange = (page: number) => {
@@ -267,10 +277,14 @@ export default function AdmissionDetailsPage() {
 
   const formStatusOptions = ["DRAFT", "PAYMENT_DUE", "PAYMENT_SUCCESS", "SUBMITTED", "APPROVED", "REJECTED"];
   const genderOptions = ["MALE", "FEMALE", "TRANSGENDER"];
-  const isGujaratiOptions = ["true", "false"];
+  const isGujaratiOptions = [
+    { label: "All", value: "all" },
+    { label: "Yes", value: "true" },
+    { label: "No", value: "false" }
+  ];
   const categoryOptions = ["General", "OBC", "SC", "ST"];
-  const religionOptions = ["Hindu", "Muslim", "Christian", "Sikh"];
-  const annualIncomeOptions = ["Below 2 LPA", "2-5 LPA", "5-10 LPA", "Above 10 LPA"];
+  const religionOptions = ["Hinduism", "Muslim", "Christian", "Sikh"];
+  const annualIncomeOptions = ["Below 2 LPA", "2-5 LPA", "5-10 LPA", "Above 10 LPA", "₹ 5 Lakh - ₹ 7.5 Lakh"];
   const courseOptions = ["B.Tech", "M.Tech", "MBA", "MCA", "BBA", "BCA"];
   const boardUniversityOptions = ["CBSE", "ICSE", "State Board", "Gujarat University", "Other"];
 
@@ -442,6 +456,7 @@ export default function AdmissionDetailsPage() {
                       Apply filters to narrow down the application forms.
                     </DialogDescription>
                   </DialogHeader>
+                  {/* {console.log('Dialog tempFilters:', tempFilters)} */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-4">
                     <FilterSelect
                       label="Category"
@@ -469,8 +484,8 @@ export default function AdmissionDetailsPage() {
                     />
                     <FilterSelect
                       label="Is Gujarati"
-                      options={isGujaratiOptions}
-                      value={tempFilters.isGujarati}
+                      options={["all", "true", "false"]}
+                      value={tempFilters.isGujarati || "all"}
                       onChange={(value) => handleFilterChange("isGujarati", value)}
                     />
                     <FilterSelect
@@ -770,13 +785,13 @@ const FilterSelect = ({
   value: string;
   onChange: (value: string) => void;
 }) => {
-  const currentValue = value || "all";
+  const displayValue = value || "all";
   return (
     <div className="w-full">
       <Label className="block text-sm font-medium text-gray-700 mb-2">
         {label}
       </Label>
-      <Select value={currentValue} onValueChange={onChange}>
+      <Select value={displayValue} onValueChange={onChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="All" />
         </SelectTrigger>
@@ -784,7 +799,13 @@ const FilterSelect = ({
           <SelectItem value="all">All</SelectItem>
           {options.map((option) => (
             <SelectItem key={option} value={option}>
-              {option}
+              {label === "Is Gujarati"
+                ? option === "true"
+                  ? "Yes"
+                  : option === "false"
+                  ? "No"
+                  : "All"
+                : option}
             </SelectItem>
           ))}
         </SelectContent>

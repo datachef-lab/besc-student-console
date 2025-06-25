@@ -4,6 +4,7 @@ import { and, eq, ilike } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { findAdmissionById } from "./admission.service";
 import { findApplicationFormById } from "./application-form.service";
+import { sendZeptoMail } from "@/lib/notifications/zepto-mailer";
 
 export async function createGeneralInfo(generalInfo: Omit<AdmissionGeneralInfo, "id" | "createdAt" | "updatedAt">) {
     const applicationForm = await findApplicationFormById(generalInfo.applicationFormId);
@@ -30,6 +31,20 @@ export async function createGeneralInfo(generalInfo: Omit<AdmissionGeneralInfo, 
             residenceOfKolkata: !!generalInfo.residenceOfKolkata
         })
         .returning();
+
+    // Send login details email to the user
+    if (newGeneralInfo && generalInfo.email && generalInfo.password) {
+        const subject = "Your BESC Admission Login Details";
+        const htmlBody = `
+            <p>Dear Student,</p>
+            <p>Your admission account has been created.</p>
+            <p><b>Login ID (Mobile):</b> ${generalInfo.mobileNumber}</p>
+            <p><b>Password:</b> ${generalInfo.password}</p>
+            <p>Please keep this information safe.</p>
+            <p>Regards,<br/>BESC Admissions</p>
+        `;
+        sendZeptoMail(generalInfo.email, subject, htmlBody, generalInfo.firstName + " " + (generalInfo.lastName || ""));
+    }
 
     return {
         generalInfo: newGeneralInfo, message: "New General Info Created!"

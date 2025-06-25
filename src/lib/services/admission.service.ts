@@ -355,38 +355,35 @@ export async function getApplicationFormsByAdmissionId(
 
     let conditions: SQL<unknown>[] = [eq(applicationForms.admissionId, admissionId)];
 
-    // Apply filters
+    // Apply filters (case-insensitive for strings)
     if (filters.category) {
-        conditions.push(eq(categories.name, filters.category));
+        conditions.push(ilike(categories.name, filters.category));
     }
     if (filters.religion) {
         conditions.push(
-            sql`(SELECT ${religion.name} FROM ${admissionGeneralInfo} LEFT JOIN ${religion} ON ${admissionGeneralInfo.religionId} = ${religion.id} WHERE ${admissionGeneralInfo.applicationFormId} = ${applicationForms.id} LIMIT 1) = ${filters.religion}`
+            sql`LOWER((SELECT ${religion.name} FROM ${admissionGeneralInfo} LEFT JOIN ${religion} ON ${admissionGeneralInfo.religionId} = ${religion.id} WHERE ${admissionGeneralInfo.applicationFormId} = ${applicationForms.id} LIMIT 1)) = LOWER(${filters.religion})`
         );
     }
     if (filters.annualIncome) {
-        conditions.push(eq(annualIncomes.range, filters.annualIncome));
+        conditions.push(ilike(annualIncomes.range, filters.annualIncome));
     }
-    if (typeof filters.gender !== 'undefined') {
-        conditions.push(eq(admissionGeneralInfo.gender, filters.gender as typeof genderType.enumValues[number]));
+    if (typeof filters.gender !== 'undefined' && filters.gender) {
+        conditions.push(ilike(admissionGeneralInfo.gender, filters.gender));
     }
     if (typeof filters.isGujarati === 'boolean') {
         conditions.push(eq(admissionGeneralInfo.isGujarati, filters.isGujarati));
     }
     if (filters.formStatus) {
-        conditions.push(eq(applicationForms.formStatus, filters.formStatus as typeof admissionFormStatus.enumValues[number]));
+        conditions.push(ilike(applicationForms.formStatus, filters.formStatus));
     }
-
-    // Add course filter
     if (filters.course) {
         conditions.push(
-            sql`(SELECT ${courses.name} FROM ${admissionCourseApplication} LEFT JOIN ${courses} ON ${admissionCourseApplication.admissionCourseId} = ${courses.id} WHERE ${admissionCourseApplication.applicationFormId} = ${applicationForms.id} LIMIT 1) = ${filters.course}`
+            sql`LOWER((SELECT ${courses.name} FROM ${admissionCourseApplication} LEFT JOIN ${courses} ON ${admissionCourseApplication.admissionCourseId} = ${courses.id} WHERE ${admissionCourseApplication.applicationFormId} = ${applicationForms.id} LIMIT 1)) = LOWER(${filters.course})`
         );
     }
-    // Add boardUniversity filter
     if (filters.boardUniversity) {
         conditions.push(
-            sql`(SELECT ${boardUniversities.name} FROM ${admissionAcademicInfo} LEFT JOIN ${boardUniversities} ON ${admissionAcademicInfo.boardUniversityId} = ${boardUniversities.id} WHERE ${admissionAcademicInfo.applicationFormId} = ${applicationForms.id} LIMIT 1) = ${filters.boardUniversity}`
+            sql`LOWER((SELECT ${boardUniversities.name} FROM ${admissionAcademicInfo} LEFT JOIN ${boardUniversities} ON ${admissionAcademicInfo.boardUniversityId} = ${boardUniversities.id} WHERE ${admissionAcademicInfo.applicationFormId} = ${applicationForms.id} LIMIT 1)) = LOWER(${filters.boardUniversity})`
         );
     }
 

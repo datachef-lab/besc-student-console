@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import { Course } from "@/db/schema";
+import { AdmissionDto } from "@/types/admissions";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -14,10 +16,13 @@ function formatDate(dateStr: string) {
 }
 
 export default function AdmissionsPage() {
-  const [admission, setAdmission] = useState<any>(null);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [admission, setAdmission] = useState<AdmissionDto | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Ensure courses is always an array
+  const safeCourses = Array.isArray(courses) ? courses : [];
 
   useEffect(() => {
     async function fetchAdmissionAndCourses() {
@@ -130,12 +135,12 @@ export default function AdmissionsPage() {
             {datePill(
               <svg className="w-3 h-3 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
               "Start Date",
-              formatDate(admission.startDate)
+              formatDate(admission.startDate!)
             )}
             {datePill(
               <svg className="w-3 h-3 text-pink-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
               "End Date",
-              formatDate(admission.lastDate || admission.endDate)
+              formatDate(admission.lastDate!)
             )}
           </div>
           {!isClosed && (
@@ -161,12 +166,12 @@ export default function AdmissionsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {courses.filter((c: any) => !c.disabled && !c.isClosed && c.course && !c.course.disabled).length === 0 ? (
+                  {safeCourses.filter((c: any) => c && c.course && !c.disabled && !c.isClosed && !c.course.disabled).length === 0 ? (
                     <tr>
                       <td colSpan={2} className="py-3 text-center text-gray-500">No courses available for this admission.</td>
                     </tr>
                   ) : (
-                    courses.filter((c: any) => !c.disabled && !c.isClosed && c.course && !c.course.disabled).map((c: any, idx: number) => (
+                    safeCourses.filter((c: any) => c && c.course && !c.disabled && !c.isClosed && !c.course.disabled).map((c: any, idx: number) => (
                       <tr key={c.id} className={"transition hover:bg-purple-50/40 " + (idx % 2 === 0 ? "bg-white/60" : "bg-white/40") }>
                         <td className="py-2 px-3 text-gray-900 whitespace-nowrap font-semibold">{idx + 1}</td>
                         <td className="py-2 px-3 text-gray-800 whitespace-nowrap font-medium">{c.course?.name || "Unnamed Course"}</td>
