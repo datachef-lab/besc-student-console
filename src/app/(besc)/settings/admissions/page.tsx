@@ -336,7 +336,7 @@ export default function AdmissionsPage() {
             open={isCreateDialogOpen}
             setOpen={setIsCreateDialogOpen}
             onCreate={handleCreateAdmission}
-            academicYears={allAcademicYears}
+            academicYears={allAcademicYears.filter(y => typeof y.id === 'number').map(y => ({ id: y.id as number, year: y.year }))}
             academicYearId={newAdmissionAcademicYearId}
             onAcademicYearChange={setNewAdmissionAcademicYearId}
           />
@@ -592,7 +592,7 @@ export default function AdmissionsPage() {
           admissionId={selectedAdmission.id}
           allCourses={allCourses}
           refetchData={fetchData}
-          allAcademicYears={allAcademicYears}
+          allAcademicYears={allAcademicYears.filter(y => typeof y.id === 'number').map(y => ({ id: y.id as number, year: y.year }))}
         />
       )}
     </div>
