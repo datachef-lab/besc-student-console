@@ -1,5 +1,5 @@
 import {dbPostgres} from "@/db";
-import { Admission, admissions, applicationForms, admissionGeneralInfo, categories, religion, annualIncomes, admissionAdditionalInfo, genderType, admissionFormStatus, admissionCourses, courses, boardUniversities, admissionAcademicInfo, admissionCourseApplication } from "@/db/schema";
+import { Admission, admissions, applicationForms, admissionGeneralInfo, categories, religion, annualIncomes, admissionAdditionalInfo, genderType, admissionFormStatus, admissionCourses, courses, boardUniversities, admissionAcademicInfo, admissionCourseApplications, academicYears } from "@/db/schema";
 import { count, desc, eq, and, sql, ilike, or, SQL } from "drizzle-orm";
 import { createAdmissionCourse, findAdmissionCoursesByAdmissionId } from "./adm-admision-courses.service";
 import { AdmissionDto } from "@/types/admissions";
@@ -8,7 +8,7 @@ export async function createAdmission(admission: Admission): Promise<AdmissionDt
     const [foundAdmission] = await dbPostgres
         .select()
         .from(admissions)
-        .where(eq(admissions.year, admission.year));
+        .where(eq(admissions.academicYearId, admission.academicYearId));
 
     if (foundAdmission) return null;
 
@@ -28,7 +28,7 @@ export async function createAdmissionWithCourses(admission: Admission, courseIds
     const [foundAdmission] = await dbPostgres
         .select()
         .from(admissions)
-        .where(eq(admissions.year, admission.year));
+        .where(eq(admissions.academicYearId, admission.academicYearId));
 
     if (foundAdmission) return null;
 
@@ -70,10 +70,11 @@ export async function createAdmissionWithCourses(admission: Admission, courseIds
 }
 
 export async function findAdmissionByYear(year: number): Promise<AdmissionDto | null> {
-    const [foundAdmission] = await dbPostgres
+    const [{ admissions: foundAdmission}] = await dbPostgres
         .select()
         .from(admissions)
-        .where(eq(admissions.year, year));
+        .leftJoin(academicYears, eq(academicYears.id, admissions.academicYearId))
+        .where(ilike(academicYears.year, String(year)));
 
     if (!foundAdmission) return null;
 
@@ -122,13 +123,10 @@ export async function findAllAdmissions(page: number = 1, size: number = 10, fil
         query.where(eq(admissions.isClosed, filters.isClosed));
     }
 
-    if (filters?.isArchived !== undefined) {
-        query.where(eq(admissions.isArchived, filters.isArchived));
-    }
-
     const admissionsList = await query;
 
-    return await Promise.all(admissionsList.map(async (adm) => await modelToDto(adm)));
+    const dtos = await Promise.all(admissionsList.map(async (adm) => await modelToDto(adm)));
+    return dtos.filter((dto): dto is AdmissionDto => dto !== null);
 }
 
 export async function updateAdmission(id: number, admission: Partial<Admission>): Promise<AdmissionDto | null> {
@@ -170,10 +168,17 @@ export async function deleteAdmission(id: number) {
     return deletedAdmission;
 }
 
-async function modelToDto(adm: Admission) {
+async function modelToDto(adm: Admission): Promise<AdmissionDto | null> {
+    if (!adm) return null;
+    
     const courses = await findAdmissionCoursesByAdmissionId(adm.id!);
+    const [academicYear] = await dbPostgres
+        .select()
+        .from(academicYears)
+        .where(eq(academicYears.id, adm.academicYearId));
     return {
         ...adm,
+        academicYear,
         courses
     }
 }
@@ -211,7 +216,7 @@ export async function findAllAdmissionSummary(page: number = 1, size: number = 1
     const admissionsObjs = await dbPostgres
         .select({
             id: admissions.id,
-            admissionYear: admissions.year,
+            admissionYear: academicYears.year,
             isClosed: admissions.isClosed,
 
             totalApplications: sql`COUNT(application_forms.id)`.as('totalApplications'),
@@ -226,10 +231,11 @@ export async function findAllAdmissionSummary(page: number = 1, size: number = 1
         })
         .from(admissions)
         .leftJoin(applicationForms, eq(applicationForms.admissionId, admissions.id))
-        .groupBy(admissions.id, admissions.year)
+        .leftJoin(academicYears, eq(academicYears.id, admissions.academicYearId))
+        .groupBy(admissions.id, admissions.academicYearId, academicYears.year, admissions.isClosed)
         .limit(size)
         .offset(offset)
-        .orderBy(desc(admissions.year));
+        .orderBy(desc(admissions.academicYearId));
 
     return admissionsObjs;
 }
@@ -344,7 +350,7 @@ export async function getApplicationFormsByAdmissionId(
             annualIncome: annualIncomes.range,
             gender: admissionGeneralInfo.gender,
             isGujarati: admissionGeneralInfo.isGujarati,
-            course: sql<string>`(SELECT ${courses.name} FROM ${admissionCourseApplication} LEFT JOIN ${courses} ON ${admissionCourseApplication.admissionCourseId} = ${courses.id} WHERE ${admissionCourseApplication.applicationFormId} = ${applicationForms.id} LIMIT 1)`.as('course'),
+            course: sql<string>`(SELECT ${courses.name} FROM ${admissionCourseApplications} LEFT JOIN ${courses} ON ${admissionCourseApplications.admissionCourseId} = ${courses.id} WHERE ${admissionCourseApplications.applicationFormId} = ${applicationForms.id} LIMIT 1)`.as('course'),
             boardUniversity: sql<string>`(SELECT ${boardUniversities.name} FROM ${admissionAcademicInfo} LEFT JOIN ${boardUniversities} ON ${admissionAcademicInfo.boardUniversityId} = ${boardUniversities.id} WHERE ${admissionAcademicInfo.applicationFormId} = ${applicationForms.id} LIMIT 1)`.as('boardUniversity')
         })
         .from(applicationForms)
@@ -378,7 +384,7 @@ export async function getApplicationFormsByAdmissionId(
     }
     if (filters.course) {
         conditions.push(
-            sql`LOWER((SELECT ${courses.name} FROM ${admissionCourseApplication} LEFT JOIN ${courses} ON ${admissionCourseApplication.admissionCourseId} = ${courses.id} WHERE ${admissionCourseApplication.applicationFormId} = ${applicationForms.id} LIMIT 1)) = LOWER(${filters.course})`
+            sql`LOWER((SELECT ${courses.name} FROM ${admissionCourseApplications} LEFT JOIN ${courses} ON ${admissionCourseApplications.admissionCourseId} = ${courses.id} WHERE ${admissionCourseApplications.applicationFormId} = ${applicationForms.id} LIMIT 1)) = LOWER(${filters.course})`
         );
     }
     if (filters.boardUniversity) {

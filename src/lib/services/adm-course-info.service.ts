@@ -1,15 +1,15 @@
 import {dbPostgres} from "@/db";
-import { admissionCourseApplication, AdmissionCourseApplication } from "@/db/schema";
+import { admissionCourseApplications, AdmissionCourseApplication } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 
 export async function createAdmissionCourse(givenCourse: AdmissionCourseApplication) {
     const [existingEntry] = await dbPostgres
         .select()
-        .from(admissionCourseApplication)
+        .from(admissionCourseApplications)
         .where(
             and(
-                eq(admissionCourseApplication.applicationFormId, givenCourse.applicationFormId),
-                eq(admissionCourseApplication.admissionCourseId, givenCourse.admissionCourseId),
+                eq(admissionCourseApplications.applicationFormId, givenCourse.applicationFormId),
+                eq(admissionCourseApplications.admissionCourseId, givenCourse.admissionCourseId),
             )
         );
 
@@ -18,7 +18,7 @@ export async function createAdmissionCourse(givenCourse: AdmissionCourseApplicat
     }
 
     const [newCourse] = await dbPostgres
-        .insert(admissionCourseApplication)
+        .insert(admissionCourseApplications)
         .values(givenCourse)
         .returning();
 
@@ -32,8 +32,8 @@ export async function createAdmissionCourse(givenCourse: AdmissionCourseApplicat
 export async function findAdmissionCourseById(id: number) {
     const [course] = await dbPostgres
         .select()
-        .from(admissionCourseApplication)
-        .where(eq(admissionCourseApplication.id, id));
+        .from(admissionCourseApplications)
+        .where(eq(admissionCourseApplications.id, id));
 
     return course || null;
 }
@@ -42,8 +42,8 @@ export async function findAdmissionCourseById(id: number) {
 export async function findAdmissionCoursesByApplicationFormId(applicationFormId: number) {
     const courses = await dbPostgres
         .select()
-        .from(admissionCourseApplication)
-        .where(eq(admissionCourseApplication.applicationFormId, applicationFormId));
+        .from(admissionCourseApplications)
+        .where(eq(admissionCourseApplications.applicationFormId, applicationFormId));
 
     return courses;
 }
@@ -53,9 +53,9 @@ export async function updateAdmissionCourse(course: AdmissionCourseApplication) 
     if (!course.id) return null;
 
     const [updatedCourse] = await dbPostgres
-        .update(admissionCourseApplication)
+        .update(admissionCourseApplications)
         .set(course)
-        .where(eq(admissionCourseApplication.id, course.id))
+        .where(eq(admissionCourseApplications.id, course.id))
         .returning();
 
     return updatedCourse;
@@ -64,8 +64,8 @@ export async function updateAdmissionCourse(course: AdmissionCourseApplication) 
 // ✅ Delete
 export async function deleteAdmissionCourse(id: number) {
     const deleted = await dbPostgres
-        .delete(admissionCourseApplication)
-        .where(eq(admissionCourseApplication.id, id));
+        .delete(admissionCourseApplications)
+        .where(eq(admissionCourseApplications.id, id));
 
     return deleted.length > 0;
 }
@@ -73,8 +73,8 @@ export async function deleteAdmissionCourse(id: number) {
 export async function findCourseApplicationByApplicationFormId(applicationFormId: number) {
     const results = await dbPostgres
         .select()
-        .from(admissionCourseApplication)
-        .where(eq(admissionCourseApplication.applicationFormId, applicationFormId));
+        .from(admissionCourseApplications)
+        .where(eq(admissionCourseApplications.applicationFormId, applicationFormId));
 
     return results;
 }

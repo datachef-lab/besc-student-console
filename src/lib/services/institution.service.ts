@@ -20,7 +20,7 @@ export async function getInstitutionById(id: number) {
 
 export async function createInstitution(name: string, degreeId: number, addressId?: number, sequence?: number): Promise<InstitutionResult> {
   try {
-    const [newInstitution] = await dbPostgres.insert(institutions).values({ name, degreeId, addressId, sequence }).returning();
+    const [newInstitution] = await dbPostgres.insert(institutions).values({ name, degreeId, addressId, sequence: sequence }).returning();
     return { success: true, message: "Institution created successfully.", data: newInstitution };
   } catch (error) {
     console.error("Error creating institution:", error);
@@ -30,7 +30,7 @@ export async function createInstitution(name: string, degreeId: number, addressI
 
 export async function updateInstitution(id: number, name: string, degreeId: number, addressId?: number, sequence?: number): Promise<InstitutionResult> {
   try {
-    const [updatedInstitution] = await dbPostgres.update(institutions).set({ name, degreeId, addressId, sequence, updatedAt: new Date().toISOString() }).where(eq(institutions.id, id)).returning();
+    const [updatedInstitution] = await dbPostgres.update(institutions).set({ name, degreeId, addressId, sequence: sequence, updatedAt: new Date().toISOString() }).where(eq(institutions.id, id)).returning();
 
     if (!updatedInstitution) {
       return { success: false, error: "Institution not found." };

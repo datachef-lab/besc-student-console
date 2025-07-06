@@ -10,14 +10,15 @@ import {
   PaymentStep,
 } from "@/app/(besc)/admissions/[year]/components";
 import Image from "next/image";
-import { Admission, AdmissionGeneralInfo, ApplicationForm } from "@/db/schema";
-import { useParams, useRouter } from "next/navigation";
-import { AdmissionAcademicInfoDto, BoardUniversityDto } from "@/types/admissions";
-import { AcademicSubjects, BoardUniversity, Payment, SportsInfo, StudentAcademicSubjects } from "@/db/schema";
+// import { Admission, AdmissionGeneralInfo, ApplicationForm } from "@/db/schema";
+// import { useParams, useRouter } from "next/navigation";
+// import { AdmissionAcademicInfoDto, BoardUniversityDto } from "@/types/admissions";
+// import { BoardUniversity, Payment, SportsInfo, StudentAcademicSubjects } from "@/db/schema";
 import { useApplicationForm } from "@/hooks/use-application-form";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { ContinueApplicationModal } from "@/components/admissions/ContinueApplicationModal";
+import { AdmissionAcademicInfoDto } from "@/types/admissions";
 
 // Notes for each step
 const stepNotes: Record<number, React.ReactNode> = {
@@ -147,7 +148,7 @@ export default function AdmissionForm() {
     languageMediumId: 0,
     yearOfPassing: new Date().getFullYear(),
     streamType: "SCIENCE",
-    isRegisteredForUGInCU: false,
+    isRegisteredForUgInCu: false,
     subjects: []
   });
   const [isModalOpen, setIsModalOpen] = useState(false);

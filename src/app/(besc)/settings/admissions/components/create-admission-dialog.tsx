@@ -16,8 +16,9 @@ type CreateAdmissionDialogProps = {
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>
     onCreate: (courseIds: number[], startDate: string, endDate: string) => Promise<void>;
-    year: number;
-    onYearChange: (year: number) => void;
+    academicYears: { id: number; year: string }[];
+    academicYearId: number | null;
+    onAcademicYearChange: (id: number) => void;
 }
 
 // Utility functions
@@ -56,8 +57,9 @@ export default function CreateAdmissionDialog({
     open,
     setOpen,
     onCreate,
-    year,
-    onYearChange
+    academicYears,
+    academicYearId,
+    onAcademicYearChange
 }: CreateAdmissionDialogProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
@@ -145,12 +147,6 @@ export default function CreateAdmissionDialog({
     setOpen(false);
   };
 
-  const handleYearChange = (value: string) => {
-    // Only allow numeric values
-    const numericValue = value.replace(/[^0-9]/g, '');
-    onYearChange(Number(numericValue) || new Date().getFullYear());
-  };
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -166,13 +162,17 @@ export default function CreateAdmissionDialog({
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="year">Admission Year</Label>
-            <Input
+            <select
               id="year"
-              type="text"
-              placeholder="Enter year (e.g., 2024)"
-              value={year}
-              onChange={(e) => handleYearChange(e.target.value)}
-            />
+              value={academicYearId || ''}
+              onChange={e => onAcademicYearChange(Number(e.target.value))}
+              className="w-full border rounded px-3 py-2 bg-transparent"
+            >
+              <option value="">Select Academic Year</option>
+              {academicYears.map(year => (
+                <option key={year.id} value={year.id}>{year.year}</option>
+              ))}
+            </select>
           </div>
           <div className="flex gap-4">
             <div className="grid gap-2 w-1/2">

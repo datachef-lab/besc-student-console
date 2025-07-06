@@ -1,2 +1,0 @@
-ALTER TABLE "colleges" ADD COLUMN "degree_id_fk" integer;--> statement-breakpoint
-ALTER TABLE "colleges" ADD CONSTRAINT "colleges_degree_id_fk_degree_id_fk" FOREIGN KEY ("degree_id_fk") REFERENCES "public"."degree"("id") ON DELETE no action ON UPDATE no action;

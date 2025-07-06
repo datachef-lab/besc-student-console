@@ -23,9 +23,9 @@ export async function POST(req: NextRequest) {
         }
 
         const otpCode = await generateOtp(type, recipient);
-
+console.log("otpCode:", otpCode);
         // Now, send the OTP
-        if (type === "FOR_EMAIL") {
+        if (type == "FOR_EMAIL") {
             await sendZeptoMail(recipient, "Email Verify", `${otpCode} is your code. This only valid for 3min.`)
             return NextResponse.json(
                 { message: "OTP generated and sent successfully!" },
@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
             );
 
         }
-        else if (type === "FOR_PHONE") {
-            const notificationData = await sendWhatsAppMessage(recipient, [otpCode], "logincode");
+        else if (type == "FOR_PHONE") {
+            const notificationData = await sendWhatsAppMessage(recipient, [otpCode], "OTP");
     
             // if (!notificationData.result) {
             //     console.error("Failed to send notification:", notificationData.message);

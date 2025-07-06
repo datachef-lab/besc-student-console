@@ -1,8 +1,8 @@
 import {dbPostgres} from "@/db"
-import { studentAcademicSubjects, StudentAcademicSubjects } from "@/db/schema"
+import { studentAcademicSubjects, StudentAcademicSubject } from "@/db/schema"
 import { and, eq } from "drizzle-orm"
 
-export async function createSubject(subject: Omit<StudentAcademicSubjects, "id" | "createdAt" | "updatedAt">) {
+export async function createSubject(subject: Omit<StudentAcademicSubject, "id" | "createdAt" | "updatedAt">) {
     // Remove any createdAt/updatedAt fields and set updatedAt to now
     // delete (subject as any).createdAt;
     // delete (subject as any).updatedAt;
@@ -61,7 +61,7 @@ export async function findSubjectsByAcademicInfoId(admissionAcademicInfoId: numb
     return subjects;
 }
 
-export async function updateSubject(subject: Omit<StudentAcademicSubjects, "createdAt" | "updatedAt">) {
+export async function updateSubject(subject: Omit<StudentAcademicSubject, "createdAt" | "updatedAt">) {
     if (!subject.id) throw new Error("Subject ID is required for update.");
 
     const [updated] = await dbPostgres

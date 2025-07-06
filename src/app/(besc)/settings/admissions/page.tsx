@@ -22,7 +22,7 @@ import CreateAdmissionDialog from "./components/create-admission-dialog";
 import AdmissionsStats from "./components/admissions-stats";
 import AdmissionConfigureDialog from './components/AdmissionConfigureDialog';
 import { getCourses } from "./action";
-import { Course } from "@/db/schema";
+import { Course, AcademicYear } from "@/db/schema";
 
 export interface Stats {
   admissionYearCount: number;
@@ -67,13 +67,12 @@ export default function AdmissionsPage() {
   const [totalItems, setTotalItems] = useState(0);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newAdmissionYear, setNewAdmissionYear] = useState<number>(
-    new Date().getFullYear()
-  );
+  const [newAdmissionAcademicYearId, setNewAdmissionAcademicYearId] = useState<number | null>(null);
 
   const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
   const [selectedAdmission, setSelectedAdmission] = useState<AdmissionSummary | null>(null);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
+  const [allAcademicYears, setAllAcademicYears] = useState<AcademicYear[]>([]);
 
   const fetchData = async () => {
     try {
@@ -109,7 +108,16 @@ export default function AdmissionsPage() {
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, itemsPerPage]);
+    // Fetch academic years
+    fetch('/api/academic-years')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) {
+          setAllAcademicYears(json.data);
+          if (json.data.length > 0) setNewAdmissionAcademicYearId(json.data[0].id);
+        }
+      });
+  }, []);
 
   const filteredData = useMemo(() => {
     if (!searchTerm) return data;
@@ -247,18 +255,18 @@ export default function AdmissionsPage() {
 
   const handleCreateAdmission = async (courseIds: number[], startDate: string, endDate: string) => {
     try {
-      const year = newAdmissionYear;
-      if (isNaN(year)) {
-        toast.error("Please enter a valid year");
+      const academicYearId = newAdmissionAcademicYearId;
+      if (!academicYearId) {
+        toast.error('Please select an academic year');
         return;
       }
-      const response = await fetch("/api/admissions", {
-        method: "POST",
+      const response = await fetch('/api/admissions', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          year,
+        body: JSON.stringify({
+          academicYearId,
           courseIds,
           startDate,
           endDate
@@ -270,7 +278,7 @@ export default function AdmissionsPage() {
       }
       toast.success("Admission created successfully");
       setIsCreateDialogOpen(false);
-      setNewAdmissionYear(new Date().getFullYear());
+      setNewAdmissionAcademicYearId(null);
       fetchData(); // Refresh the data
     } catch (error: any) {
       console.error("Error creating admission:", error);
@@ -328,8 +336,9 @@ export default function AdmissionsPage() {
             open={isCreateDialogOpen}
             setOpen={setIsCreateDialogOpen}
             onCreate={handleCreateAdmission}
-            onYearChange={(year) => setNewAdmissionYear(year)}
-            year={newAdmissionYear}
+            academicYears={allAcademicYears}
+            academicYearId={newAdmissionAcademicYearId}
+            onAcademicYearChange={setNewAdmissionAcademicYearId}
           />
         </div>
 
@@ -583,6 +592,7 @@ export default function AdmissionsPage() {
           admissionId={selectedAdmission.id}
           allCourses={allCourses}
           refetchData={fetchData}
+          allAcademicYears={allAcademicYears}
         />
       )}
     </div>

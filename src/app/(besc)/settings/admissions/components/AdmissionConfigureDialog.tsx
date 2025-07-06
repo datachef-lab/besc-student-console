@@ -33,6 +33,7 @@ interface AdmissionConfigureDialogProps {
     refetchData: () => Promise<void>;
     admissionId: number;
     allCourses: Course[];
+    allAcademicYears: { id: number; year: string }[];
 }
 
 // Utility functions
@@ -64,6 +65,7 @@ export default function AdmissionConfigureDialog({
     admissionId,
     refetchData,
     allCourses,
+    allAcademicYears,
 }: AdmissionConfigureDialogProps) {
     const [admission, setAdmission] = useState<AdmissionDto | null>(null);
     const [localAdmission, setLocalAdmission] = useState<AdmissionDto | null>(null);
@@ -158,7 +160,7 @@ export default function AdmissionConfigureDialog({
             // Prepare the data for the API call
             const updateData = {
                 id: localAdmission.id,
-                year: localAdmission.year,
+                academicYearId: localAdmission.academicYearId,
                 startDate: localAdmission.startDate,
                 endDate: localAdmission.lastDate, // API expects endDate
                 isClosed: localAdmission.isClosed,
@@ -292,11 +294,6 @@ export default function AdmissionConfigureDialog({
         });
     };
 
-    const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const year = e.target.value.replace(/[^0-9]/g, '');
-        setLocalAdmission(prev => prev ? { ...prev, year: parseInt(year) || 0 } : null);
-    };
-
     const handleStartDateChange = (date: Date | null) => {
         setLocalAdmission(prev => prev ? { 
             ...prev, 
@@ -332,12 +329,16 @@ export default function AdmissionConfigureDialog({
                             <div className="flex justify-between items-center gap-2">
                                 <div className="grid gap-2 w-1/3">
                                     <Label>Admission Year</Label>
-                                    <Input
-                                        type="text"
-                                        value={localAdmission?.year || ''}
-                                        onChange={handleYearChange}
-                                        placeholder="e.g. 2026"
-                                    />
+                                    <select
+                                        value={localAdmission?.academicYearId || ''}
+                                        onChange={e => setLocalAdmission(prev => prev ? { ...prev, academicYearId: Number(e.target.value) } : null)}
+                                        className="w-full border rounded px-3 py-2 bg-transparent"
+                                    >
+                                        <option value="">Select Academic Year</option>
+                                        {allAcademicYears.map(year => (
+                                            <option key={year.id} value={year.id}>{year.year}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="grid gap-2 w-1/3">
                                     

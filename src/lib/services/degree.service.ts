@@ -62,7 +62,10 @@ export async function uploadDegreesFromFile(formData: FormData): Promise<AddDegr
       };
     }
 
-    await dbPostgres.insert(degree).values(validDegrees);
+    await dbPostgres.insert(degree).values(validDegrees.map(d => ({
+      ...d,
+      sequence: d.sequence,
+    })));
 
     return {
       success: true,
@@ -82,7 +85,7 @@ export async function getAllDegrees() {
     .select()
     .from(degree)
     .where(eq(degree.disabled, false))
-    .orderBy(degree.sequence);
+    .orderBy(degree.id);
 }
 
 export async function getDegreeById(id: number) {

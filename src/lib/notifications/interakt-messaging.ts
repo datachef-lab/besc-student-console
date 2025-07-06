@@ -5,7 +5,7 @@ const INTERAKT_BASE_URL = process.env.INTERAKT_BASE_URL!;
 const DEVELOPER_PHONE = process.env.DEVELOPER_PHONE;
 const NODE_ENV = process.env.NODE_ENV;
 
-export const sendWhatsAppMessage = async (to: string, messageArr: string[] = [], templateName: string = "logincode") => {
+export const sendWhatsAppMessage = async (to: string, messageArr: string[] = [], templateName: string = "OTP") => {
     console.log("messageArr:", messageArr);
     try {
         // Use developer phone in development mode

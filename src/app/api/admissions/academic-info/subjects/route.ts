@@ -6,12 +6,12 @@ import {
     findSubjectsByAcademicInfoId,
     updateSubject
 } from "@/lib/services/adm-student-subject.service";
-import { StudentAcademicSubjects } from "@/db/schema";
+import { StudentAcademicSubject } from "@/db/schema";
 
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const result = await createSubject(body as StudentAcademicSubjects);
+        const result = await createSubject(body as StudentAcademicSubject);
 
         if (result.message === "Subject already exists for this academic info.") {
             return NextResponse.json(
@@ -82,7 +82,7 @@ export async function PUT(req: NextRequest) {
             const updatedSubject = await updateSubject({
                 ...body,
                 id: parseInt(id)
-            } as StudentAcademicSubjects);
+            } as StudentAcademicSubject);
 
             if (!updatedSubject) {
                 return NextResponse.json(

@@ -183,8 +183,8 @@ export const ApplicationFormProvider: React.FC<
           formStatus: "DRAFT",
           paymentInfo: null,
           currentStep: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
 
         setApplicationForm(emptyForm);
@@ -206,8 +206,8 @@ export const ApplicationFormProvider: React.FC<
           formStatus: "DRAFT",
           paymentInfo: null,
           currentStep: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
         return null;
       } finally {

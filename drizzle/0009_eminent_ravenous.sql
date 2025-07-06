@@ -1,1 +1,0 @@
-ALTER TABLE "colleges" ADD COLUMN "sequence" integer;

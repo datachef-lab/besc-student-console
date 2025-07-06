@@ -292,7 +292,7 @@ console.log(`/api/admissions/${year}?${queryParams.toString()}`);
     <div className="">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admission Details - {admission.year}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Admission Details - {admission.academicYear.year}</h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => window.open(`/api/admissions/${year}/download-report`, '_blank')}>
               <FileText className="w-4 h-4 mr-2" />

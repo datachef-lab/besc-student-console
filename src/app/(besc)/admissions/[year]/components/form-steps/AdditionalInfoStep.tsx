@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import SingleParentModal from './SingleParentModal';
 import { ReactNode } from 'react';
-import { AnnualIncome, ApplicationForm, BloodGroup, Category, Religion, SportsCategory, SportsInfo, collegeDepartment, AdmissionGeneralInfo, sportsLevelType, personTitleType } from "@/db/schema";
+import { AnnualIncome, ApplicationForm, BloodGroup, Category, Religion, SportsCategory, SportsInfo, AdmissionGeneralInfo, sportsLevel as sportsLevelType, personTitleType, Department } from "@/db/schema";
 import { AdmissionAdditionalInfoDto } from "@/types/admissions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -23,7 +23,6 @@ interface AdditionalInfoStepProps {
 }
 
 const sportsLevels = sportsLevelType.enumValues;
-const collegeDepartments = collegeDepartment.enumValues;
 
 // Define available sports levels
 const SPORTS_LEVELS = [
@@ -43,17 +42,19 @@ export default function AdditionalInfoStep({
 }: AdditionalInfoStepProps) {
   const { applicationForm } = useApplicationForm();
   // Initialize state from applicationForm.additionalInfo or with defaults
+  const [departmentArr, setDepartmentArr] = useState<Department[]>([]);
   const [additionalInfo, setAdditionalInfo] = useState<AdmissionAdditionalInfoDto>(
     applicationForm?.additionalInfo || {
       applicationFormId: applicationForm?.id || 0,
+      
       annualIncomeId: 0,
       bloodGroupId: 0,
       categoryId: 0,
       religionId: 0,
       alternateMobileNumber: "",
-      applyUnderNCCCategory: false,
+      applyUnderNccCategory: false,
       applyUnderSportsCategory: false,
-      departmentOfStaffParent: null,
+      departmentOfStaffParentId: null,
       disabilityType: null, // Assuming disabilityType is part of schema
       fatherName: "",
       fatherTitle: null,
@@ -103,12 +104,13 @@ export default function AdditionalInfoStep({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [annualIncomesRes, bloodGroupsRes, categoriesRes, religionsRes, sportsCategoriesRes] = await Promise.all([
+        const [annualIncomesRes, bloodGroupsRes, categoriesRes, religionsRes, sportsCategoriesRes, departmentsRes] = await Promise.all([
           fetch('/api/annual-incomes'),
           fetch('/api/blood-groups'),
           fetch('/api/categories'),
           fetch('/api/religions'),
           fetch('/api/sports-categories'),
+          fetch('/api/departments'),
         ]);
 
         if (annualIncomesRes.ok) {
@@ -130,6 +132,10 @@ export default function AdditionalInfoStep({
         if (sportsCategoriesRes.ok) {
           const data = await sportsCategoriesRes.json();
           setSportsCategories(Array.isArray(data) ? data : (data.data || []));
+        }
+        if (departmentsRes.ok) {
+          const data = await departmentsRes.json();
+          setDepartmentArr(Array.isArray(data) ? data : (data.data || []));
         }
       } catch (error) {
         console.error('Error fetching additional info data:', error);
@@ -295,7 +301,7 @@ export default function AdditionalInfoStep({
     if (additionalInfo.isEitherParentStaff && !additionalInfo.nameOfStaffParent) {
       errors.nameOfStaffParent = "Staff parent name is required";
     }
-    if (additionalInfo.isEitherParentStaff && !additionalInfo.departmentOfStaffParent) {
+    if (additionalInfo.isEitherParentStaff && !additionalInfo.departmentOfStaffParentId) {
       errors.departmentOfStaffParent = "Staff parent department is required";
     }
     
@@ -704,14 +710,14 @@ export default function AdditionalInfoStep({
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">31. Department</label>
-                   <select
-                    value={additionalInfo.departmentOfStaffParent || ''}
-                    onChange={(e) => handleAdditionalInfoChange("departmentOfStaffParent", e.target.value || null)}
+                  <select
+                    value={additionalInfo.departmentOfStaffParentId || ''}
+                    onChange={(e) => handleAdditionalInfoChange("departmentOfStaffParentId", e.target.value || null)}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Department</option>
-                    {collegeDepartments.map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
+                    {departmentArr.map(dept => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
                     ))}
                   </select>
                 </div>
@@ -787,8 +793,8 @@ export default function AdditionalInfoStep({
                 36. Do you want to apply under NCC Category? *
               </label>
               <select
-                value={additionalInfo.applyUnderNCCCategory ? 'Yes' : 'No'}
-                onChange={(e) => handleAdditionalInfoChange("applyUnderNCCCategory", e.target.value === 'Yes')}
+                value={additionalInfo.applyUnderNccCategory ? 'Yes' : 'No'}
+                onChange={(e) => handleAdditionalInfoChange("applyUnderNccCategory", e.target.value === 'Yes')}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:focus:border-blue-500"
                 required
               >

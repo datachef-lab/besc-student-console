@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import SubjectMarksModal from "./SubjectMarksModal";
 import InstituteDetailsModal from "./InstituteDetailsModal";
-import { AcademicSubjects, ApplicationForm, boardResultStatusType, BoardUniversity, Colleges, Institution, LanguageMedium, StudentAcademicSubjects, Course } from "@/db/schema";
+import { ApplicationForm, boardResultStatusType, LanguageMedium, StudentAcademicSubject, Course, Institution } from "@/db/schema";
 import { AdmissionAcademicInfoDto, ApplicationFormDto, BoardUniversityDto } from "@/types/admissions";
 import { useParams } from "next/navigation";
 import { getCourses } from "../../action";
@@ -74,7 +74,7 @@ export default function AcademicInfoStep({
   
   const [boardUniversities, setBoardUniversities] = useState<BoardUniversityDto[]>([]);
   const [languageMediums, setLanguageMediums] = useState<LanguageMedium[]>([]);
-  const [colleges, setColleges] = useState<Colleges[]>([]);
+  // const [colleges, setColleges] = useState<College[]>([]);
   const [academicSubjects, setAcademicSubjects] = useState<AcademicSubject[]>([]); // New state for academic subjects
   const [courses, setCourses] = useState<Course[]>([]); // New state for courses
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -117,17 +117,9 @@ export default function AcademicInfoStep({
           const {data} = await institutionsResponse.json();
           setInstitutions(data);
         } else {
-          console.error('Failed to fetch language mediums:', languageMediumsResponse.status);
+          console.error('Failed to fetch language mediums:', institutionsResponse.status);
         }
 
-        // Fetch colleges
-        const collegesResponse = await fetch('/api/colleges');
-        if (collegesResponse.ok) {
-          const data = await collegesResponse.json();
-          setColleges(data.colleges);
-        } else {
-          console.error('Failed to fetch colleges:', collegesResponse.status);
-        }
 
         // Fetch courses
         try {
@@ -166,9 +158,9 @@ export default function AcademicInfoStep({
                 
                 // If there are institute details, populate the enteredInstituteDetails state
                 if (existingData.rollNumber || existingData.instituteId) {
-                  const institute = colleges.find(c => c.id === existingData.instituteId);
+                  const institute = institutions.find(c => c.id === existingData.instituteId);
                   const medium = languageMediums.find(m => m.id === existingData.languageMediumId);
-                  const previousCollege = colleges.find(c => c.id === existingData.previousCollegeId);
+                  const previousCollege = institutions.find(c => c.id === existingData.previousCollegeId);
                   
                   setEnteredInstituteDetails({
                     rollNo: existingData.rollNumber || '',
@@ -239,7 +231,7 @@ export default function AcademicInfoStep({
   const handleOpenMarksEntry = () => {
     // If no subjects are entered, add 4 default rows
     if (academicInfo.subjects.length === 0) {
-      const defaultSubjects: StudentAcademicSubjects[] = Array.from({ length: 4 }, () => ({
+      const defaultSubjects: StudentAcademicSubject[] = Array.from({ length: 4 }, () => ({
         applicationFormId: academicInfo.applicationFormId,
         academicSubjectId: 0, // Placeholder, will be selected in modal
         fullMarks: '0',
@@ -259,7 +251,7 @@ export default function AcademicInfoStep({
     setShowMarksEntryModal(false);
   };  
 
-  const handleSaveMarksEntry = (subjects: StudentAcademicSubjects[]) => {
+  const handleSaveMarksEntry = (subjects: StudentAcademicSubject[]) => {
     // Store subjects in academicInfo state
     setAcademicInfo(prev => ({
       ...prev,
@@ -284,14 +276,14 @@ export default function AcademicInfoStep({
       schoolNumber: details.schoolNo,
       centerNumber: details.centerNo,
       admitCardId: details.admitCardId,
-      instituteId: (colleges || []).find(i => i.name === details.institute)?.id ?? 0,
+      instituteId: (institutions || []).find(i => i.name === details.institute)?.id ?? 0,
       otherInstitute: details.institute === 'Other Institute' ? details.otherInstitute : null,
       languageMediumId: languageMediums.find(m => m.name === details.medium)?.id ?? 0,
       yearOfPassing: parseInt(details.yearOfPassing),
       streamType: details.stream as "COMMERCE" | "SCIENCE" | "HUMANITIES",
       isRegisteredForUGInCU: details.calcuttaUniversityRegistered === 'Yes',
       cuRegistrationNumber: details.calcuttaUniversityRegistered === 'Yes' ? details.calcuttaUniversityRegistrationNo : null,
-      previousCollegeId: colleges.find(c => c.name === details.previousCollege)?.id ?? 0,
+      previousCollegeId: institutions.find(c => c.name === details.previousCollege)?.id ?? 0,
       otherCollege: details.previousCollege === 'Other college' ? details.otherCollege : null,
       previouslyRegisteredCourseId: 0,
       otherPreviouslyRegisteredCourse: details.previouslyRegisteredCourse === 'Other Course' ? details.otherCourse : null,
@@ -307,7 +299,7 @@ export default function AcademicInfoStep({
     if (!academicInfo.boardUniversityId) {
       errors.boardUniversityId = "Board/University is required";
     }
-    if (!academicInfo.instituteId) {
+    if (!academicInfo.instituteId && !academicInfo.otherInstitute) {
       errors.instituteId = "Institute details are required";
     }
     if (!academicInfo.languageMediumId) {
@@ -319,7 +311,7 @@ export default function AcademicInfoStep({
     if (!academicInfo.streamType) {
       errors.streamType = "Stream type is required";
     }
-    if (academicInfo.isRegisteredForUGInCU && !academicInfo.cuRegistrationNumber) {
+    if (academicInfo.isRegisteredForUgInCu && !academicInfo.cuRegistrationNumber) {
       errors.cuRegistrationNumber = "CU registration number is required";
     }
     
@@ -360,7 +352,7 @@ export default function AcademicInfoStep({
   };
 
   // Helper to check if all subject rows are valid
-  const areSubjectsValid = (subjects: StudentAcademicSubjects[]) => {
+  const areSubjectsValid = (subjects: StudentAcademicSubject[]) => {
     if (!subjects || subjects.length === 0) return false;
     const seenSubjects = new Set();
     for (const subject of subjects) {
@@ -389,11 +381,13 @@ export default function AcademicInfoStep({
 
   const handleNext = async () => {
     if (!validateForm()) {
+      // Show all error messages in a toast
+      const errorList = Object.values(formErrors).join('\n');
       toast({
         title: "Validation Error",
-        description: "Please fix the errors before proceeding",
+        description: errorList,
         variant: "destructive",
-        // onClose: () => {},
+        duration: 8000,
       });
       return;
     }
@@ -725,7 +719,7 @@ export default function AcademicInfoStep({
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {academicInfo.subjects.map((subject: StudentAcademicSubjects, index: number) => (
+                  {academicInfo.subjects.map((subject: StudentAcademicSubject, index: number) => (
                     <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                       <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{index + 1}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{getSubjectName(subject.academicSubjectId)}</td>
@@ -754,7 +748,7 @@ export default function AcademicInfoStep({
               <DialogTitle>Institute Details</DialogTitle>
               <InstituteDetailsModal 
               institutions={institutions}
-                colleges={colleges}
+              colleges={institutions}
                 languageMediums={languageMediums}
                 onChange={handleAcademicInfoChange} 
                 onClose={handleCloseInstituteDetails} 
@@ -810,13 +804,7 @@ export default function AcademicInfoStep({
         )}
         <Button
           onClick={handleNext}
-              disabled={
-                isSubmitting ||
-                Object.keys(formErrors).length > 0 ||
-                academicInfo.boardResultStatus !== "PASS" ||
-                !areSubjectsValid(academicInfo.subjects) ||
-                !areInstituteDetailsValid(academicInfo)
-              }
+          disabled={isSubmitting}
         >
           {isSubmitting ? "Saving..." : "Save & Continue"}
         </Button>
