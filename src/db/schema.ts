@@ -9,15 +9,15 @@ export const boardResultType = pgEnum("board_result_type", ['FAIL', 'PASS'])
 export const classType = pgEnum("class_type", ['YEAR', 'SEMESTER'])
 export const communityType = pgEnum("community_type", ['GUJARATI', 'NON-GUJARATI'])
 export const degreeLevelType = pgEnum("degree_level_type", ['SECONDARY', 'HIGHER_SECONDARY', 'UNDER_GRADUATE', 'POST_GRADUATE'])
-export const degreeProgrammeType = pgEnum("degree_programme_type", ['HONOURS', 'GENERAL'])
+export const programmeTypeEnum = pgEnum("programme_type", ['HONOURS', 'GENERAL'])
 export const disabilityType = pgEnum("disability_type", ['VISUAL', 'HEARING_IMPAIRMENT', 'VISUAL_IMPAIRMENT', 'ORTHOPEDIC', 'OTHER'])
 export const frameworkType = pgEnum("framework_type", ['CCF', 'CBCS'])
-export const genderType = pgEnum("gender_type", ['MALE', 'FEMALE', 'TRANSGENDER'])
+export const genderType = pgEnum("gender_type", ['MALE', 'FEMALE', 'OTHER'])
 export const localityType = pgEnum("locality_type", ['RURAL', 'URBAN'])
 export const marksheetSource = pgEnum("marksheet_source", ['FILE_UPLOAD', 'ADDED'])
 export const paperModeType = pgEnum("paper_mode_type", ['THEORETICAL', 'PRACTICAL', 'VIVA', 'ASSIGNMENT', 'PROJECT', 'MCQ'])
 export const parentType = pgEnum("parent_type", ['BOTH', 'FATHER_ONLY', 'MOTHER_ONLY'])
-export const placeOfStayType = pgEnum("place_of_stay_type", ['OWN', 'HOSTEL', 'PAYING_GUEST', 'RELATIVES'])
+export const placeOfStayType = pgEnum("place_of_stay_type", ['OWN', 'HOSTEL', 'PAYING_GUEST', "FAMILY_FRIENDS", 'RELATIVES'])
 export const subjectCategoryType = pgEnum("subject_category_type", ['SPECIAL', 'COMMON', 'HONOURS', 'GENERAL', 'ELECTIVE'])
 export const subjectStatus = pgEnum("subject_status", ['PASS', 'FAIL', 'P', 'F', 'F(IN)', 'F(PR)', 'F(TH)'])
 export const transportType = pgEnum("transport_type", ['BUS', 'TRAIN', 'METRO', 'AUTO', 'TAXI', 'CYCLE', 'WALKING', 'OTHER'])
@@ -55,13 +55,13 @@ export const admissionSteps = pgEnum("admission_steps", [
     "SUBMITTED",
 ]);
 
-export const collegeDepartment = pgEnum("college_department", [
-    "The Bhawanipur Design Academy",
-    "The Bhawanipur Education Society College",
-    "The Bhawanipur Gujarati Education Society",
-    "The Bhawanipur Gujarati Education Society School-ICSE",
-    "The Bhawanipur Gujarati Education Society School-ISC",
-]);
+// export const collegeDepartment = pgEnum("college_department", [
+//     "The Bhawanipur Design Academy",
+//     "The Bhawanipur Education Society College",
+//     "The Bhawanipur Gujarati Education Society",
+//     "The Bhawanipur Gujarati Education Society School-ICSE",
+//     "The Bhawanipur Gujarati Education Society School-ISC",
+// ]);
 
 export const paymentStatus = pgEnum("payment_status", [
     "PENDING", "SUCCESS", "FAILED", "REFUNDED"
@@ -119,10 +119,41 @@ export const otps = pgTable("otps", {
 export const createOtpSchema = createInsertSchema(otps);
 export type Otp = z.infer<typeof createOtpSchema>;
 
+export const academicYearModel = pgTable("academic_years", {
+    id: serial().primaryKey(),
+    year: varchar({ length: 4 }).notNull(),
+    isCurrentYear: boolean("is_current_year").notNull().default(false),
+    sessionId: integer("session_id_fk")
+        .references(() => sessionModel.id),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
+export const createAcademicYearSchema = createInsertSchema(academicYearModel);
+
+export type AcademicYear = z.infer<typeof createAcademicYearSchema>;
+
+export const sessionModel = pgTable("sessions", {
+    id: serial().primaryKey(),
+    name: varchar({ length: 255 }).notNull(),
+    from: date().notNull(),
+    to: date().notNull(),
+    isCurrentSession: boolean().notNull().default(false),
+    codePrefix: varchar({ length: 255 }),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
+const createSessionSchema = createInsertSchema(sessionModel);
+
+export type Session = z.infer<typeof createSessionSchema>;
 
 export const admissions = pgTable("admissions", {
     id: serial().primaryKey().notNull(),
-    year: integer("year").notNull(),
+    academicYearId: integer("academic_year_id_fk")
+        .references(() => academicYearModel.id)
+        .notNull(),
+    admissionCode: varchar("admission_code", { length: 255 }),
     isClosed: boolean("is_closed").default(false).notNull(),
     startDate: date("start_date"),
     lastDate: date("last_date"),
@@ -156,6 +187,7 @@ export const applicationForms = pgTable("application_forms", {
     admissionId: integer("admission_id_fk")
         .references(() => admissions.id)
         .notNull(),
+    applicationNumber: varchar({ length: 255 }),
     formStatus: admissionFormStatus("form_status").notNull(),
     admissionStep: admissionSteps("admission_step").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
@@ -283,17 +315,6 @@ export const academicSubjects = pgTable("academic_subjects", {
 export const createAcademicSubjects = createInsertSchema(academicSubjects);
 export type AcademicSubjects = z.infer<typeof createAcademicSubjects>;
 
-export const colleges = pgTable("colleges", {
-    id: serial("id").primaryKey(),
-    name: varchar("name", { length: 500 }).notNull(),
-    code: varchar("code", { length: 50 }),
-    sequence: integer("sequence"),
-    disabled: boolean().default(false),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-});
-export const createCollegesSchema = createInsertSchema(colleges);
-export type Colleges = z.infer<typeof createCollegesSchema>;
 
 export const admissionCourseApplication = pgTable("admission_course_applications", {
     id: serial("id").primaryKey(),
@@ -308,6 +329,19 @@ export const admissionCourseApplication = pgTable("admission_course_applications
 });
 export const createAdmissionCourseApplicationSchema = createInsertSchema(admissionCourseApplication);
 export type AdmissionCourseApplication = z.infer<typeof createAdmissionCourseApplicationSchema>;
+
+export const departmentModel = pgTable("departments", {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 900 }).notNull().unique(),
+    code: varchar("code", { length: 100 }).notNull().unique(),
+    description: varchar("description", { length: 2000 }).notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+});
+
+export const createDepartmentSchema = createInsertSchema(departmentModel);
+
+export type Department = z.infer<typeof createDepartmentSchema>;
 
 export const admissionAdditionalInfo = pgTable("admission_additional_info", {
     id: serial("id").primaryKey(),
@@ -333,7 +367,8 @@ export const admissionAdditionalInfo = pgTable("admission_additional_info", {
     motherName: varchar("mother_name", { length: 255 }),
     isEitherParentStaff: boolean("is_either_parent_staff").default(false),
     nameOfStaffParent: varchar("name_of_staff_parent", { length: 255 }),
-    departmentOfStaffParent: collegeDepartment("department_of_staff_parent"),
+    departmentOfStaffParent: integer("department_of_staff_parent_fk")
+        .references(() => departmentModel.id),
     hasSmartphone: boolean("has_smartphone").default(false),
     hasLaptopOrDesktop: boolean("has_laptop_or_desktop").default(false),
     hasInternetAccess: boolean("has_internet_access").default(false),
@@ -368,7 +403,7 @@ export type SportsInfo = z.infer<typeof createSportsInfoSchema>;
 
 export const sportsCategories = pgTable("sports_categories", {
     id: serial().primaryKey(),
-    name: varchar({length: 255}).notNull(),
+    name: varchar({ length: 255 }).notNull(),
     disabled: boolean().default(false),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
@@ -430,6 +465,7 @@ export const cities = pgTable("cities", {
     name: varchar({ length: 255 }).notNull(),
     documentRequired: boolean("document_required").default(false).notNull(),
     code: varchar({ length: 10 }).notNull(),
+    sequene: integer().unique(),
     disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
@@ -551,7 +587,7 @@ export const boardUniversities = pgTable("board_universities", {
     id: serial().primaryKey().notNull(),
     name: varchar({ length: 700 }).notNull(),
     degreeId: integer("degree_id"),
-    
+    passingMarks: integer(),
     code: varchar({ length: 255 }),
     disabled: boolean().default(false),
     addressId: integer("address_id_fk").references(() => address.id),
@@ -611,6 +647,7 @@ export type BoardUniversity = z.infer<typeof createBoardUniversitiesSchema>;
 export const annualIncomes = pgTable("annual_incomes", {
     id: serial().primaryKey().notNull(),
     range: varchar({ length: 255 }).notNull(),
+    sequene: integer().unique(),
     disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
@@ -621,6 +658,7 @@ export type AnnualIncome = z.infer<typeof createAnnualIncomesSchema>;
 export const bloodGroup = pgTable("blood_group", {
     id: serial().primaryKey().notNull(),
     type: varchar({ length: 255 }).notNull(),
+    sequene: integer().unique(),
     disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
@@ -635,6 +673,7 @@ export const categories = pgTable("categories", {
     name: varchar({ length: 255 }).notNull(),
     documentRequired: boolean("document_required"),
     code: varchar({ length: 10 }).notNull(),
+    sequene: integer().unique(),
     disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
@@ -679,10 +718,15 @@ export type Country = z.infer<typeof createCountriesSchema>;
 
 export const courses = pgTable("courses", {
     id: serial().primaryKey().notNull(),
+    degreeId: integer("degree_id_fk").references(() => degree.id),
     name: varchar({ length: 500 }).notNull(),
+    programmeType: programmeTypeEnum(),
     shortName: varchar("short_name", { length: 500 }),
     codePrefix: varchar("code_prefix", { length: 10 }),
     universityCode: varchar("university_code", { length: 10 }),
+    numberOfSemesters: integer(),
+    duration: varchar({length: 255}),
+    sequene: integer().unique(),
     disabled: boolean().default(false),
     amount: integer("amount"),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
@@ -743,6 +787,7 @@ export type Course = z.infer<typeof createCoursesSchema>;
 export const languageMedium = pgTable("language_medium", {
     id: serial().primaryKey().notNull(),
     name: varchar({ length: 255 }).notNull(),
+    sequene: integer().unique(),
     disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
@@ -920,6 +965,7 @@ export type Nationality = z.infer<typeof createNationalitySchema>;
 export const occupations = pgTable("occupations", {
     id: serial().primaryKey().notNull(),
     name: varchar({ length: 255 }).notNull(),
+    sequene: integer().unique(),
     disabled: boolean().default(false),
     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
