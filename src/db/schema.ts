@@ -8,7 +8,6 @@ export const boardResultType = pgEnum("board_result_type", ['FAIL', 'PASS'])
 export const classType = pgEnum("class_type", ['YEAR', 'SEMESTER'])
 export const communityType = pgEnum("community_type", ['GUJARATI', 'NON-GUJARATI'])
 export const degreeLevelType = pgEnum("degree_level_type", ['SECONDARY', 'HIGHER_SECONDARY', 'UNDER_GRADUATE', 'POST_GRADUATE'])
-export const degreeProgrammeType = pgEnum("degree_programme_type", ['HONOURS', 'GENERAL'])
 export const disabilityType = pgEnum("disability_type", ['VISUAL', 'HEARING_IMPAIRMENT', 'VISUAL_IMPAIRMENT', 'ORTHOPEDIC', 'OTHER'])
 export const frameworkType = pgEnum("framework_type", ['CCF', 'CBCS'])
 export const genderType = pgEnum("gender_type", ['MALE', 'FEMALE', 'OTHER'])
@@ -17,7 +16,17 @@ export const marksheetSource = pgEnum("marksheet_source", ['FILE_UPLOAD', 'ADDED
 export const otpType = pgEnum("otp_type", ['FOR_PHONE', 'FOR_EMAIL'])
 export const paperModeType = pgEnum("paper_mode_type", ['THEORETICAL', 'PRACTICAL', 'VIVA', 'ASSIGNMENT', 'PROJECT', 'MCQ'])
 export const parentType = pgEnum("parent_type", ['BOTH', 'FATHER_ONLY', 'MOTHER_ONLY'])
-export const placeOfStayType = pgEnum("place_of_stay_type", ['OWN', 'HOSTEL', 'PAYING_GUEST', 'RELATIVES'])
+export const paymentMode = pgEnum("payment_mode", ['CASH', 'CHEQUE', 'ONLINE'])
+export const paymentStatus = pgEnum("payment_status", ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED', 'CANCELLED'])
+export const personTitleType = pgEnum("person_title_type", ['MR', 'MRS', 'MS', 'DR', 'PROF', 'REV', 'OTHER'])
+export const placeOfStayType = pgEnum("place_of_stay_type", ['OWN', 'HOSTEL', 'FAMILY_FRIENDS', 'PAYING_GUEST', 'RELATIVES'])
+export const programmeType = pgEnum("programme_type", ['HONOURS', 'GENERAL'])
+export const sportsLevel = pgEnum("sports_level", ['NATIONAL', 'STATE', 'DISTRICT', 'OTHERS'])
+export const streamType = pgEnum("stream_type", ['SCIENCE', 'COMMERCE', 'HUMANITIES', 'ARTS'])
+export const studentFeesMappingType = pgEnum("student_fees_mapping_type", ['FULL', 'INSTALMENT'])
+export const studyMaterialAvailabilityType = pgEnum("study_material_availability_type", ['ALWAYS', 'CURRENT_SESSION_ONLY', 'COURSE_LEVEL', 'BATCH_LEVEL'])
+export const studyMaterialType = pgEnum("study_material_type", ['FILE', 'LINK'])
+export const studyMetaType = pgEnum("study_meta_type", ['RESOURCE', 'WORKSHEET', 'ASSIGNMENT', 'PROJECT'])
 export const subjectCategoryType = pgEnum("subject_category_type", ['SPECIAL', 'COMMON', 'HONOURS', 'GENERAL', 'ELECTIVE'])
 export const subjectStatus = pgEnum("subject_status", ['PASS', 'FAIL', 'AB', 'P', 'F', 'F(IN)', 'F(PR)', 'F(TH)'])
 export const transportType = pgEnum("transport_type", ['BUS', 'TRAIN', 'METRO', 'AUTO', 'TAXI', 'CYCLE', 'WALKING', 'OTHER'])
@@ -58,12 +67,30 @@ export const otps = pgTable("otps", {
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 });
 
-export const collegeDepartment = pgEnum("college_department", [
-    "The Bhawanipur Design Academy",
-    "The Bhawanipur Education Society College",
-    "The Bhawanipur Gujarati Education Society",
-    "The Bhawanipur Gujarati Education Society School-ICSE",
-    "The Bhawanipur Gujarati Education Society School-ISC",
+export const sessions = pgTable("sessions", {
+	id: serial().primaryKey().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	from: date().notNull(),
+	to: date().notNull(),
+	isCurrentSession: boolean("is_current_session").default(false).notNull(),
+	codePrefix: varchar("code_prefix", { length: 255 }),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+});
+
+export const academicYears = pgTable("academic_years", {
+	id: serial().primaryKey().notNull(),
+	year: varchar({ length: 4 }).notNull(),
+	isCurrentYear: boolean("is_current_year").default(false).notNull(),
+	sessionId: integer("session_id_fk"),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.sessionId],
+			foreignColumns: [sessions.id],
+			name: "academic_years_session_id_fk_sessions_id_fk"
+		}),
 ]);
 
 export const batches = pgTable("batches", {
@@ -157,32 +184,87 @@ export const sections = pgTable("sections", {
 	unique("sections_sequence_unique").on(table.sequence),
 ]);
 
-export const otps = pgTable("otps", {
-    id: serial("id").primaryKey(),
-    otp: varchar("otp", { length: 6 }).notNull(),
-    recipient: varchar("recipient", { length: 255 }).notNull(),
-    type: otpType("type").notNull(),
-    expiresAt: timestamp("expires_at").notNull(),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-});
-export const createOtpSchema = createInsertSchema(otps);
-export type Otp = z.infer<typeof createOtpSchema>;
+export const shifts = pgTable("shifts", {
+	id: serial().primaryKey().notNull(),
+	name: varchar({ length: 500 }).notNull(),
+	codePrefix: varchar("code_prefix", { length: 10 }).notNull(),
+	sequence: integer(),
+	disabled: boolean().default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("shifts_sequence_unique").on(table.sequence),
+]);
 
+export const batchPapers = pgTable("batch_papers", {
+	id: serial().primaryKey().notNull(),
+	batchId: integer("batch_id_fk").notNull(),
+	subjectMetadataId: integer("subject_metadata_id_fk").notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.batchId],
+			foreignColumns: [batches.id],
+			name: "batch_papers_batch_id_fk_batches_id_fk"
+		}),
+	foreignKey({
+			columns: [table.subjectMetadataId],
+			foreignColumns: [subjectMetadatas.id],
+			name: "batch_papers_subject_metadata_id_fk_subject_metadatas_id_fk"
+		}),
+]);
 
-export const admissions = pgTable("admissions", {
-    id: serial().primaryKey().notNull(),
-    year: integer("year").notNull(),
-    isClosed: boolean("is_closed").default(false).notNull(),
-    startDate: date("start_date"),
-    lastDate: date("last_date"),
-    isArchived: boolean("archived").default(false).notNull(),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-    remarks: text("remarks"),
-});
-export const createAdmissionSchema = createInsertSchema(admissions);
-export type Admission = z.infer<typeof createAdmissionSchema>;
+export const subjectMetadatas = pgTable("subject_metadatas", {
+	id: serial().primaryKey().notNull(),
+	degreeId: integer("degree_id_fk").notNull(),
+	programmeType: programmeType("programme_type").default('HONOURS').notNull(),
+	framework: frameworkType().default('CCF').notNull(),
+	classId: integer("class_id_fk").notNull(),
+	specializationId: integer("specialization_id_fk"),
+	category: subjectCategoryType(),
+	subjectTypeId: integer("subject_type_id_fk"),
+	irpName: varchar("irp_name", { length: 500 }),
+	name: varchar({ length: 500 }),
+	irpCode: varchar("irp_code", { length: 255 }),
+	marksheetCode: varchar("marksheet_code", { length: 255 }).notNull(),
+	isOptional: boolean("is_optional").default(false),
+	credit: integer(),
+	theoryCredit: integer("theory_credit"),
+	fullMarksTheory: integer("full_marks_theory"),
+	practicalCredit: integer("practical_credit"),
+	fullMarksPractical: integer("full_marks_practical"),
+	internalCredit: integer("internal_credit"),
+	fullMarksInternal: integer("full_marks_internal"),
+	projectCredit: integer("project_credit"),
+	fullMarksProject: integer("full_marks_project"),
+	vivalCredit: integer("vival_credit"),
+	fullMarksViva: integer("full_marks_viva"),
+	fullMarks: integer("full_marks").notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.degreeId],
+			foreignColumns: [degree.id],
+			name: "subject_metadatas_degree_id_fk_degree_id_fk"
+		}),
+	foreignKey({
+			columns: [table.classId],
+			foreignColumns: [classes.id],
+			name: "subject_metadatas_class_id_fk_classes_id_fk"
+		}),
+	foreignKey({
+			columns: [table.specializationId],
+			foreignColumns: [specializations.id],
+			name: "subject_metadatas_specialization_id_fk_specializations_id_fk"
+		}),
+	foreignKey({
+			columns: [table.subjectTypeId],
+			foreignColumns: [subjectTypes.id],
+			name: "subject_metadatas_subject_type_id_fk_subject_types_id_fk"
+		}),
+]);
 
 export const degree = pgTable("degree", {
 	id: serial().primaryKey().notNull(),
@@ -197,108 +279,77 @@ export const degree = pgTable("degree", {
 	unique("degree_sequence_unique").on(table.sequence),
 ]);
 
-export const applicationForms = pgTable("application_forms", {
-    id: serial().primaryKey().notNull(),
-    admissionId: integer("admission_id_fk")
-        .references(() => admissions.id)
-        .notNull(),
-    formStatus: admissionFormStatus("form_status").notNull(),
-    admissionStep: admissionSteps("admission_step").notNull(),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-    remarks: text("remarks"),
-});
-export const createApplicationFormSchema = createInsertSchema(applicationForms);
-export type ApplicationForm = z.infer<typeof createApplicationFormSchema>;
+export const students = pgTable("students", {
+	id: serial().primaryKey().notNull(),
+	userId: integer("user_id_fk").notNull(),
+	applicationId: integer("application_id_fk"),
+	community: communityType(),
+	handicapped: boolean().default(false),
+	specializationId: integer("specialization_id_fk"),
+	lastPassedYear: integer("last_passed_year"),
+	notes: text(),
+	active: boolean(),
+	alumni: boolean(),
+	isSuspended: boolean("is_suspended").default(false),
+	leavingDate: timestamp("leaving_date", { mode: 'string' }),
+	leavingReason: text("leaving_reason"),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "students_user_id_fk_users_id_fk"
+		}),
+	foreignKey({
+			columns: [table.applicationId],
+			foreignColumns: [applicationForms.id],
+			name: "students_application_id_fk_application_forms_id_fk"
+		}),
+	foreignKey({
+			columns: [table.specializationId],
+			foreignColumns: [specializations.id],
+			name: "students_specialization_id_fk_specializations_id_fk"
+		}),
+]);
 
-export const payments = pgTable("payments", {
-    id: serial("id").primaryKey(),
-    applicationFormId: integer("application_form_id_fk")
-        .references(() => applicationForms.id)
-        .notNull(),
-
-    orderId: varchar("order_id", { length: 100 }).notNull(),
-    transactionId: varchar("transaction_id", { length: 100 }),
-    amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
-
-    status: paymentStatus("status").notNull().default("PENDING"),
-    paymentMode: paymentMode("payment_mode"),
-    bankTxnId: varchar("bank_txn_id", { length: 100 }),
-    gatewayName: varchar("gateway_name", { length: 50 }),
-    txnDate: timestamp("txn_date"),
-
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-    remarks: text("remarks"),
-});
-export const createPaymentSchema = createInsertSchema(payments);
-export type Payment = z.infer<typeof createPaymentSchema>;
-
-export const admissionGeneralInfo = pgTable("admission_general_info", {
-    id: serial("id").primaryKey(),
-    applicationFormId: integer("application_form_id_fk")
-        .references(() => applicationForms.id)
-        .notNull(),
-    firstName: varchar("first_name", { length: 255 }).notNull(),
-    middleName: varchar("middle_name", { length: 255 }),
-    lastName: varchar("last_name", { length: 255 }),
-    dateOfBirth: date("date_of_birth").notNull(),
-    nationalityId: integer("nationality_id_fk").references(() => nationality.id),
-    otherNationality: varchar("other_nationality", { length: 255 }),
-    isGujarati: boolean("is_gujarati").default(false),
-    categoryId: integer("category_id_fk").references(() => categories.id),
-    religionId: integer("religion_id_fk").references(() => religion.id),
-    gender: genderType().default("MALE"),
-    degreeLevel: degreeLevelType().default("UNDER_GRADUATE").notNull(),
-    password: varchar("password", { length: 255 }).notNull(),
-    whatsappNumber: varchar("whatsapp_number", { length: 15 }),
-    mobileNumber: varchar("mobile_number", { length: 15 }).notNull(),
-    email: varchar("email", { length: 255 }).notNull(),
-    residenceOfKolkata: boolean("residence_of_kolkata").notNull(),
-
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-});
-export const createAdmissionGeneralInfoSchema = createInsertSchema(admissionGeneralInfo);
-export type AdmissionGeneralInfo = z.infer<typeof createAdmissionGeneralInfoSchema>;
-
-
-export const admissionAcademicInfo = pgTable("admission_academic_info", {
-    id: serial("id").primaryKey(),
-    applicationFormId: integer("application_form_id_fk")
-        .references(() => applicationForms.id)
-        .notNull(),
-    boardUniversityId: integer("board_university_id_fk")
-        .references(() => boardUniversities.id)
-        .notNull(),
-    boardResultStatus: boardResultStatusType("board_result_status").notNull(),
-    rollNumber: varchar("roll_number", { length: 255 }),
-    schoolNumber: varchar("school_number", { length: 255 }),
-    centerNumber: varchar("center_number", { length: 255 }),
-    admitCardId: varchar("admit_card_id", { length: 255 }),
-    instituteId: integer("institute_id_fk")
-        .references(() => institutions.id)
-        .notNull(),
-    otherInstitute: varchar("other_institute", { length: 500 }),
-    languageMediumId: integer("language_medium_id_fk")
-        .references(() => languageMedium.id)
-        .notNull(),
-    yearOfPassing: integer("year_of_passing").notNull(),
-    streamType: streamType("stream_type").notNull(),
-    isRegisteredForUGInCU: boolean("is_registered_for_ug_in_cu").default(false),
-    cuRegistrationNumber: varchar("cu_registration_number", { length: 255 }),
-    previouslyRegisteredCourseId: integer("previously_registered_course_id_fk")
-        .references(() => courses.id),
-    otherPreviouslyRegisteredCourse: varchar("other_previously_registered_course", { length: 500 }),
-    previousCollegeId: integer("previous_college_id_fk")
-        .references(() => colleges.id),
-    otherCollege: varchar("other_college", { length: 500 }),
-
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-});
-export const createAdmissionAcademicInfoSchema = createInsertSchema(admissionAcademicInfo);
-export type AdmissionAcademicInfo = z.infer<typeof createAdmissionAcademicInfoSchema>;
+export const marksheets = pgTable("marksheets", {
+	id: serial().primaryKey().notNull(),
+	studentId: integer("student_id_fk").notNull(),
+	classId: integer("class_id_fk").notNull(),
+	year: integer().notNull(),
+	sgpa: numeric(),
+	cgpa: numeric(),
+	classification: varchar({ length: 255 }),
+	remarks: varchar({ length: 255 }),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+	source: marksheetSource(),
+	file: varchar({ length: 700 }),
+	createdByUserId: integer("created_by_user_id").notNull(),
+	updatedByUserId: integer("updated_by_user_id").notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.studentId],
+			foreignColumns: [students.id],
+			name: "marksheets_student_id_fk_students_id_fk"
+		}),
+	foreignKey({
+			columns: [table.classId],
+			foreignColumns: [classes.id],
+			name: "marksheets_class_id_fk_classes_id_fk"
+		}),
+	foreignKey({
+			columns: [table.createdByUserId],
+			foreignColumns: [users.id],
+			name: "marksheets_created_by_user_id_users_id_fk"
+		}),
+	foreignKey({
+			columns: [table.updatedByUserId],
+			foreignColumns: [users.id],
+			name: "marksheets_updated_by_user_id_users_id_fk"
+		}),
+]);
 
 export const users = pgTable("users", {
 	id: serial().primaryKey().notNull(),
@@ -316,127 +367,76 @@ export const users = pgTable("users", {
 	unique("users_email_unique").on(table.email),
 ]);
 
-export const colleges = pgTable("colleges", {
-    id: serial("id").primaryKey(),
-    name: varchar("name", { length: 500 }).notNull(),
-    code: varchar("code", { length: 50 }),
-    sequence: integer("sequence"),
-    disabled: boolean().default(false),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-});
-export const createCollegesSchema = createInsertSchema(colleges);
-export type Colleges = z.infer<typeof createCollegesSchema>;
+export const offeredSubjects = pgTable("offered_subjects", {
+	id: serial().primaryKey().notNull(),
+	subjectMetadataId: integer("subject_metadata_id_fk").notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.subjectMetadataId],
+			foreignColumns: [subjectMetadatas.id],
+			name: "offered_subjects_subject_metadata_id_fk_subject_metadatas_id_fk"
+		}),
+]);
 
-export const admissionCourseApplication = pgTable("admission_course_applications", {
-    id: serial("id").primaryKey(),
-    applicationFormId: integer("application_form_id_fk")
-        .references(() => applicationForms.id)
-        .notNull(),
-    admissionCourseId: integer("admission_course_id_fk")
-        .references(() => admissionCourses.id)
-        .notNull(),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-});
-export const createAdmissionCourseApplicationSchema = createInsertSchema(admissionCourseApplication);
-export type AdmissionCourseApplication = z.infer<typeof createAdmissionCourseApplicationSchema>;
+export const papers = pgTable("papers", {
+	id: serial().primaryKey().notNull(),
+	offeredSubjectId: integer("offered_subject_id").notNull(),
+	name: varchar({ length: 500 }),
+	shortName: varchar("short_name", { length: 500 }),
+	mode: paperModeType(),
+	displayName: varchar("display_name", { length: 500 }),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.offeredSubjectId],
+			foreignColumns: [offeredSubjects.id],
+			name: "papers_offered_subject_id_offered_subjects_id_fk"
+		}),
+]);
 
-export const admissionAdditionalInfo = pgTable("admission_additional_info", {
-    id: serial("id").primaryKey(),
-    applicationFormId: integer("application_form_id_fk")
-        .references(() => applicationForms.id)
-        .notNull(),
-    alternateMobileNumber: varchar("alternate_mobile_number", { length: 255 }),
-    bloodGroupId: integer("blood_group_id_fk")
-        .references(() => bloodGroup.id)
-        .notNull(),
-    religionId: integer("religion_id_fk")
-        .references(() => religion.id)
-        .notNull(),
-    categoryId: integer("category_id_fk")
-        .references(() => categories.id)
-        .notNull(),
-    isPhysicallyChallenged: boolean("is_physically_challenged").default(false),
-    disabilityType: disabilityType("disability_type"),
-    isSingleParent: boolean("is_single_parent").default(false),
-    fatherTitle: personTitleType("father_title"),
-    fatherName: varchar("father_name", { length: 255 }),
-    motherTitle: personTitleType("mother_title"),
-    motherName: varchar("mother_name", { length: 255 }),
-    isEitherParentStaff: boolean("is_either_parent_staff").default(false),
-    nameOfStaffParent: varchar("name_of_staff_parent", { length: 255 }),
-    departmentOfStaffParent: collegeDepartment("department_of_staff_parent"),
-    hasSmartphone: boolean("has_smartphone").default(false),
-    hasLaptopOrDesktop: boolean("has_laptop_or_desktop").default(false),
-    hasInternetAccess: boolean("has_internet_access").default(false),
-    annualIncomeId: integer("annual_income_id_fk")
-        .references(() => annualIncomes.id)
-        .notNull(),
-    applyUnderNCCCategory: boolean("apply_under_ncc_category").default(false),
-    applyUnderSportsCategory: boolean("apply_under_sports_category").default(false),
+export const studentPapers = pgTable("student_papers", {
+	id: serial().primaryKey().notNull(),
+	studentId: integer("student_id_fk").notNull(),
+	batchPaperId: integer("batch_paper_id_fk").notNull(),
+	batchId: integer("batch_id_fk").notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.studentId],
+			foreignColumns: [students.id],
+			name: "student_papers_student_id_fk_students_id_fk"
+		}),
+	foreignKey({
+			columns: [table.batchPaperId],
+			foreignColumns: [batchPapers.id],
+			name: "student_papers_batch_paper_id_fk_batch_papers_id_fk"
+		}),
+	foreignKey({
+			columns: [table.batchId],
+			foreignColumns: [batches.id],
+			name: "student_papers_batch_id_fk_batches_id_fk"
+		}),
+]);
 
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-});
-export const createAdmissionAdditionalInfoSchema = createInsertSchema(admissionAdditionalInfo);
-export type AdmissionAdditionalInfo = z.infer<typeof createAdmissionAdditionalInfoSchema>;
-
-
-export const sportsInfo = pgTable("sports_info", {
-    id: serial().primaryKey(),
-    additionalInfoId: integer("additional_info_id_fk")
-        .references(() => admissionAdditionalInfo.id)
-        .notNull(),
-    sportsCategoryId: integer("sports_category_id_fk")
-        .references(() => sportsCategories.id)
-        .notNull(),
-    level: sportsLevelType().notNull(),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-});
-export const createSportsInfoSchema = createInsertSchema(sportsInfo);
-export type SportsInfo = z.infer<typeof createSportsInfoSchema>;
-
-
-export const sportsCategories = pgTable("sports_categories", {
-    id: serial().primaryKey(),
-    name: varchar({length: 255}).notNull(),
-    disabled: boolean().default(false),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-});
-export const createSportsCategorySchema = createInsertSchema(sportsCategories);
-export type SportsCategory = z.infer<typeof createSportsCategorySchema>;
-
-
-
-
-
-
-
-
-
-
-
-/**
- * These schemas are already existing in the database.
- */
-
-
-
-export const address = pgTable("address", {
-    id: serial().primaryKey().notNull(),
-    countryIdFk: integer("country_id_fk"),
-    stateIdFk: integer("state_id_fk"),
-    cityIdFk: integer("city_id_fk"),
-    addressLine: varchar("address_line", { length: 1000 }),
-    landmark: varchar({ length: 255 }),
-    localityType: localityType("locality_type"),
-    phone: varchar({ length: 255 }),
-    pincode: varchar({ length: 255 }),
-    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+export const studyMaterials = pgTable("study_materials", {
+	id: serial().primaryKey().notNull(),
+	availability: studyMaterialAvailabilityType().notNull(),
+	subjectMetadataId: integer("subject_metadata_id_fk").notNull(),
+	sessionId: integer("session_di_fk"),
+	courseId: integer("course_id_fk"),
+	batchId: integer("batch_id_fk"),
+	type: studyMaterialType().notNull(),
+	variant: studyMetaType().notNull(),
+	name: varchar({ length: 700 }).notNull(),
+	url: varchar({ length: 2000 }).notNull(),
+	filePath: varchar("file_path", { length: 700 }),
+	dueDate: timestamp("due_date", { mode: 'string' }),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	foreignKey({
 			columns: [table.subjectMetadataId],
@@ -460,15 +460,35 @@ export const address = pgTable("address", {
 		}),
 ]);
 
-export const cities = pgTable("cities", {
-    id: serial().primaryKey().notNull(),
-    stateId: integer("state_id").notNull(),
-    name: varchar({ length: 255 }).notNull(),
-    documentRequired: boolean("document_required").default(false).notNull(),
-    code: varchar({ length: 10 }).notNull(),
-    disabled: boolean().default(false),
-    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+export const subjects = pgTable("subjects", {
+	id: serial().primaryKey().notNull(),
+	marksheetId: integer("marksheet_id_fk"),
+	subjectMetadataId: integer("subject_metadata_id_fk"),
+	year1: integer().notNull(),
+	year2: integer(),
+	internalMarks: integer("internal_marks"),
+	internalYear: integer("internal_year"),
+	internalCredit: integer("internal_credit"),
+	practicalMarks: integer("practical_marks"),
+	practicalYear: integer("practical_year"),
+	practicalCredit: integer("practical_credit"),
+	theoryMarks: integer("theory_marks"),
+	theoryYear: integer("theory_year"),
+	theoryCredit: integer("theory_credit"),
+	totalMarks: integer("total_marks"),
+	vivalMarks: integer("vival_marks"),
+	vivalYear: integer("vival_year"),
+	vivalCredit: integer("vival_credit"),
+	projectMarks: integer("project_marks"),
+	projectYear: integer("project_year"),
+	projectCredit: integer("project_credit"),
+	totalCredits: integer("total_credits"),
+	status: subjectStatus(),
+	ngp: numeric(),
+	tgp: numeric(),
+	letterGrade: varchar("letter_grade", { length: 255 }),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	foreignKey({
 			columns: [table.marksheetId],
@@ -507,16 +527,16 @@ export const subjectTypes = pgTable("subject_types", {
 ]);
 
 export const boardUniversities = pgTable("board_universities", {
-    id: serial().primaryKey().notNull(),
-    name: varchar({ length: 700 }).notNull(),
-    degreeId: integer("degree_id"),
-    
-    code: varchar({ length: 255 }),
-    disabled: boolean().default(false),
-    addressId: integer("address_id_fk").references(() => address.id),
-    sequence: integer(),
-    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+	id: serial().primaryKey().notNull(),
+	name: varchar({ length: 700 }).notNull(),
+	degreeId: integer("degree_id"),
+	passingMarks: integer("passing_marks"),
+	code: varchar({ length: 255 }),
+	addressId: integer("address_id"),
+	sequence: integer(),
+	disabled: boolean().default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	foreignKey({
 			columns: [table.degreeId],
@@ -565,22 +585,71 @@ export const applicationForms = pgTable("application_forms", {
 		}),
 ]);
 
-export const annualIncomes = pgTable("annual_incomes", {
-    id: serial().primaryKey().notNull(),
-    range: varchar({ length: 255 }).notNull(),
-    disabled: boolean().default(false),
-    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-});
-export const createAnnualIncomesSchema = createInsertSchema(annualIncomes);
-export type AnnualIncome = z.infer<typeof createAnnualIncomesSchema>;
+export const admissionAdditionalInfo = pgTable("admission_additional_info", {
+	id: serial().primaryKey().notNull(),
+	applicationFormId: integer("application_form_id_fk").notNull(),
+	alternateMobileNumber: varchar("alternate_mobile_number", { length: 255 }),
+	bloodGroupId: integer("blood_group_id_fk").notNull(),
+	religionId: integer("religion_id_fk").notNull(),
+	categoryId: integer("category_id_fk").notNull(),
+	isPhysicallyChallenged: boolean("is_physically_challenged").default(false),
+	disabilityType: disabilityType("disability_type"),
+	isSingleParent: boolean("is_single_parent").default(false),
+	fatherTitle: personTitleType("father_title"),
+	fatherName: varchar("father_name", { length: 255 }),
+	motherTitle: personTitleType("mother_title"),
+	motherName: varchar("mother_name", { length: 255 }),
+	isEitherParentStaff: boolean("is_either_parent_staff").default(false),
+	nameOfStaffParent: varchar("name_of_staff_parent", { length: 255 }),
+	departmentOfStaffParentId: integer("department_of_staff_parent_fk"),
+	hasSmartphone: boolean("has_smartphone").default(false),
+	hasLaptopOrDesktop: boolean("has_laptop_or_desktop").default(false),
+	hasInternetAccess: boolean("has_internet_access").default(false),
+	annualIncomeId: integer("annual_income_id_fk").notNull(),
+	applyUnderNccCategory: boolean("apply_under_ncc_category").default(false),
+	applyUnderSportsCategory: boolean("apply_under_sports_category").default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+}, (table) => [
+	foreignKey({
+			columns: [table.applicationFormId],
+			foreignColumns: [applicationForms.id],
+			name: "admission_additional_info_application_form_id_fk_application_fo"
+		}),
+	foreignKey({
+			columns: [table.bloodGroupId],
+			foreignColumns: [bloodGroup.id],
+			name: "admission_additional_info_blood_group_id_fk_blood_group_id_fk"
+		}),
+	foreignKey({
+			columns: [table.religionId],
+			foreignColumns: [religion.id],
+			name: "admission_additional_info_religion_id_fk_religion_id_fk"
+		}),
+	foreignKey({
+			columns: [table.categoryId],
+			foreignColumns: [categories.id],
+			name: "admission_additional_info_category_id_fk_categories_id_fk"
+		}),
+	foreignKey({
+			columns: [table.departmentOfStaffParentId],
+			foreignColumns: [departments.id],
+			name: "admission_additional_info_department_of_staff_parent_fk_departm"
+		}),
+	foreignKey({
+			columns: [table.annualIncomeId],
+			foreignColumns: [annualIncomes.id],
+			name: "admission_additional_info_annual_income_id_fk_annual_incomes_id"
+		}),
+]);
 
 export const bloodGroup = pgTable("blood_group", {
-    id: serial().primaryKey().notNull(),
-    type: varchar({ length: 255 }).notNull(),
-    disabled: boolean().default(false),
-    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+	id: serial().primaryKey().notNull(),
+	type: varchar({ length: 255 }).notNull(),
+	sequence: integer(),
+	disabled: boolean().default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	unique("blood_group_type_unique").on(table.type),
 	unique("blood_group_sequence_unique").on(table.sequence),
@@ -599,13 +668,14 @@ export const religion = pgTable("religion", {
 ]);
 
 export const categories = pgTable("categories", {
-    id: serial().primaryKey().notNull(),
-    name: varchar({ length: 255 }).notNull(),
-    documentRequired: boolean("document_required"),
-    code: varchar({ length: 10 }).notNull(),
-    disabled: boolean().default(false),
-    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+	id: serial().primaryKey().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	documentRequired: boolean("document_required"),
+	code: varchar({ length: 10 }).notNull(),
+	sequence: integer(),
+	disabled: boolean().default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	unique("categories_name_unique").on(table.name),
 	unique("categories_code_unique").on(table.code),
@@ -634,87 +704,93 @@ export const annualIncomes = pgTable("annual_incomes", {
 }, (table) => [
 	unique("annual_incomes_sequence_unique").on(table.sequence),
 ]);
-export const createCountriesSchema = createInsertSchema(countries);
-export type Country = z.infer<typeof createCountriesSchema>;
 
+export const admissionAcademicInfo = pgTable("admission_academic_info", {
+	id: serial().primaryKey().notNull(),
+	applicationFormId: integer("application_form_id_fk").notNull(),
+	boardUniversityId: integer("board_university_id_fk").notNull(),
+	boardResultStatus: boardResultStatusType("board_result_status").notNull(),
+	rollNumber: varchar("roll_number", { length: 255 }),
+	schoolNumber: varchar("school_number", { length: 255 }),
+	centerNumber: varchar("center_number", { length: 255 }),
+	admitCardId: varchar("admit_card_id", { length: 255 }),
+	instituteId: integer("institute_id_fk"),
+	otherInstitute: varchar("other_institute", { length: 500 }),
+	languageMediumId: integer("language_medium_id_fk").notNull(),
+	yearOfPassing: integer("year_of_passing").notNull(),
+	streamType: streamType("stream_type").notNull(),
+	isRegisteredForUgInCu: boolean("is_registered_for_ug_in_cu").default(false),
+	cuRegistrationNumber: varchar("cu_registration_number", { length: 255 }),
+	previouslyRegisteredCourseId: integer("previously_registered_course_id_fk"),
+	otherPreviouslyRegisteredCourse: varchar("other_previously_registered_course", { length: 500 }),
+	previousCollegeId: integer("previous_college_id_fk"),
+	otherCollege: varchar("other_college", { length: 500 }),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+}, (table) => [
+	foreignKey({
+			columns: [table.applicationFormId],
+			foreignColumns: [applicationForms.id],
+			name: "admission_academic_info_application_form_id_fk_application_form"
+		}),
+	foreignKey({
+			columns: [table.boardUniversityId],
+			foreignColumns: [boardUniversities.id],
+			name: "admission_academic_info_board_university_id_fk_board_universiti"
+		}),
+	foreignKey({
+			columns: [table.instituteId],
+			foreignColumns: [institutions.id],
+			name: "admission_academic_info_institute_id_fk_institutions_id_fk"
+		}),
+	foreignKey({
+			columns: [table.languageMediumId],
+			foreignColumns: [languageMedium.id],
+			name: "admission_academic_info_language_medium_id_fk_language_medium_i"
+		}),
+	foreignKey({
+			columns: [table.previouslyRegisteredCourseId],
+			foreignColumns: [courses.id],
+			name: "admission_academic_info_previously_registered_course_id_fk_cour"
+		}),
+	foreignKey({
+			columns: [table.previousCollegeId],
+			foreignColumns: [institutions.id],
+			name: "admission_academic_info_previous_college_id_fk_institutions_id_"
+		}),
+]);
 
-// export const classes = pgTable("classes", {
-//     id: serial().primaryKey().notNull(),
-//     name: varchar({ length: 500 }).notNull(),
-//     type: classType().notNull(),
-//     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-//     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-// });
-
-export const courses = pgTable("courses", {
-    id: serial().primaryKey().notNull(),
-    name: varchar({ length: 500 }).notNull(),
-    shortName: varchar("short_name", { length: 500 }),
-    codePrefix: varchar("code_prefix", { length: 10 }),
-    universityCode: varchar("university_code", { length: 10 }),
-    disabled: boolean().default(false),
-    amount: integer("amount"),
-    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-});
-export const createCoursesSchema = createInsertSchema(courses);
-export type Course = z.infer<typeof createCoursesSchema>;
-
-// export const documents = pgTable("documents", {
-//     id: serial().primaryKey().notNull(),
-//     name: varchar({ length: 255 }).notNull(),
-//     description: varchar({ length: 255 }),
-//     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-//     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-// }, (table) => [
-//     unique("documents_name_unique").on(table.name),
-// ]);
-
-// export const familyDetails = pgTable("family_details", {
-//     id: serial().primaryKey().notNull(),
-//     studentIdFk: integer("student_id_fk").notNull(),
-//     parentType: parentType("parent_type"),
-//     fatherDetailsPersonIdFk: integer("father_details_person_id_fk"),
-//     motherDetailsPersonIdFk: integer("mother_details_person_id_fk"),
-//     guardianDetailsPersonIdFk: integer("guardian_details_person_id_fk"),
-//     annualIncomeIdFk: integer("annual_income_id_fk"),
-//     createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-//     updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-// }, (table) => [
-//     foreignKey({
-//         columns: [table.annualIncomeIdFk],
-//         foreignColumns: [annualIncomes.id],
-//         name: "family_details_annual_income_id_fk_annual_incomes_id_fk"
-//     }),
-//     foreignKey({
-//         columns: [table.fatherDetailsPersonIdFk],
-//         foreignColumns: [person.id],
-//         name: "family_details_father_details_person_id_fk_person_id_fk"
-//     }),
-//     foreignKey({
-//         columns: [table.guardianDetailsPersonIdFk],
-//         foreignColumns: [person.id],
-//         name: "family_details_guardian_details_person_id_fk_person_id_fk"
-//     }),
-//     foreignKey({
-//         columns: [table.motherDetailsPersonIdFk],
-//         foreignColumns: [person.id],
-//         name: "family_details_mother_details_person_id_fk_person_id_fk"
-//     }),
-//     foreignKey({
-//         columns: [table.studentIdFk],
-//         foreignColumns: [students.id],
-//         name: "family_details_student_id_fk_students_id_fk"
-//     }),
-//     unique("family_details_student_id_fk_unique").on(table.studentIdFk),
-// ]);
+export const institutions = pgTable("institutions", {
+	id: serial().primaryKey().notNull(),
+	name: varchar({ length: 700 }).notNull(),
+	degreeId: integer("degree_id").notNull(),
+	addressId: integer("address_id"),
+	sequence: integer(),
+	disabled: boolean().default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.degreeId],
+			foreignColumns: [degree.id],
+			name: "institutions_degree_id_degree_id_fk"
+		}),
+	foreignKey({
+			columns: [table.addressId],
+			foreignColumns: [address.id],
+			name: "institutions_address_id_address_id_fk"
+		}),
+	unique("institutions_name_unique").on(table.name),
+	unique("institutions_sequence_unique").on(table.sequence),
+]);
 
 export const languageMedium = pgTable("language_medium", {
-    id: serial().primaryKey().notNull(),
-    name: varchar({ length: 255 }).notNull(),
-    disabled: boolean().default(false),
-    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+	id: serial().primaryKey().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	sequence: integer(),
+	disabled: boolean().default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	unique("language_medium_name_unique").on(table.name),
 	unique("language_medium_sequence_unique").on(table.sequence),
@@ -856,12 +932,53 @@ export const sportsInfo = pgTable("sports_info", {
 		}),
 ]);
 
-export const occupations = pgTable("occupations", {
-    id: serial().primaryKey().notNull(),
-    name: varchar({ length: 255 }).notNull(),
-    disabled: boolean().default(false),
-    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+export const sportsCategories = pgTable("sports_categories", {
+	id: serial().primaryKey().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	disabled: boolean().default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+});
+
+export const studentAcademicSubjects = pgTable("student_academic_subjects", {
+	id: serial().primaryKey().notNull(),
+	admissionAcademicInfoId: integer("admission_academic_info_id_fk").notNull(),
+	academicSubjectId: integer("academic_subject_id_fk").notNull(),
+	fullMarks: numeric("full_marks", { precision: 10, scale:  2 }).notNull(),
+	totalMarks: numeric("total_marks", { precision: 10, scale:  2 }).notNull(),
+	resultStatus: boardResultStatusType("result_status").notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+}, (table) => [
+	foreignKey({
+			columns: [table.admissionAcademicInfoId],
+			foreignColumns: [admissionAcademicInfo.id],
+			name: "student_academic_subjects_admission_academic_info_id_fk_admissi"
+		}),
+	foreignKey({
+			columns: [table.academicSubjectId],
+			foreignColumns: [academicSubjects.id],
+			name: "student_academic_subjects_academic_subject_id_fk_academic_subje"
+		}),
+]);
+
+export const feesStructures = pgTable("fees_structures", {
+	id: serial().primaryKey().notNull(),
+	feesReceiptTypeId: integer("fees_receipt_type_id_fk"),
+	closingDate: date("closing_date").notNull(),
+	academicYearId: integer("academic_year_id_fk").notNull(),
+	courseId: integer("course_id_fk").notNull(),
+	classId: integer("class_id_fk").notNull(),
+	shiftId: integer("shift_id_fk").notNull(),
+	advanceForCourseId: integer("advance_for_course_id_fk"),
+	advanceForSemester: integer("advance_for_semester"),
+	startDate: date("start_date").notNull(),
+	endDate: date("end_date").notNull(),
+	onlineStartDate: date("online_start_date").notNull(),
+	onlineEndDate: date("online_end_date").notNull(),
+	numberOfInstalments: integer("number_of_instalments"),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	foreignKey({
 			columns: [table.feesReceiptTypeId],
