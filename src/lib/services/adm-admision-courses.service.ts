@@ -1,5 +1,5 @@
 import { dbPostgres } from "@/db";
-import { admissionCourses, AdmissionCourse, courses, admissions } from "@/db/schema";
+import { admissionCourses, AdmissionCourse, courses, admissions, academicYears } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 
 // ✅ Create
@@ -61,16 +61,16 @@ export async function findAdmissionCourseByIdWithDetails(id: number) {
             },
             admission: {
                 id: admissions.id,
-                year: admissions.year,
+                year: academicYears.year,
                 isClosed: admissions.isClosed,
                 startDate: admissions.startDate,
                 lastDate: admissions.lastDate,
-                isArchived: admissions.isArchived
             }
         })
         .from(admissionCourses)
         .leftJoin(courses, eq(admissionCourses.courseId, courses.id))
         .leftJoin(admissions, eq(admissionCourses.admissionId, admissions.id))
+        .leftJoin(academicYears, eq(academicYears.id, admissions.academicYearId))
         .where(eq(admissionCourses.id, id));
 
     return course || null;
@@ -137,15 +137,16 @@ export async function findAdmissionCoursesByCourseIdWithDetails(courseId: number
             remarks: admissionCourses.remarks,
             admission: {
                 id: admissions.id,
-                year: admissions.year,
+                year: academicYears.year,
                 isClosed: admissions.isClosed,
                 startDate: admissions.startDate,
                 lastDate: admissions.lastDate,
-                isArchived: admissions.isArchived
+
             }
         })
         .from(admissionCourses)
         .leftJoin(admissions, eq(admissionCourses.admissionId, admissions.id))
+        .leftJoin(academicYears, eq(academicYears.id, admissions.academicYearId))
         .where(eq(admissionCourses.courseId, courseId));
 
     return admissionCoursesList;
@@ -183,16 +184,16 @@ export async function findAllActiveAdmissionCoursesWithDetails() {
             },
             admission: {
                 id: admissions.id,
-                year: admissions.year,
+                year: academicYears.year,
                 isClosed: admissions.isClosed,
                 startDate: admissions.startDate,
                 lastDate: admissions.lastDate,
-                isArchived: admissions.isArchived
             }
         })
         .from(admissionCourses)
         .leftJoin(courses, eq(admissionCourses.courseId, courses.id))
         .leftJoin(admissions, eq(admissionCourses.admissionId, admissions.id))
+        .leftJoin(academicYears, eq(academicYears.id, admissions.academicYearId))
         .where(eq(admissionCourses.disabled, false));
 
     return admissionCoursesList;
@@ -229,15 +230,15 @@ export async function findAllAdmissionCoursesWithDetails() {
             },
             admission: {
                 id: admissions.id,
-                year: admissions.year,
+                year: academicYears.year,
                 isClosed: admissions.isClosed,
                 startDate: admissions.startDate,
                 lastDate: admissions.lastDate,
-                isArchived: admissions.isArchived
             }
         })
         .from(admissionCourses)
         .leftJoin(courses, eq(admissionCourses.courseId, courses.id))
+        .leftJoin(academicYears, eq(academicYears.id, admissions.academicYearId))
         .leftJoin(admissions, eq(admissionCourses.admissionId, admissions.id));
 
     return admissionCoursesList;

@@ -1,7 +1,7 @@
-import { AcademicSubjects, Admission, AdmissionAcademicInfo, AdmissionAdditionalInfo, AdmissionCourse, AdmissionCourseApplication, AdmissionGeneralInfo, ApplicationForm, BoardUniversity, Payment, SportsInfo, StudentAcademicSubjects } from "@/db/schema";
+import { AcademicSubject, AcademicYear, Admission, AdmissionAcademicInfo, AdmissionAdditionalInfo, AdmissionCourse, AdmissionCourseApplication, AdmissionGeneralInfo, ApplicationForm, BoardUniversity, Payment, SportsInfo, StudentAcademicSubject } from "@/db/schema";
 
 export interface AdmissionAcademicInfoDto extends AdmissionAcademicInfo {
-    subjects: StudentAcademicSubjects[];
+    subjects: StudentAcademicSubject[];
 }
 
 
@@ -19,10 +19,11 @@ export interface ApplicationFormDto extends ApplicationForm {
 }
 
 export interface BoardUniversityDto extends BoardUniversity {
-    subjects: AcademicSubjects[];
+    subjects: AcademicSubject[];
     degreeName?: string;
 }
 
 export interface AdmissionDto extends Admission {
     courses: AdmissionCourse[];
+    academicYear: AcademicYear;
 }

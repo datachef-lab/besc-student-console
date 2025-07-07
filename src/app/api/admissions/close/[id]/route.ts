@@ -23,7 +23,7 @@ export async function POST(
 
     const [updatedAdmission] = await dbPostgres
       .update(admissions)
-      .set({ isClosed, updatedAt: new Date() })
+      .set({ isClosed, updatedAt: new Date().toISOString() })
       .where(eq(admissions.id, id))
       .returning();
 

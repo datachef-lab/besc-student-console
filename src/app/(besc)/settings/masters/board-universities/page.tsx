@@ -36,7 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
 import { uploadBoardUniversitiesFromFile, downloadBoardUniversities, getDegrees } from './actions';
 
 // Assuming a type definition for BoardUniversity exists in your schema file
-import { AcademicSubjects, Degree, type BoardUniversity } from "@/db/schema";
+import { AcademicSubject, Degree, type BoardUniversity } from "@/db/schema";
 import { BoardUniversityDto } from "@/types/admissions";
 
 // Extend the BoardUniversity type to include subjects
@@ -90,7 +90,7 @@ export default function BoardUniversitiesPage() {
   const [editedSequence, setEditedSequence] = useState<number | null>(null);
   const [selectedDegreeId, setSelectedDegreeId] = useState<number | null>(null);
   const [degrees, setDegrees] = useState<Degree[]>([]);
-  const [editedSubjects, setEditedSubjects] = useState<AcademicSubjects[]>([]);
+  const [editedSubjects, setEditedSubjects] = useState<AcademicSubject[]>([]);
   const [subjectSearchTerm, setSubjectSearchTerm] = useState("");
 
   // Placeholder total pages calculation
@@ -743,7 +743,7 @@ setTotalCount(result.length); // Assuming the API returns total count in a 'tota
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setEditedSubjects([{ id: 0, boardUniversityId: editingBoardUniversity?.id || 0, name: '', passingMarks: null, disabled: false, createdAt: new Date(), updatedAt: new Date() }, ...editedSubjects])} // Prepend new subject
+                  onClick={() => setEditedSubjects([{ id: 0, boardUniversityId: editingBoardUniversity?.id || 0, name: '', passingMarks: null, disabled: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...editedSubjects])} // Prepend new subject
                   className="flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200"
                 >
                   <Pencil className="h-4 w-4" /> Add Subject

@@ -1,7 +1,11 @@
-import React, { useState, useEffect, Dispatch, SetStateAction, useRef } from "react";
-import {
-  Input
-} from "@/components/ui/input";
+import React, {
+  useState,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  useRef,
+} from "react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,11 +17,18 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { AdmissionGeneralInfo, ApplicationForm, Category, Nationality, admissionGeneralInfo, genderType } from "@/db/schema";
+import {
+  AdmissionGeneralInfo,
+  ApplicationForm,
+  Category,
+  Nationality,
+  admissionGeneralInfo,
+  genderType,
+} from "@/db/schema";
 import { useApplicationForm } from "@/hooks/use-application-form";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-import {ApplicationFormDto} from "@/types/admissions/index";
+import { ApplicationFormDto } from "@/types/admissions/index";
 interface GeneralInfoStepProps {
   stepNotes: React.ReactNode;
   onNext: () => void;
@@ -38,16 +49,10 @@ const STATES = [
   // ...add more as needed
 ];
 
-const CATEGORIES = [
-  "General",
-  "SC",
-  "ST",
-  "OBC-A",
-  "OBC-B",
-];
+const CATEGORIES = ["General", "SC", "ST", "OBC-A", "OBC-B"];
 
 const GENDERS = genderType.enumValues;
-type Gender = typeof GENDERS[number];
+type Gender = (typeof GENDERS)[number];
 
 // const DEGREES = ["Under Graduate", "Post Graduate"];
 
@@ -60,8 +65,18 @@ export const RedDot = () => (
 
 const days = Array.from({ length: 31 }, (_, i) => i + 1);
 const months = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 60 }, (_, i) => currentYear - i);
@@ -73,7 +88,8 @@ export default function GeneralInfoStep({
 }: GeneralInfoStepProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const { admission, applicationForm, setApplicationForm, login } = useApplicationForm();
+  const { admission, applicationForm, setApplicationForm, login } =
+    useApplicationForm();
   const [nationalities, setNationalities] = useState<Nationality[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -91,57 +107,66 @@ export default function GeneralInfoStep({
     whatsappNumber: "",
   });
 
-  const isGeneralInfoLocked = !!(applicationForm?.generalInfo && applicationForm.generalInfo.id && applicationForm.generalInfo.id !== 0);
+  const isGeneralInfoLocked = !!(
+    applicationForm?.generalInfo &&
+    applicationForm.generalInfo.id &&
+    applicationForm.generalInfo.id !== 0
+  );
 
   // Handle changes in generalInfo
-  const handleGeneralInfoChange = (field: keyof AdmissionGeneralInfo, value: any) => {
+  const handleGeneralInfoChange = (
+    field: keyof AdmissionGeneralInfo,
+    value: any
+  ) => {
     if (!applicationForm) return;
-    
+
     setApplicationForm({
       ...applicationForm,
       generalInfo: {
         ...applicationForm.generalInfo,
-        [field]: value
-      } as AdmissionGeneralInfo
+        [field]: value,
+      } as AdmissionGeneralInfo,
     });
   };
 
-  const generalInfo = applicationForm?.generalInfo || {
-    applicationFormId: 0,
-    dateOfBirth: new Date().toISOString().split('T')[0],
-    email: "",
-    firstName: "",
-    middleName: null,
-    lastName: "",
-    mobileNumber: "",
-    password: "",
-    categoryId: null,
-    degreeLevel: "UNDER_GRADUATE",
-    residenceOfKolkata: true,
-    gender: "FEMALE",
-    isGujarati: false,
-    nationalityId: null,
-    otherNationality: null,
-    religionId: null,
-    whatsappNumber: null,
-  } as AdmissionGeneralInfo;
+  const generalInfo =
+    applicationForm?.generalInfo ||
+    ({
+      applicationFormId: 0,
+      dateOfBirth: new Date().toISOString().split("T")[0],
+      email: "",
+      firstName: "",
+      middleName: null,
+      lastName: "",
+      mobileNumber: "",
+      password: "",
+      categoryId: null,
+      degreeLevel: "UNDER_GRADUATE",
+      residenceOfKolkata: true,
+      gender: "FEMALE",
+      isGujarati: false,
+      nationalityId: null,
+      otherNationality: null,
+      religionId: null,
+      whatsappNumber: null,
+    } as AdmissionGeneralInfo);
 
   // Fetch nationalities on component mount
   useEffect(() => {
     const fetchNationalities = async () => {
       try {
-        const response = await fetch('/api/nationalities');
+        const response = await fetch("/api/nationalities");
         if (!response.ok) {
-          throw new Error('Failed to fetch nationalities');
+          throw new Error("Failed to fetch nationalities");
         }
         const result = await response.json();
         if (result.success && result.data) {
           setNationalities(result.data);
         } else {
-          throw new Error(result.message || 'Failed to fetch nationalities');
+          throw new Error(result.message || "Failed to fetch nationalities");
         }
       } catch (error) {
-        console.error('Error fetching nationalities:', error);
+        console.error("Error fetching nationalities:", error);
       }
     };
 
@@ -152,18 +177,18 @@ export default function GeneralInfoStep({
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/categories');
+        const response = await fetch("/api/categories");
         if (!response.ok) {
-          throw new Error('Failed to fetch categories');
+          throw new Error("Failed to fetch categories");
         }
         const result = await response.json();
         if (result.success && result.data) {
           setCategories(result.data);
         } else {
-          throw new Error(result.message || 'Failed to fetch categories');
+          throw new Error(result.message || "Failed to fetch categories");
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
       }
     };
 
@@ -172,7 +197,7 @@ export default function GeneralInfoStep({
 
   const validateForm = () => {
     const errors: { [key: string]: string } = {};
-    
+
     if (!generalInfo.firstName?.trim()) {
       errors.firstName = "First name is required";
     }
@@ -218,13 +243,13 @@ export default function GeneralInfoStep({
 
   const handleNext = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // If info is locked, just proceed to next step without API calls
     if (isGeneralInfoLocked) {
       onNext();
       return;
     }
-    
+
     // If info is locked, skip password validation
     if (!validateForm()) {
       toast({
@@ -237,9 +262,13 @@ export default function GeneralInfoStep({
     }
     setIsSubmitting(true);
     try {
-      const isNewApplication = !applicationForm?.id || applicationForm?.id === 0;
+      const isNewApplication =
+        !applicationForm?.id || applicationForm?.id === 0;
 
-      let requestBody: {form: ApplicationForm, generalInfo: AdmissionGeneralInfo };
+      let requestBody: {
+        form: ApplicationForm;
+        generalInfo: AdmissionGeneralInfo;
+      };
       let method: string;
       let url: string;
       // const {} = applicationForm;
@@ -251,14 +280,16 @@ export default function GeneralInfoStep({
             admissionId: admission?.id!,
             formStatus: "DRAFT",
             admissionStep: "ACADEMIC_INFORMATION",
-            
+
             // remarks: "", // add if needed
           },
           generalInfo: {
             ...generalInfo,
             applicationFormId: 0,
 
-            whatsappNumber: sameAsMobile ? generalInfo.mobileNumber : generalInfo.whatsappNumber,
+            whatsappNumber: sameAsMobile
+              ? generalInfo.mobileNumber
+              : generalInfo.whatsappNumber,
           },
         };
       } else {
@@ -276,8 +307,10 @@ export default function GeneralInfoStep({
           generalInfo: {
             ...applicationForm.generalInfo,
             ...generalInfo,
-            whatsappNumber: sameAsMobile ? generalInfo.mobileNumber : generalInfo.whatsappNumber,
-          }
+            whatsappNumber: sameAsMobile
+              ? generalInfo.mobileNumber
+              : generalInfo.whatsappNumber,
+          },
         };
       }
 
@@ -312,7 +345,8 @@ export default function GeneralInfoStep({
       console.error("Error saving form:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save form",
+        description:
+          error instanceof Error ? error.message : "Failed to save form",
         variant: "destructive",
         // onClose: () => {},
       });
@@ -337,7 +371,9 @@ export default function GeneralInfoStep({
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Helper for DOB
-  const dob = generalInfo.dateOfBirth ? new Date(generalInfo.dateOfBirth) : new Date();
+  const dob = generalInfo.dateOfBirth
+    ? new Date(generalInfo.dateOfBirth)
+    : new Date();
   const dobDay = dob.getDate().toString();
   const dobMonth = (dob.getMonth() + 1).toString();
   const dobYear = dob.getFullYear().toString();
@@ -390,7 +426,13 @@ export default function GeneralInfoStep({
           otp: emailOtp,
         }),
       });
+      console.log("sending email otp", {
+        type: "FOR_EMAIL",
+        recipient: generalInfo.email,
+        otp: emailOtp,
+      });
       const data = await response.json();
+      console.log(data);
       if (response.ok) {
         setEmailVerified(true);
         alert("Email verified successfully!");
@@ -466,7 +508,9 @@ export default function GeneralInfoStep({
     if (value === "other") {
       handleGeneralInfoChange("nationalityId", null);
     } else {
-      const selectedNationality = nationalities.find(n => n.id?.toString() === value);
+      const selectedNationality = nationalities.find(
+        (n) => n.id?.toString() === value
+      );
       if (selectedNationality?.id) {
         handleGeneralInfoChange("nationalityId", selectedNationality.id);
       }
@@ -482,7 +526,9 @@ export default function GeneralInfoStep({
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     debounceTimeout.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/admissions/general-info?admissionId=${admission.id}&mobileNumber=${generalInfo.mobileNumber}`);
+        const res = await fetch(
+          `/api/admissions/general-info?admissionId=${admission.id}&mobileNumber=${generalInfo.mobileNumber}`
+        );
         if (res.ok) {
           setMobileExists(true);
         } else {
@@ -512,13 +558,19 @@ export default function GeneralInfoStep({
           <div>
             <div className="flex flex-col gap-4">
               <div className="flex-1">
-                <Label className="mb-1 block text-sm sm:text-base">1. Applicant's Name</Label>
+                <Label className="mb-1 block text-sm sm:text-base">
+                  1. Applicant's Name
+                </Label>
                 <div className="flex flex-col sm:flex-row w-full gap-3 mt-2">
                   <div className="w-full sm:w-1/3">
-                    <Label className="mb-1 flex items-center text-sm">First Name <RedDot /></Label>
+                    <Label className="mb-1 flex items-center text-sm">
+                      First Name <RedDot />
+                    </Label>
                     <Input
                       value={generalInfo.firstName || ""}
-                      onChange={e => handleGeneralInfoChange("firstName", e.target.value)}
+                      onChange={(e) =>
+                        handleGeneralInfoChange("firstName", e.target.value)
+                      }
                       required
                       placeholder="AS PER CLASS XII BOARD MARKSHEET"
                       className="w-full"
@@ -526,21 +578,31 @@ export default function GeneralInfoStep({
                     />
                   </div>
                   <div className="w-full sm:w-1/3">
-                    <Label className="mb-1 flex items-center text-sm">Middle Name</Label>
+                    <Label className="mb-1 flex items-center text-sm">
+                      Middle Name
+                    </Label>
                     <Input
                       value={generalInfo.middleName || ""}
-                      onChange={e => handleGeneralInfoChange("middleName", e.target.value)}
+                      onChange={(e) =>
+                        handleGeneralInfoChange("middleName", e.target.value)
+                      }
                       placeholder="AS PER CLASS XII BOARD MARKSHEET"
                       className="w-full"
                       disabled={isGeneralInfoLocked}
                     />
-                    <p className="text-red-500 font-semibold text-xs mt-1">(Do not write if not given in Class XII Board Marksheet)</p>
+                    <p className="text-red-500 font-semibold text-xs mt-1">
+                      (Do not write if not given in Class XII Board Marksheet)
+                    </p>
                   </div>
                   <div className="w-full sm:w-1/3">
-                    <Label className="mb-1 flex items-center text-sm">Last Name <RedDot /></Label>
+                    <Label className="mb-1 flex items-center text-sm">
+                      Last Name <RedDot />
+                    </Label>
                     <Input
                       value={generalInfo.lastName || ""}
-                      onChange={e => handleGeneralInfoChange("lastName", e.target.value)}
+                      onChange={(e) =>
+                        handleGeneralInfoChange("lastName", e.target.value)
+                      }
                       required
                       placeholder="AS PER CLASS XII BOARD MARKSHEET"
                       className="w-full"
@@ -553,11 +615,13 @@ export default function GeneralInfoStep({
           </div>
           {/* 2. Email */}
           <div>
-            <Label className="flex items-center mb-1">2. Email <RedDot /></Label>
+            <Label className="flex items-center mb-1">
+              2. Email <RedDot />
+            </Label>
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 value={generalInfo.email || ""}
-                onChange={e => {
+                onChange={(e) => {
                   handleGeneralInfoChange("email", e.target.value);
                   setEmailVerified(false); // Reset verification on email change
                   setEmailOtpSent(false);
@@ -569,14 +633,22 @@ export default function GeneralInfoStep({
               />
               <div className="flex flex-col sm:flex-row gap-2">
                 {!emailVerified && !emailOtpSent && (
-                  <Button type="button" size="sm" className="w-full sm:w-auto" onClick={handleSendEmailOtp} disabled={isGeneralInfoLocked}>Send OTP</Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    onClick={handleSendEmailOtp}
+                    disabled={isGeneralInfoLocked}
+                  >
+                    Send OTP
+                  </Button>
                 )}
                 {emailOtpSent && !emailVerified && (
                   <>
                     <Input
                       className="w-full sm:w-32"
                       value={emailOtp}
-                      onChange={e => setEmailOtp(e.target.value)}
+                      onChange={(e) => setEmailOtp(e.target.value)}
                       placeholder="Enter OTP"
                       size={"sm" as any}
                     />
@@ -591,56 +663,103 @@ export default function GeneralInfoStep({
                     </Button>
                   </>
                 )}
-                {emailVerified && <span className="text-green-600 font-semibold text-sm flex items-center">Verified ✅</span>}
+                {emailVerified && (
+                  <span className="text-green-600 font-semibold text-sm flex items-center">
+                    Verified ✅
+                  </span>
+                )}
               </div>
             </div>
           </div>
           {/* 3. Date of Birth (split) */}
           <div>
-            <Label className="flex items-center mb-1">3. Date of Birth <RedDot /></Label>
+            <Label className="flex items-center mb-1">
+              3. Date of Birth <RedDot />
+            </Label>
             <div className="flex gap-2">
               <Select
                 value={dobDay}
-                onValueChange={val => {
-                  const newDate = new Date(generalInfo.dateOfBirth || new Date());
+                onValueChange={(val) => {
+                  const newDate = new Date(
+                    generalInfo.dateOfBirth || new Date()
+                  );
                   newDate.setDate(Number(val));
-                  handleGeneralInfoChange("dateOfBirth", newDate.toISOString().split('T')[0]);
+                  handleGeneralInfoChange(
+                    "dateOfBirth",
+                    newDate.toISOString().split("T")[0]
+                  );
                 }}
                 disabled={isGeneralInfoLocked}
               >
-                <SelectTrigger className="w-24"><SelectValue placeholder="Select date" /></SelectTrigger>
-                <SelectContent>{days.map(day => <SelectItem key={day} value={day.toString()}>{day}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="w-24">
+                  <SelectValue placeholder="Select date" />
+                </SelectTrigger>
+                <SelectContent>
+                  {days.map((day) => (
+                    <SelectItem key={day} value={day.toString()}>
+                      {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
               <Select
                 value={dobMonth}
-                onValueChange={val => {
-                  const newDate = new Date(generalInfo.dateOfBirth || new Date());
+                onValueChange={(val) => {
+                  const newDate = new Date(
+                    generalInfo.dateOfBirth || new Date()
+                  );
                   newDate.setMonth(Number(val) - 1);
-                  handleGeneralInfoChange("dateOfBirth", newDate.toISOString().split('T')[0]);
+                  handleGeneralInfoChange(
+                    "dateOfBirth",
+                    newDate.toISOString().split("T")[0]
+                  );
                 }}
                 disabled={isGeneralInfoLocked}
               >
-                <SelectTrigger className="w-32"><SelectValue placeholder="Select month" /></SelectTrigger>
-                <SelectContent>{months.map((month, idx) => <SelectItem key={month} value={(idx + 1).toString()}>{month}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((month, idx) => (
+                    <SelectItem key={month} value={(idx + 1).toString()}>
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
               <Select
                 value={dobYear}
-                onValueChange={val => {
-                  const newDate = new Date(generalInfo.dateOfBirth || new Date());
+                onValueChange={(val) => {
+                  const newDate = new Date(
+                    generalInfo.dateOfBirth || new Date()
+                  );
                   newDate.setFullYear(Number(val));
-                  handleGeneralInfoChange("dateOfBirth", newDate.toISOString().split('T')[0]);
+                  handleGeneralInfoChange(
+                    "dateOfBirth",
+                    newDate.toISOString().split("T")[0]
+                  );
                 }}
                 disabled={isGeneralInfoLocked}
               >
-                <SelectTrigger className="w-32"><SelectValue placeholder="Select year" /></SelectTrigger>
-                <SelectContent>{years.map(year => <SelectItem key={year} value={year.toString()}>{year}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
           </div>
           {/* 4(a) and 4(b) Nationality/Other Nationality on same line */}
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label className="flex items-center mb-1">4(a). Nationality <RedDot /></Label>
+              <Label className="flex items-center mb-1">
+                4(a). Nationality <RedDot />
+              </Label>
               <Select
                 value={generalInfo.nationalityId?.toString() || "other"}
                 onValueChange={handleNationalityChange}
@@ -649,22 +768,30 @@ export default function GeneralInfoStep({
                   <SelectValue placeholder="Select Nationality" />
                 </SelectTrigger>
                 <SelectContent>
-                  {nationalities.map(nationality => (
-                    nationality.id && (
-                      <SelectItem key={nationality.id} value={nationality.id.toString()}>
-                        {nationality.name}
-                      </SelectItem>
-                    )
-                  ))}
+                  {nationalities.map(
+                    (nationality) =>
+                      nationality.id && (
+                        <SelectItem
+                          key={nationality.id}
+                          value={nationality.id.toString()}
+                        >
+                          {nationality.name}
+                        </SelectItem>
+                      )
+                  )}
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex-1">
-              <Label className="flex items-center mb-1">4(b). Other Nationality</Label>
+              <Label className="flex items-center mb-1">
+                4(b). Other Nationality
+              </Label>
               <Input
                 value={generalInfo.otherNationality || ""}
-                onChange={e => handleGeneralInfoChange("otherNationality", e.target.value)}
+                onChange={(e) =>
+                  handleGeneralInfoChange("otherNationality", e.target.value)
+                }
                 placeholder="Other Nationality"
                 disabled={generalInfo.nationalityId !== null}
               />
@@ -672,29 +799,44 @@ export default function GeneralInfoStep({
           </div>
           {/* 5. Category */}
           <div>
-            <Label className="flex items-center mb-1">5. Select Category <RedDot /></Label>
+            <Label className="flex items-center mb-1">
+              5. Select Category <RedDot />
+            </Label>
             <Select
               value={generalInfo.categoryId?.toString() || ""}
-              onValueChange={val => handleGeneralInfoChange("categoryId", parseInt(val))}
+              onValueChange={(val) =>
+                handleGeneralInfoChange("categoryId", parseInt(val))
+              }
             >
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
               <SelectContent>
-                {categories.map(cat => (
-                  cat.id && (
-                    <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
-                  )
-                ))}
+                {categories.map(
+                  (cat) =>
+                    cat.id && (
+                      <SelectItem key={cat.id} value={cat.id.toString()}>
+                        {cat.name}
+                      </SelectItem>
+                    )
+                )}
               </SelectContent>
             </Select>
           </div>
           {/* 6. Is either of your parents Gujarati? */}
           <div>
-            <Label className="flex items-center mb-1">6. Is either of your parents Gujarati? <RedDot /></Label>
+            <Label className="flex items-center mb-1">
+              6. Is either of your parents Gujarati? <RedDot />
+            </Label>
             <Select
               value={generalInfo.isGujarati ? "Yes" : "No"}
-              onValueChange={val => handleGeneralInfoChange("isGujarati", val === "Yes")}
+              onValueChange={(val) =>
+                handleGeneralInfoChange("isGujarati", val === "Yes")
+              }
             >
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Yes">Yes</SelectItem>
                 <SelectItem value="No">No</SelectItem>
@@ -703,16 +845,24 @@ export default function GeneralInfoStep({
           </div>
           {/* 7. Gender */}
           <div>
-            <Label className="flex items-center mb-1">7. Select Your Gender <RedDot /></Label>
+            <Label className="flex items-center mb-1">
+              7. Select Your Gender <RedDot />
+            </Label>
             <Select
               value={generalInfo.gender || "FEMALE"}
-              onValueChange={(val: Gender) => handleGeneralInfoChange("gender", val)}
+              onValueChange={(val: Gender) =>
+                handleGeneralInfoChange("gender", val)
+              }
               disabled={isGeneralInfoLocked}
             >
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
               <SelectContent>
-                {GENDERS.map(g => (
-                  <SelectItem key={g} value={g}>{g}</SelectItem>
+                {GENDERS.map((g) => (
+                  <SelectItem key={g} value={g}>
+                    {g}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -721,11 +871,17 @@ export default function GeneralInfoStep({
           <div className="flex flex-col gap-4">
             {/* 8(a). Mobile Number */}
             <div className="flex-1">
-              <Label className="flex items-center mb-1 text-sm">8(a). Mobile Number <span className="text-blue-700 font-bold text-xs sm:text-sm">(10-digit only.)</span> <RedDot /></Label>
+              <Label className="flex items-center mb-1 text-sm">
+                8(a). Mobile Number{" "}
+                <span className="text-blue-700 font-bold text-xs sm:text-sm">
+                  (10-digit only.)
+                </span>{" "}
+                <RedDot />
+              </Label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   value={generalInfo.mobileNumber || ""}
-                  onChange={e => {
+                  onChange={(e) => {
                     handleGeneralInfoChange("mobileNumber", e.target.value);
                     setMobileVerified(false); // Reset verification on mobile change
                     setMobileOtpSent(false);
@@ -736,18 +892,29 @@ export default function GeneralInfoStep({
                   className="w-full"
                 />
                 {mobileExists && (
-                  <span className="text-red-600 text-xs mt-1">This mobile number is already registered for this admission year.</span>
+                  <span className="text-red-600 text-xs mt-1">
+                    This mobile number is already registered for this admission
+                    year.
+                  </span>
                 )}
                 <div className="flex flex-col sm:flex-row gap-2">
                   {!mobileVerified && !mobileOtpSent && (
-                    <Button type="button" size="sm" className="w-full sm:w-auto" onClick={handleSendMobileOtp} disabled={isGeneralInfoLocked || mobileExists}>Send OTP</Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      onClick={handleSendMobileOtp}
+                      disabled={isGeneralInfoLocked || mobileExists}
+                    >
+                      Send OTP
+                    </Button>
                   )}
                   {mobileOtpSent && !mobileVerified && (
                     <>
                       <Input
                         className="w-full sm:w-32"
                         value={mobileOtp}
-                        onChange={e => setMobileOtp(e.target.value)}
+                        onChange={(e) => setMobileOtp(e.target.value)}
                         placeholder="Enter OTP"
                         size={"sm" as any}
                       />
@@ -762,18 +929,30 @@ export default function GeneralInfoStep({
                       </Button>
                     </>
                   )}
-                  {mobileVerified && <span className="text-green-600 font-semibold text-sm flex items-center">Verified ✅</span>}
+                  {mobileVerified && (
+                    <span className="text-green-600 font-semibold text-sm flex items-center">
+                      Verified ✅
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* 8(b). WhatsApp Number */}
             <div className="flex-1">
-              <Label className="flex items-center mb-1 text-sm">8(b). WhatsApp Number <RedDot /></Label>
+              <Label className="flex items-center mb-1 text-sm">
+                8(b). WhatsApp Number <RedDot />
+              </Label>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <Input
-                  value={sameAsMobile ? (generalInfo.mobileNumber || "") : (generalInfo.whatsappNumber || "")}
-                  onChange={e => handleGeneralInfoChange("whatsappNumber", e.target.value)}
+                  value={
+                    sameAsMobile
+                      ? generalInfo.mobileNumber || ""
+                      : generalInfo.whatsappNumber || ""
+                  }
+                  onChange={(e) =>
+                    handleGeneralInfoChange("whatsappNumber", e.target.value)
+                  }
                   required
                   disabled={isGeneralInfoLocked || sameAsMobile}
                   placeholder="WhatsApp Number"
@@ -782,29 +961,38 @@ export default function GeneralInfoStep({
                 <div className="flex items-center gap-2 mt-2 sm:mt-0">
                   <Checkbox
                     checked={sameAsMobile}
-                    onCheckedChange={checked => {
+                    onCheckedChange={(checked) => {
                       setSameAsMobile(!!checked);
                       if (checked) {
-                        handleGeneralInfoChange("whatsappNumber", generalInfo.mobileNumber);
+                        handleGeneralInfoChange(
+                          "whatsappNumber",
+                          generalInfo.mobileNumber
+                        );
                       }
                     }}
                     id="sameAsMobile"
                   />
-                  <Label htmlFor="sameAsMobile" className="text-xs sm:text-sm">Same As Mobile Number</Label>
+                  <Label htmlFor="sameAsMobile" className="text-xs sm:text-sm">
+                    Same As Mobile Number
+                  </Label>
                 </div>
               </div>
             </div>
           </div>
           {/* 9. Are you a resident of Kolkata? */}
           <div>
-            <Label className="flex items-center mb-1">9. Are you a resident of Kolkata? <RedDot /></Label>
+            <Label className="flex items-center mb-1">
+              9. Are you a resident of Kolkata? <RedDot />
+            </Label>
             <Select
               value={generalInfo.residenceOfKolkata ? "Yes" : "No"}
-              onValueChange={val => {
+              onValueChange={(val) => {
                 handleGeneralInfoChange("residenceOfKolkata", val === "Yes");
               }}
             >
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Yes">Yes</SelectItem>
                 <SelectItem value="No">No</SelectItem>
@@ -815,18 +1003,31 @@ export default function GeneralInfoStep({
         {/* Login Details Section */}
         <Card className="p-6 space-y-4">
           <h3 className="text-lg font-semibold mb-2">Login Details</h3>
-          <p className="text-sm text-muted-foreground mb-4">The mobile number entered above in Sr. No. 8 (a) will be your login ID by default in order to access your profile on college website.</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            The mobile number entered above in Sr. No. 8 (a) will be your login
+            ID by default in order to access your profile on college website.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <Label className="flex items-center mb-1">10. Login Id <RedDot /></Label>
-              <Input value={generalInfo.mobileNumber || ""} disabled placeholder="Login Id" />
+              <Label className="flex items-center mb-1">
+                10. Login Id <RedDot />
+              </Label>
+              <Input
+                value={generalInfo.mobileNumber || ""}
+                disabled
+                placeholder="Login Id"
+              />
             </div>
             <div>
-              <Label className="flex items-center mb-1">11. Password <RedDot /></Label>
+              <Label className="flex items-center mb-1">
+                11. Password <RedDot />
+              </Label>
               <Input
                 type="password"
                 value={generalInfo.password || ""}
-                onChange={e => handleGeneralInfoChange("password", e.target.value)}
+                onChange={(e) =>
+                  handleGeneralInfoChange("password", e.target.value)
+                }
                 placeholder="Password (Max 10 Characters)"
                 maxLength={10}
                 required
@@ -834,11 +1035,13 @@ export default function GeneralInfoStep({
               />
             </div>
             <div>
-              <Label className="flex items-center mb-1">12. Confirm Password <RedDot /></Label>
+              <Label className="flex items-center mb-1">
+                12. Confirm Password <RedDot />
+              </Label>
               <Input
                 type="password"
                 value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm Password (Max 10 Characters)"
                 maxLength={10}
                 required
@@ -850,16 +1053,25 @@ export default function GeneralInfoStep({
         {/* Application To Section */}
         <Card className="p-6 space-y-4">
           <h3 className="text-lg font-semibold mb-2">Application To</h3>
-          <p className="text-sm text-muted-foreground mb-4">Since you are applying to B.Com./B.A./B.Sc./BBA course, the selection will remain "Undergraduate".</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Since you are applying to B.Com./B.A./B.Sc./BBA course, the
+            selection will remain "Undergraduate".
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label className="flex items-center mb-1">13. Select Degree <RedDot /></Label>
+              <Label className="flex items-center mb-1">
+                13. Select Degree <RedDot />
+              </Label>
               <Select
                 value={generalInfo.degreeLevel || "UNDER_GRADUATE"}
-                onValueChange={val => handleGeneralInfoChange("degreeLevel", val)}
+                onValueChange={(val) =>
+                  handleGeneralInfoChange("degreeLevel", val)
+                }
                 disabled
               >
-                <SelectTrigger><SelectValue placeholder="Select Degree" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Degree" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="UNDER_GRADUATE">Under Graduate</SelectItem>
                   <SelectItem value="POST_GRADUATE">Post Graduate</SelectItem>
@@ -887,7 +1099,9 @@ export default function GeneralInfoStep({
       {/* Display validation errors */}
       {Object.keys(formErrors).length > 0 && (
         <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <h4 className="text-red-800 font-semibold mb-2">Please fix the following errors:</h4>
+          <h4 className="text-red-800 font-semibold mb-2">
+            Please fix the following errors:
+          </h4>
           <ul className="list-disc list-inside text-red-700">
             {Object.entries(formErrors).map(([field, error]) => (
               <li key={field}>{error}</li>

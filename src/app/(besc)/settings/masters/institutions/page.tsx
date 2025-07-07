@@ -1,17 +1,28 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Institution } from '@/db/schema';
 
+// Add a local InstitutionForm type for UI state
+interface InstitutionForm {
+  id?: number;
+  name: string;
+  degreeId: number;
+  sequence?: number;
+}
+
 const fetchInstitutions = async () => {
   const res = await fetch('/api/institutions');
   if (!res.ok) throw new Error('Failed to fetch institutions');
   const data = await res.json();
-  return Array.isArray(data.data) ? data.data : [];
+  // Map backend 'sequence' to frontend 'sequence'
+  return Array.isArray(data.data)
+    ? data.data.map((inst: any) => ({ ...inst, sequence: inst.sequence }))
+    : [];
 };
 
 const fetchDegrees = async () => {
@@ -36,11 +47,11 @@ function InstitutionDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: Institution) => void;
-  initialData: Institution | null;
+  onSave: (data: InstitutionForm) => void;
+  initialData: InstitutionForm | null;
   degrees: any[];
 }) {
-  const [form, setForm] = useState<Institution>(
+  const [form, setForm] = useState<InstitutionForm>(
     initialData || { name: '', degreeId: 0, sequence: 0 }
   );
 
@@ -90,39 +101,43 @@ function InstitutionDialog({
   );
 }
 
-const addInstitution = async (data: Institution) => {
-  // Only send the fields that exist in Institution
+const addInstitution = async (data: InstitutionForm) => {
   const { name, degreeId, sequence } = data;
-  const payload = { name, degreeId, sequence };
+  const payload = { name, degreeId, sequence: sequence };
   const res = await fetch('/api/institutions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Failed to add institution');
-  return await res.json();
+  const created = await res.json();
+  return { ...created, sequence: created.sequence };
 };
 
-const updateInstitution = async (id: number, data: Institution) => {
+const updateInstitution = async (id: number, data: InstitutionForm) => {
   const { name, degreeId, sequence } = data;
-  const payload = { name, degreeId, sequence };
+  const payload = { name, degreeId, sequence: sequence };
   const res = await fetch(`/api/institutions/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Failed to update institution');
-  return await res.json();
+  const updated = await res.json();
+  return { ...updated, sequence: updated.sequence };
 };
 
 const deleteInstitution = async (id: number) => true;
 
 export default function InstitutionPage() {
-  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [institutions, setInstitutions] = useState<InstitutionForm[]>([]);
   const [degrees, setDegrees] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editData, setEditData] = useState<Institution | null>(null);
+  const [editData, setEditData] = useState<InstitutionForm | null>(null);
   const [loading, setLoading] = useState(false);
+const fileInputRef = useRef<HTMLInputElement | null>(null);
+ const [selectedFile, setSelectedFile] = useState<File | null>(null);
+const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     fetchInstitutions().then(setInstitutions);
@@ -130,9 +145,9 @@ export default function InstitutionPage() {
   }, []);
 
   const handleAdd = () => { setEditData(null); setDialogOpen(true); };
-  const handleEdit = (row: Institution) => {
-    // Map backend Institution to InstitutionForm
+  const handleEdit = (row: InstitutionForm) => {
     setEditData({
+      id: row.id,
       name: row.name,
       degreeId: row.degreeId,
       sequence: row.sequence,
@@ -145,23 +160,31 @@ export default function InstitutionPage() {
       setInstitutions(insts => insts.filter(i => i.id !== id));
     }
   };
-  const handleSave = async (data: Institution) => {
+  const handleSave = async (data: InstitutionForm) => {
     if (editData) {
       const id = institutions.find(i => i.name === editData.name)?.id;
       if (id !== undefined) {
         const updated = await updateInstitution(id, data);
-        setInstitutions((insts: Institution[]) => insts.map((i: Institution) => i.id === updated.id ? updated : i));
+        setInstitutions((insts: InstitutionForm[]) => insts.map((i: InstitutionForm) => i.id === updated.id ? updated : i));
       }
     } else {
-      const created: Institution = await addInstitution(data);
+      const created: InstitutionForm = await addInstitution(data);
       if (created && created.id) {
-        setInstitutions((insts: Institution[]) => [...insts, created]);
+        setInstitutions((insts: InstitutionForm[]) => [...insts, created]);
       } else {
         await fetchInstitutions().then(setInstitutions);
       }
     }
     setDialogOpen(false);
   };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setSelectedFile(file);
+        setUploadProgress(0);
+      }
+    };
 
   // Placeholder for upload/download
   const handleUpload = () => alert('Upload not implemented');
@@ -171,6 +194,19 @@ export default function InstitutionPage() {
     <div className="p-4">
       <h2 className="text-xl font-semibold mb-4">Institutions Management</h2>
       <div className="flex gap-2 mb-4">
+      <Input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  onChange={handleFileSelect}
+                  accept=".xlsx,.xls"
+                />
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                  Choose File
+                </Button>
+                {selectedFile && (
+                  <span className="text-sm text-gray-600">{selectedFile.name}</span>
+                )}
         <Button onClick={handleUpload}>Upload File</Button>
         <Button onClick={handleDownload} variant="outline">Download Template</Button>
         <Button onClick={handleAdd} className="ml-auto">+ Add Institution</Button>

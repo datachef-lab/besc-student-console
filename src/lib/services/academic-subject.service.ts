@@ -1,5 +1,5 @@
 import { dbPostgres } from "@/db";
-import { academicSubjects, AcademicSubjects } from "@/db/schema";
+import { academicSubjects, AcademicSubject } from "@/db/schema";
 import { and, eq, ilike } from "drizzle-orm";
 
 export async function getAllSubjects(disabled?: boolean) {
@@ -27,7 +27,7 @@ export async function getSubjectByBoardUniversityId(boardUniversityId: number) {
     return subjects || null;
 }
 
-export async function createSubject(data: Omit<AcademicSubjects, "id" | "createdAt" | "updatedAt">) {
+export async function createSubject(data: Omit<AcademicSubject, "id" | "createdAt" | "updatedAt">) {
     const [existingSubject] = await dbPostgres
         .select()
         .from(academicSubjects)
@@ -50,7 +50,7 @@ export async function createSubject(data: Omit<AcademicSubjects, "id" | "created
     return { subject: newSubject, message: "New Subject Created!" };
 }
 
-export async function updateSubject(id: number, data: Partial<Omit<AcademicSubjects, "id" | "createdAt" | "updatedAt">>) {
+export async function updateSubject(id: number, data: Partial<Omit<AcademicSubject, "id" | "createdAt" | "updatedAt">>) {
     const [updatedSubject] = await dbPostgres
         .update(academicSubjects)
         .set(data)

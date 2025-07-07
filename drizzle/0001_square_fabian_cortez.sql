@@ -1,2 +1,0 @@
-ALTER TABLE "admission_additional_info" ADD COLUMN "application_form_id_fk" integer NOT NULL;--> statement-breakpoint
-ALTER TABLE "admission_additional_info" ADD CONSTRAINT "admission_additional_info_application_form_id_fk_application_forms_id_fk" FOREIGN KEY ("application_form_id_fk") REFERENCES "public"."application_forms"("id") ON DELETE no action ON UPDATE no action;

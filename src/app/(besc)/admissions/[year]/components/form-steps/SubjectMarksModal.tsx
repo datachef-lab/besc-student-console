@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StudentAcademicSubjects, subjectResultStatusType } from "@/db/schema";
+import { StudentAcademicSubject, subjectStatus } from "@/db/schema";
 import { useState, useEffect, useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Check, ChevronsUpDown } from "lucide-react"
@@ -39,15 +39,15 @@ interface SubjectMark {
 interface AcademicSubject { id: number; name: string; }
 
 interface SubjectMarksModalProps {
-  onSave: (subjects: StudentAcademicSubjects[]) => void;
+  onSave: (subjects: StudentAcademicSubject[]) => void;
   onClose: () => void;
   academicSubjects: AcademicSubject[]; // Added academicSubjects prop
-  initialSubjects: StudentAcademicSubjects[]; // Added initialSubjects prop
+  initialSubjects: StudentAcademicSubject[]; // Added initialSubjects prop
 }
 
 export default function SubjectMarksModal({ onSave, onClose, academicSubjects, initialSubjects }: SubjectMarksModalProps) {
   // Initialize state with initialSubjects prop
-  const [subjects, setSubjects] = useState<StudentAcademicSubjects[]>(initialSubjects);
+  const [subjects, setSubjects] = useState<StudentAcademicSubject[]>(initialSubjects);
   const tableBodyRef = useRef<HTMLTableSectionElement>(null);
 
   console.log('academicSubjects in SubjectMarksModal:', academicSubjects);
@@ -80,7 +80,7 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
   };
 
   // Update handleInputChange to work with StudentAcademicSubjects type
-  const handleInputChange = (index: number, field: keyof StudentAcademicSubjects, value: any) => {
+  const handleInputChange = (index: number, field: keyof StudentAcademicSubject, value: any) => {
     const newSubjects = [...subjects];
     // Basic type checking and conversion for numeric values
     if (field === 'fullMarks' || field === 'totalMarks') {
@@ -228,7 +228,7 @@ export default function SubjectMarksModal({ onSave, onClose, academicSubjects, i
                         >
                           <SelectTrigger className="h-7 text-xs sm:text-sm"><SelectValue placeholder="Select Status" /></SelectTrigger>
                           <SelectContent>
-                            {subjectResultStatusType.enumValues.map(value => (
+                            {subjectStatus.enumValues.map(value => (
                               <SelectItem key={value} value={value} className="text-xs sm:text-sm">{value}</SelectItem>
                             ))}
                             </SelectContent>

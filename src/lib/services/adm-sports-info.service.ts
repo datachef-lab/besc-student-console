@@ -15,7 +15,7 @@ export async function createSportsInfo(data: Omit<SportsInfo, "id" | "createdAt"
 export async function updateSportsInfo(id: number, data: Partial<Omit<SportsInfo, "id" | "createdAt" | "updatedAt">>) {
     try {
         const result = await dbPostgres.update(sportsInfo)
-            .set({ ...data, updatedAt: new Date() })
+            .set({ ...data, updatedAt: new Date().toISOString() })
             .where(eq(sportsInfo.id, id))
             .returning();
         return result[0];

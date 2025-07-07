@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { AdmissionAcademicInfo, BoardUniversity, Colleges, Course, LanguageMedium, streamType, Institution } from "@/db/schema"; // Import necessary types
+import { AdmissionAcademicInfo, BoardUniversity, Course, LanguageMedium, streamType, Institution } from "@/db/schema"; // Import necessary types
 import { Combobox } from "@/components/ui/combobox";
 // import { Combobox } from "@/components/ui/combobox";
 
@@ -19,7 +19,7 @@ interface InstituteDetailsModalProps {
   onClose: () => void;
   academicInfo: AdmissionAcademicInfo;
   languageMediums: LanguageMedium[]; // Add languageMediums prop
-  colleges: Colleges[]; // Add colleges prop - will be used for institutes too
+  colleges: Institution[]; // Add colleges prop - will be used for institutes too
   institutions: Institution[];
   // If previously registered courses need dynamic options, add a similar prop
   // previouslyRegisteredCourses: Course[];
@@ -180,8 +180,8 @@ export default function InstituteDetailsModal({
             <div>
               <Label className="flex items-center mb-1 text-xs sm:text-sm">f. Have you ever been registered for any undergraduate courses under Calcutta University? <span className="text-red-600">*</span></Label>
               <Select
-                value={academicInfo.isRegisteredForUGInCU === true ? 'Yes' : academicInfo.isRegisteredForUGInCU === false ? 'No' : 'null'}
-                onValueChange={(val) => onChange('isRegisteredForUGInCU', val === 'Yes' ? true : val === 'No' ? false : null)}
+                value={academicInfo.isRegisteredForUgInCu === true ? 'Yes' : academicInfo.isRegisteredForUgInCu === false ? 'No' : 'null'}
+                onValueChange={(val) => onChange('isRegisteredForUgInCu', val === 'Yes' ? true : val === 'No' ? false : null)}
                 disabled={academicInfo.yearOfPassing === admissionYear}
               >
                 <SelectTrigger className="w-full h-8 text-xs sm:text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
@@ -192,7 +192,7 @@ export default function InstituteDetailsModal({
                 </SelectContent>
               </Select>
             </div>
-            {academicInfo.isRegisteredForUGInCU === true && (
+            {academicInfo.isRegisteredForUgInCu === true && (
               <div>
                 <Label className="flex items-center mb-1 text-xs sm:text-sm">g. Calcutta University Registration No</Label>
                 <Input
